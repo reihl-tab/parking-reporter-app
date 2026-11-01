@@ -1,16 +1,15 @@
 plugins {
     id("com.google.devtools.ksp")
     id("com.android.application")
-    id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
 }
 android {
     namespace = "il.sidewalks.reporter"
-    compileSdk = 35
+    compileSdk = 37
     defaultConfig {
         applicationId = "il.sidewalks.reporter"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 37
         if (providers.gradleProperty("previewArm64").isPresent) { ndk { abiFilters += "arm64-v8a" } }
         versionCode = 29
         versionName = "0.4.26"
@@ -63,10 +62,10 @@ dependencies {
     implementation(platform("androidx.compose:compose-bom:2025.02.00"))
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:okhttp:5.5.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
     testImplementation("junit:junit:4.13.2")
-    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+    testImplementation("com.squareup.okhttp3:mockwebserver:5.5.1")
     testImplementation("org.json:json:20260814")
     androidTestImplementation(platform("androidx.compose:compose-bom:2025.02.00"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
