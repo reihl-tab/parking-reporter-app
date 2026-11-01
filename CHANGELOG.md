@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.4.27] - 2026-11-01
+
+### Other changes
+
+- Toolchain migration: AGP 9.5.0 + Gradle 9.8.2 + compileSdk 37 + okhttp/mockwebserver 5.5.1 (#81) (#82) (49d2e66)
+
 ## [0.4.26] - 2026-10-30
 
 ### Other changes
