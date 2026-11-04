@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-11-04
+
+### Features
+
+- feat: add approved public PayPal Sponsor button (#87) (849ef89)
+
 ## [0.4.27] - 2026-11-01
 
 ### Other changes
