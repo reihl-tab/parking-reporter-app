@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-11-04
+
+### Other changes
+
+- docs: design encrypted report ledger and safe migration (#89) (d5365e8)
+
 ## [0.5.0] - 2026-11-04
 
 ### Features
