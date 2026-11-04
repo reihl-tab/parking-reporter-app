@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-04
+
+### Features
+
+- feat: add ledger key envelope and Keystore custody (not wired yet) (#90) (9dc0563)
+
 ## [0.5.1] - 2026-11-04
 
 ### Other changes
