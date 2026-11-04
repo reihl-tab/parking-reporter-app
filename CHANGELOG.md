@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.6.1] - 2026-11-04
+
+### Other changes
+
+- docs: refine ledger migration proof and crash recovery phases (#91) (c9cfb90)
+
 ## [0.6.0] - 2026-11-04
 
 ### Features
