@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-11-06
+
+### Other changes
+
+- build(deps): bump com.google.devtools.ksp from 2.3.12 to 2.3.13 (#85) (831afd5)
+
 ## [0.6.1] - 2026-11-04
 
 ### Other changes
