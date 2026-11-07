@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.6.4] - 2026-11-07
+
+### Other changes
+
+- Sync layout kit: NUL-safe ls-files, tracked-set required checks, no persisted credentials (#95) (3709e2a)
+
 ## [0.6.3] - 2026-11-07
 
 ### Other changes
