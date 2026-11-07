@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.6.3] - 2026-11-07
+
+### Other changes
+
+- Add repo layout contract and CI enforcement (#93) (9eff2f4)
+
 ## [0.6.2] - 2026-11-06
 
 ### Other changes
