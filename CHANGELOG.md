@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-11-08
+
+### Other changes
+
+- ci: pipefail + --check on the python smoke gate; checklist pipe/GITHUB_TOKEN/atomicity clarifications (Tab #131 finding) (#135) (fa25fd3)
+
 ## [0.9.1] - 2026-11-08
 
 ### Other changes
