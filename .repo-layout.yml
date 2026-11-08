@@ -21,7 +21,8 @@
       ".editorconfig",
       ".gitignore",
       "LICENSE",
-      "gradlew"
+      "gradlew",
+      "deps-inventory.json"
     ],
     "deny": [
       "*.py"
