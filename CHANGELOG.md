@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.14.1] - 2026-11-08
+
+### Other changes
+
+- ODbL address-lookup builder + Settings Licenses screen (#163) (60c7fa5)
+
 ## [0.14.0] - 2026-11-08
 
 ### Features
