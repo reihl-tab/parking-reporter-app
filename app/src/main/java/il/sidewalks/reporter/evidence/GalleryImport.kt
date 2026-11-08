@@ -10,13 +10,31 @@ import java.util.UUID
  * requires no permissions.
  */
 object GalleryImport {
-    fun copyToOriginals(open: () -> InputStream?, originals: File, name: String = "${UUID.randomUUID()}.jpg"): File {
+    /** Refuse oversized picks: no legitimate evidence photo is near this. */
+    const val MAX_IMPORT_BYTES = 50L * 1024 * 1024
+
+    fun copyToOriginals(
+        open: () -> InputStream?,
+        originals: File,
+        name: String = "${UUID.randomUUID()}.jpg",
+        maxBytes: Long = MAX_IMPORT_BYTES,
+    ): File {
         check(originals.mkdirs() || originals.isDirectory) { "originals directory unavailable" }
         val target = File(originals, name)
         val temp = File(originals, "$name.tmp")
         try {
             requireNotNull(open()) { "gallery image unreadable" }.use { input ->
-                temp.outputStream().use { output -> input.copyTo(output) }
+                temp.outputStream().use { output ->
+                    val buffer = ByteArray(64 * 1024)
+                    var total = 0L
+                    while (true) {
+                        val read = input.read(buffer)
+                        if (read < 0) break
+                        total += read
+                        if (total > maxBytes) throw java.io.IOException("image exceeds the import size limit")
+                        output.write(buffer, 0, read)
+                    }
+                }
             }
             check(temp.renameTo(target)) { "gallery import failed" }
             return target

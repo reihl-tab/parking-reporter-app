@@ -1,6 +1,8 @@
 package il.sidewalks.reporter.ui
 
 import android.graphics.BitmapFactory
+import android.net.Uri
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -22,6 +24,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.room.Room
 import il.sidewalks.reporter.BuildConfig
+import il.sidewalks.reporter.EntrySignal
+import il.sidewalks.reporter.EntryIntents
 import il.sidewalks.reporter.capture.CaptureScreen
 import il.sidewalks.reporter.core.ReviewDraft
 import il.sidewalks.reporter.evidence.EvidenceReader
@@ -40,6 +44,7 @@ fun AppShell(
     requestCamera: (() -> Unit) -> Unit,
     readSettings: () -> ReporterSettings?,
     saveSettings: (ReporterSettings) -> Unit,
+    entry: State<EntrySignal?> = mutableStateOf(null),
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -121,7 +126,10 @@ fun AppShell(
                 original = file; revision = 0
                 draft = ReviewDraft(evidence, "", "", "", "", missing)
                 reload(); page = "review"
-            } catch (_: Exception) { status = "הראיה כפולה או שלא נשמרה, לא בוצעה שליחה"; page = "home" }
+            } catch (e: Exception) {
+                Log.w("AppShell", "review start failed", e)
+                status = "הראיה כפולה או שלא נשמרה, לא בוצעה שליחה"; page = "home"
+            }
         }
     }
     fun openRecord(record: ReportRecord) {
@@ -135,23 +143,37 @@ fun AppShell(
     }
     // The system photo picker needs no permissions (no camera, no location).
     // EXIF time and GPS, when present, come from the picked original bytes.
-    val pickImage = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-        if (uri != null) {
-            scope.launch {
-                var copied: File? = null
-                try {
-                    val file = withContext(Dispatchers.IO) {
-                        GalleryImport.copyToOriginals({ context.contentResolver.openInputStream(uri) },
-                            File(context.noBackupFilesDir, "originals"))
-                    }
-                    copied = file
-                    val hasGps = withContext(Dispatchers.IO) { EvidenceReader().read(file).latitude != null }
-                    if (hasGps) pendingImport = file else startReview(file)
-                } catch (_: Exception) {
-                    copied?.let { orphan -> withContext(Dispatchers.IO) { GalleryImport.deleteOrphaned(orphan) } }
-                    status = "התמונה לא נקראה, לא בוצעה שליחה"
+    // One import pipeline for the system picker and the share-sheet target
+    // (issue #149): copy bytes, read EXIF from the copy, confirm location use.
+    fun importShared(uri: Uri) {
+        scope.launch {
+            var copied: File? = null
+            try {
+                val file = withContext(Dispatchers.IO) {
+                    GalleryImport.copyToOriginals({ context.contentResolver.openInputStream(uri) },
+                        File(context.noBackupFilesDir, "originals"))
                 }
+                copied = file
+                val hasGps = withContext(Dispatchers.IO) { EvidenceReader().read(file).latitude != null }
+                if (hasGps) pendingImport = file else startReview(file)
+            } catch (e: Exception) {
+                Log.w("AppShell", "shared/gallery image import failed", e)
+                copied?.let { orphan -> withContext(Dispatchers.IO) { GalleryImport.deleteOrphaned(orphan) } }
+                status = "התמונה לא נקראה, לא בוצעה שליחה"
             }
+        }
+    }
+    val pickImage = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) importShared(uri)
+    }
+    // Deep link / Quick Settings tile / share-sheet entry (issue #149 phase 1).
+    LaunchedEffect(entry.value) {
+        when (val request = entry.value?.request) {
+            // An entry arriving over the settings screen drops the decrypted
+            // profile from memory before any navigation.
+            is EntryIntents.Request.SharedPhoto -> { profile = null; importShared(Uri.parse(request.uriString)) }
+            EntryIntents.Request.NewReport -> { profile = null; requestCamera { page = "camera" } }
+            null -> {}
         }
     }
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {

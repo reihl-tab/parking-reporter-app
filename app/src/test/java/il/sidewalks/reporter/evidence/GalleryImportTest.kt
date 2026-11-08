@@ -105,4 +105,17 @@ class GalleryImportTest {
         assertTrue(saved.exists())
         assertEquals(100, saved.readBytes().size)
     }
+    @Test fun oversizedImportRefusedAndLeavesNoFiles() {
+        val dir = java.nio.file.Files.createTempDirectory("gallery-import").toFile()
+        try {
+            GalleryImport.copyToOriginals({ ByteArray(200) { 7 }.inputStream() }, dir, maxBytes = 100)
+            fail("expected failure")
+        } catch (_: java.io.IOException) {}
+        assertEquals(0, dir.listFiles()?.size ?: 0)
+    }
+    @Test fun exactLimitImportSucceeds() {
+        val dir = java.nio.file.Files.createTempDirectory("gallery-import").toFile()
+        val out = GalleryImport.copyToOriginals({ ByteArray(100) { 7 }.inputStream() }, dir, maxBytes = 100)
+        assertEquals(100, out.readBytes().size)
+    }
 }

@@ -1,0 +1,11 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- Lives in the test APK (package il.sidewalks.reporter.test), so the
+             name must be fully qualified and the provider exported for the app
+             under test to open its stream cross-package. Test-only bytes. -->
+        <provider
+            android:name="il.sidewalks.reporter.TestShareProvider"
+            android:authorities="il.sidewalks.reporter.testshare"
+            android:exported="true" />
+    </application>
+</manifest>

@@ -137,6 +137,9 @@ jobs:
             sleep 2
             adb pull /sdcard/test-run.mp4 app/build/reports/androidTests/test-run.mp4 || true
             adb shell rm /sdcard/test-run.mp4 || true
+            # Dump the device log so app-side Log lines and compose tree dumps
+            # from failing tests are readable without rerunning locally.
+            adb logcat -d -v threadtime > app/build/reports/androidTests/logcat.txt || true
             python3 scripts/test_summary.py --title 'Instrumented tests (emulator, API 30)' --instrumentation app/build/reports/androidTests/instrumentation.txt --check; echo $? > app/build/reports/androidTests/summary.rc
             for f in $(adb shell run-as il.sidewalks.reporter ls files/ | tr -d '\r' | grep '\.png$'); do adb shell run-as il.sidewalks.reporter cat "files/$f" > "app/build/reports/androidTests/screenshots/$f" || true; done
             adb shell run-as il.sidewalks.reporter cat files/m0-synthetic.png > app/build/reports/androidTests/screenshots/m0-synthetic.png
