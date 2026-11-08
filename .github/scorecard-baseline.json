@@ -18,14 +18,6 @@
    "reason": "Semantic-release job creates release commits/tags; job-scoped; reviewed."
   },
   {
-   "path": ".github/workflows/repository-checks.yml",
-   "rule": "unhashed-pip-install",
-   "scope": "dependencies",
-   "evidence": "/tmp/venv/bin/pip install -r requirements.txt",
-   "issue": "https://github.com/reihlinstinct/parking-reporter-app/issues/73",
-   "reason": "Pre-existing pip install without --require-hashes; resolves unhashed dependencies; tracked for hash pinning in this issue."
-  },
-  {
    "path": ".github/workflows/scorecard.yml",
    "rule": "job-write",
    "scope": "analysis",
@@ -48,22 +40,6 @@
    "evidence": "contents: write",
    "issue": "https://github.com/reihlinstinct/parking-reporter-app/issues/73",
    "reason": "Wiki sync job pushes docs/wiki/ to the repo wiki (documented in-file); job-scoped; reviewed."
-  },
-  {
-   "path": "requirements.txt",
-   "rule": "unhashed-requirement",
-   "scope": "dependencies",
-   "evidence": "cryptography==50.0.2",
-   "issue": "https://github.com/reihlinstinct/parking-reporter-app/issues/73",
-   "reason": "Pre-existing requirement entry without exact version and sha256 hash; tracked for hash pinning in this issue."
-  },
-  {
-   "path": "requirements.txt",
-   "rule": "unhashed-requirement",
-   "scope": "dependencies",
-   "evidence": "pillow==13.0.0",
-   "issue": "https://github.com/reihlinstinct/parking-reporter-app/issues/73",
-   "reason": "Pre-existing requirement entry without exact version and sha256 hash; tracked for hash pinning in this issue."
   }
  ]
 }
