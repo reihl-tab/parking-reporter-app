@@ -11,7 +11,7 @@
 ## Standards
 
 - Kotlin typed interfaces and explicit state transitions; English code/docs and Hebrew report text.
-- Unit tests plus functional/emulator-based e2e tests for user flows. Mock network transport; CI never calls the municipal API or creates reports.
+- Unit tests plus functional/emulator-based e2e tests for user flows. Mock network transport; CI never calls the municipal API or creates reports, apart from the one manual read-only check under Current checks.
 - Regression tests for approval invalidation, duplicate photos/IDs, crash checkpoints, uncertain outcomes and no-retry behavior.
 - Synthetic photos, plates and reporter profiles only. No private evidence, personal details, secrets, generated build output or junk files.
 - Design diagrams: any issue or proposal that needs design (API, containers, architecture, data flow, security boundaries, test pipelines) includes a Mermaid diagram in the issue body or docs. Mermaid renders natively on GitHub and stays version-controlled; do not add binary diagram files. Diagrams use synthetic data only: no real plates, locations or living-person data.
@@ -33,6 +33,8 @@ With Python 3 installed, run `python3 scripts/check_repository.py` from the repo
 The Python tooling smoke tests install from the hash-locked `requirements-lock.txt` with `pip install --require-hashes -r requirements-lock.txt`; see docs/DEPENDENCY-LOCKS.md for the full commands and how to regenerate the lock.
 
 Run the Gradle commands in README.md for Android build, lint, unit tests and emulator tests. Never use a skipped or placeholder job as evidence of correctness.
+
+CI never calls the municipal API on its own: no workflow that runs on push, pull request or schedule holds municipal credentials or contacts the municipality. The one exception is `.github/workflows/city-readonly-checks.yml` ("City read-only checks"). It has only a `workflow_dispatch` trigger, and its job runs only in this repository, on `main`, when the repository owner dispatches it. It runs in the `city-readonly-checks` environment, which waits for a required reviewer's approval, and the municipal credentials reach only its last step, as Actions secrets at run time. That step runs `scripts/city_readonly_check.py`, which is read-only: it logs in, reads the subject-category catalog (`GetSubjectCategories`) and compares its fingerprint with the documented one. It never submits, amends or lists cases, and it never prints the credentials, the session token or the raw catalog.
 
 ## Issues: labels, milestones and order
 
