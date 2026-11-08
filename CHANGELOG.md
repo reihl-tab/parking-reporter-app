@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.9.6] - 2026-11-08
+
+### Other changes
+
+- test: stubbed offline test for scripts/city_readonly_check.py (#142) (4d691de)
+
 ## [0.9.5] - 2026-11-08
 
 ### Other changes
