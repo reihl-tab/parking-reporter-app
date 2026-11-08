@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.8.2] - 2026-11-08
+
+### Other changes
+
+- docs: review-lessons checklist in CONTRIBUTING (#131) (602096e)
+
 ## [0.8.1] - 2026-11-08
 
 ### Other changes
