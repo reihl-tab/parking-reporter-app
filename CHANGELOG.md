@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.12.1] - 2026-11-08
+
+### Other changes
+
+- docs: platform roadmap note (Android first, iOS port later) (#150) (8f6a98b)
+
 ## [0.12.0] - 2026-11-08
 
 ### Features
