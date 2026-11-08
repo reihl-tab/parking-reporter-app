@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.8.1] - 2026-11-08
+
+### Other changes
+
+- build: hash-locked Python tooling requirements (#130) (9945c8d)
+
 ### Security
 
 - Python tooling requirements are hash-locked: `requirements-lock.txt` pins every package, transitive ones included, with sha256 hashes, generated from the unchanged `requirements.txt` pins. The Scorecard guard now checks the lock (exact pins, hashes, generating command, input pins) and install commands in Markdown code and Python scripts; regeneration in docs/DEPENDENCY-LOCKS.md. The workflow install moves to the lock in a separate maintainer change. (#70)
