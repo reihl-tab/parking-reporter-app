@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.8.4] - 2026-11-08
+
+### Other changes
+
+- chore: add weekly OSV vulnerability scan via dependency-inventory (#120) (1402f44)
+
 ## [0.8.3] - 2026-11-08
 
 ### Other changes
