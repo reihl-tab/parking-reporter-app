@@ -58,3 +58,30 @@ The same scheme is used in every public repo. Do not add parallel label schemes.
 ## File placement (enforced)
 
 Decide where a file lives BEFORE creating it. The contract in `.repo-layout.yml` lists the allowed top-level directories, the file types permitted in each, and the required community-standards files; `python3 tools/check_repo_layout.py` enforces it in CI. A new kind of file means updating the contract in the same PR.
+
+## Review lessons (check before requesting review)
+
+Lessons from past independent reviews. Run through this list before asking for a review; it catches the classes of bug that reviews keep finding.
+
+**Test gates must actually gate**
+- Never append `|| true` to a test, summary or coverage check. If a step must collect evidence before failing, record the exit code to a file and `test` it after collection.
+- Know what your runner reports: `adb shell am instrument` exits 0 even when tests fail, so a summary/results parser is the real gate, not the command exit code.
+- A test job that runs zero tests must fail, not pass.
+- After changing gate logic, replay the failure cases (one failing test, zero tests, nonzero exit), not only the green case.
+
+**CI and workflow hygiene**
+- Never put `[skip ci]` in a commit whose merge is supposed to trigger a downstream workflow; the marker survives squash merges onto main.
+- A `GITHUB_TOKEN`-created PR runs no `pull_request` checks; say so in the workflow and make human review the explicit gate.
+- No force-push to branches that may carry human edits; build on top of the remote branch and push fast-forward only.
+- Scope credentials: `persist-credentials: false` on checkouts that do not push; hold tokens only in the step that needs them.
+- Redirect backgrounded processes (`> /dev/null 2>&1 &`) or they hold the step open.
+
+**Scripts and data**
+- Normalize types at trust boundaries (for example `str()` an ID from JSON before comparing with a CSV string), or idempotence breaks on the second run.
+- Compare canonical forms, not raw text, when deciding "did this change" - formatting drift must not open reformat-only PRs.
+- Write files atomically (temp file + rename), never in place.
+- When backfilling rows, extend the schema before writing, and test against a minimal input schema.
+- Skips must be counted and printed; a silently skipped eligible record is a lost record.
+
+**Housekeeping**
+- Keep the PR body in sync with the code after every fix (numbers, caps, flow descriptions); a stale body is a review finding.
