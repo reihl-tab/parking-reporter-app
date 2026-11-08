@@ -155,7 +155,11 @@ fun AppShell(
         }
         "settings" -> SettingsScreen(profile, save = { value, cleared ->
             authenticate {
-                try { saveSettings(value); profile = null; cleared(); status = "נשמר מוצפן" }
+                try {
+                    // The screen clears itself and profile is dropped after a save, so blank
+                    // fields must keep the stored values: merge against a fresh read.
+                    saveSettings(mergeReporterSettings(value, readSettings())); profile = null; cleared(); status = "נשמר מוצפן"
+                }
                 catch (_: Exception) { status = "הצפנה או אימות נכשלו, לא נשמר מידע גלוי" }
             }
         }, back = { profile = null; page = "home" }, debugTools = if (BuildConfig.DEBUG) {

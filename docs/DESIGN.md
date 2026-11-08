@@ -6,7 +6,7 @@ Development preview. Local review is not authorization for network submission.
 
 Kotlin, Jetpack Compose, CameraX and Room. Preserve original photo bytes under noBackupFilesDir and compute SHA-256. Record manual time/location corrections separately from original metadata. Geocoding is opt-in; address results are suggestions, not proof.
 
-Reporter settings contain first name, last name, phone, ID and email. Keystore AES-GCM, recent device credential authentication and AtomicFile protect storage. No plaintext fallback or backup; optional ML Kit sends disclosed API usage/performance metrics to Google. Municipal credentials are absent. Sensitive production screens use FLAG_SECURE.
+Reporter settings contain first name, last name, phone, ID and email. Keystore AES-GCM, recent device credential authentication and AtomicFile protect storage. No plaintext fallback or backup; optional ML Kit sends disclosed API usage/performance metrics to Google. Municipal API credentials are not part of the build: they are entered manually on the settings screen and stored only inside the same encrypted envelope (never logged, never backed up, omitted when blank, masked with password keyboard options). Live submission stays disabled until separately approved. Sensitive production screens use FLAG_SECURE.
 
 A revision-checked Room ledger reserves stable report IDs and original hashes. Manual review binds an exact content digest; editing clears review. This is a local review gate, not a submission receipt. Recovery checks original hashes.
 

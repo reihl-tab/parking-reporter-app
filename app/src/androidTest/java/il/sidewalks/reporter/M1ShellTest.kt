@@ -60,16 +60,31 @@ class M1ShellTest {
         compose.onNodeWithText("שמור טיוטה").performScrollTo().performClick()
         compose.runOnIdle { assertEquals("12345678", saved?.plate); assertFalse(saved?.isApproved() == true) }
     }
-    @Test fun settingsContainReporterOnlyAndClearAfterSave() {
+    @Test fun settingsStoreManuallyEnteredCredentialsAndClearAfterSave() {
+        // Owner decision 2026-11-08: municipal API keys are entered manually here and
+        // stored only inside the encrypted settings. The screenshot is taken before any
+        // value is typed, so no credential ever reaches a captured image.
         var saved: ReporterSettings? = null
         compose.setContent { MaterialTheme { SettingsScreen(null, { value, clear -> saved = value; clear() }, {}) } }
         screenshot("m1-settings-synthetic.png")
         compose.onNodeWithText("שם פרטי").performTextInput("בדיקה")
         compose.onNodeWithText("שם משפחה").performTextInput("מדווח")
-        compose.onNodeWithText("מפתח מנוי").assertDoesNotExist()
+        compose.onNodeWithText("מפתח מנוי").performScrollTo().performTextInput("synthetic-subscription-key")
+        compose.onNodeWithText("שם משתמש API").performScrollTo().performTextInput("synthetic-api-user")
+        compose.onNodeWithText("סיסמת API").performScrollTo().performTextInput("synthetic-api-pass")
         compose.onNodeWithText("אמת זהות ושמור מוצפן").performScrollTo().performClick()
-        compose.runOnIdle { assertEquals("בדיקה", saved?.firstName); assertEquals("מדווח", saved?.lastName) }
+        compose.runOnIdle {
+            assertEquals("בדיקה", saved?.firstName); assertEquals("מדווח", saved?.lastName)
+            assertEquals("synthetic-subscription-key", saved?.municipalSubscriptionKey)
+            assertEquals("synthetic-api-user", saved?.municipalUsername)
+            assertEquals("synthetic-api-pass", saved?.municipalPassword)
+            assertTrue(saved?.hasMunicipalCredentials() == true)
+        }
         compose.onNodeWithText("בדיקה").assertDoesNotExist()
+        compose.onNodeWithText("synthetic-subscription-key").assertDoesNotExist()
+        compose.onNodeWithText("synthetic-api-pass").assertDoesNotExist()
+        // The unmasked username field is checked too; masked fields expose only bullets.
+        compose.onNodeWithText("synthetic-api-user").assertDoesNotExist()
     }
     @Test fun duplicateAndStaleRevisionBlockedAcrossReopen() = runBlocking {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
@@ -199,5 +214,15 @@ class M1ShellTest {
         file.appendText("changed")
         assertNotEquals(a.originalSha256, reader.read(file, "synthetic").originalSha256)
         file.delete()
+    }
+
+    @Test fun settingsSaveDisabledWhenAllBlankAndAfterSave() {
+        var saved: ReporterSettings? = null
+        compose.setContent { MaterialTheme { SettingsScreen(null, { s, done -> saved = s; done() }, {}) } }
+        compose.onNodeWithText("אמת זהות ושמור מוצפן").assertIsNotEnabled()
+        compose.onNodeWithText("שם פרטי").performTextInput("בדיקה")
+        compose.onNodeWithText("אמת זהות ושמור מוצפן").performScrollTo().assertIsEnabled().performClick()
+        compose.runOnIdle { assertEquals("בדיקה", saved?.firstName) }
+        compose.onNodeWithText("אמת זהות ושמור מוצפן").performScrollTo().assertIsNotEnabled()
     }
 }

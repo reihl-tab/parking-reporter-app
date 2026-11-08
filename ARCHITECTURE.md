@@ -46,7 +46,7 @@ flowchart LR
 ## Security boundary
 
 - The public client holds no municipal endpoint, credential or secret, and no private repository identifier.
-- Reporter settings (first name, last name, phone, ID, email) stay encrypted on-device with Keystore AES-GCM; no plaintext fallback or backup.
+- Reporter settings (first name, last name, phone, ID, email) stay encrypted on-device with Keystore AES-GCM; no plaintext fallback or backup. Municipal API credentials are entered manually, never bundled, and live only inside that same encrypted envelope; live submission remains disabled pending separate approval.
 - Approval is local and binds an exact content digest; it is not a submission receipt.
 - Anything leaving the device is an encrypted package to a pinned receiver public key; the private decryption key never lives in the app.
 - Transport, enrollment and municipal filing are proposed stages (M5) and remain outside this preview.
