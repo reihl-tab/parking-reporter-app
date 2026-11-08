@@ -99,6 +99,602 @@
         "one": "{count} ሪፖርት",
         "other": "{count} ሪፖርቶች"
       }
+    },
+    "shell.nav.home": {
+      "he": "בית",
+      "en": "Home",
+      "ar": "الرئيسية",
+      "ru": "Главная",
+      "am": "መነሻ"
+    },
+    "shell.nav.reports": {
+      "he": "הדיווחים שלי",
+      "en": "My reports",
+      "ar": "بلاغاتي",
+      "ru": "Мои обращения",
+      "am": "የእኔ ሪፖርቶች"
+    },
+    "shell.nav.settings": {
+      "he": "הגדרות",
+      "en": "Settings",
+      "ar": "الإعدادات",
+      "ru": "Настройки",
+      "am": "ቅንብሮች"
+    },
+    "shell.home.title": {
+      "he": "מדרכות פנויות",
+      "en": "Clear Sidewalks",
+      "ar": "أرصفة خالية",
+      "ru": "Свободные тротуары",
+      "am": "ነጻ የእግረኛ መንገዶች"
+    },
+    "shell.home.subtitle": {
+      "he": "צלם תמונה כדי להתחיל דיווח",
+      "en": "Take a photo to start a report",
+      "ar": "التقط صورة لبدء بلاغ",
+      "ru": "Сделайте фото, чтобы начать обращение",
+      "am": "ሪፖርት ለመጀመር ፎቶ ያንሱ"
+    },
+    "shell.home.on_device_note": {
+      "he": "הניתוח נעשה במכשיר. תוכל לבדוק ולתקן לפני שליחה.",
+      "en": "Analysis happens on the device. You can check and correct it before sending.",
+      "ar": "يتم التحليل على الجهاز. يمكنك المراجعة والتصحيح قبل الإرسال.",
+      "ru": "Анализ выполняется на устройстве. Вы сможете проверить и исправить данные перед отправкой.",
+      "am": "ትንተናው በመሣሪያው ላይ ይከናወናል። ከመላክዎ በፊት መፈተሽና ማረም ይችላሉ።"
+    },
+    "shell.home.take_photo": {
+      "he": "צלם תמונה",
+      "en": "Take photo",
+      "ar": "التقط صورة",
+      "ru": "Сделать фото",
+      "am": "ፎቶ አንሳ"
+    },
+    "shell.home.upload_photo": {
+      "he": "העלה תמונה",
+      "en": "Upload photo",
+      "ar": "رفع صورة",
+      "ru": "Загрузить фото",
+      "am": "ፎቶ ስቀል"
+    },
+    "shell.home.upload_note": {
+      "he": "העלאה מהגלריה אינה דורשת הרשאות; זמן ומיקום נקראים מהתמונה אם קיימים.",
+      "en": "Uploading from the gallery needs no permissions; time and location are read from the photo if present.",
+      "ar": "الرفع من المعرض لا يتطلب أذونات؛ يُقرأ الوقت والموقع من الصورة إن وُجدا.",
+      "ru": "Загрузка из галереи не требует разрешений; время и место берутся из фото, если они есть.",
+      "am": "ከማዕከለ-ስዕላት መስቀል ፈቃድ አያስፈልገውም፤ ሰዓትና ቦታ ካሉ ከፎቶው ይነበባሉ።"
+    },
+    "shell.home.test_build_note": {
+      "he": "גרסת בדיקה מקומית. אין שליחה.",
+      "en": "Local test version. No sending.",
+      "ar": "نسخة تجريبية محلية. لا إرسال.",
+      "ru": "Локальная тестовая версия. Отправки нет.",
+      "am": "የአካባቢ የሙከራ ስሪት። መላክ የለም።"
+    },
+    "shell.home.drafts_title": {
+      "he": "טיוטות",
+      "en": "Drafts",
+      "ar": "المسودات",
+      "ru": "Черновики",
+      "am": "ረቂቆች"
+    },
+    "shell.home.no_drafts": {
+      "he": "אין טיוטות שמורות",
+      "en": "No saved drafts",
+      "ar": "لا توجد مسودات محفوظة",
+      "ru": "Нет сохранённых черновиков",
+      "am": "የተቀመጡ ረቂቆች የሉም"
+    },
+    "shell.home.open_draft": {
+      "he": "פתח טיוטה {id}",
+      "en": "Open draft {id}",
+      "ar": "فتح المسودة {id}",
+      "ru": "Открыть черновик {id}",
+      "am": "ረቂቅ {id} ክፈት"
+    },
+    "shell.home.continue_review": {
+      "he": "המשך בדיקת טיוטה",
+      "en": "Continue reviewing draft",
+      "ar": "متابعة مراجعة المسودة",
+      "ru": "Продолжить проверку черновика",
+      "am": "ረቂቁን መገምገም ቀጥል"
+    },
+    "shell.home.login_unavailable": {
+      "he": "התחברות לשירות הדיווח עדיין אינה זמינה. פרטי גישה עירוניים אינם חלק מהאפליקציה.",
+      "en": "Signing in to the reporting service is not available yet. Municipal access details are not part of the app.",
+      "ar": "تسجيل الدخول إلى خدمة البلاغات غير متاح بعد. بيانات الوصول البلدية ليست جزءًا من التطبيق.",
+      "ru": "Вход в службу обращений пока недоступен. Муниципальные данные доступа не входят в приложение.",
+      "am": "ወደ ሪፖርት አገልግሎቱ መግባት ገና አይገኝም። የማዘጋጃ ቤት የመዳረሻ መረጃ የመተግበሪያው አካል አይደለም።"
+    },
+    "shell.home.permission_note": {
+      "he": "ביטול הרשאת מצלמה או אימות משאיר את המסך ללא פעולה. אין שמירת פרטים גלויים כחלופה.",
+      "en": "Declining camera permission or authentication leaves the screen without action. Readable details are never saved as a fallback.",
+      "ar": "رفض إذن الكاميرا أو التحقق يُبقي الشاشة دون إجراء. لا تُحفظ بيانات مكشوفة كبديل.",
+      "ru": "Отказ в доступе к камере или в проверке подлинности оставляет экран без действия. Открытые данные не сохраняются взамен.",
+      "am": "የካሜራ ፈቃድን ወይም ማረጋገጫን መሰረዝ ገጹን ያለ እርምጃ ይተዋል። እንደ አማራጭ ግልጽ መረጃ አይቀመጥም።"
+    },
+    "shell.review.missing_gps": {
+      "he": "GPS חסר",
+      "en": "GPS missing",
+      "ar": "لا يوجد GPS",
+      "ru": "Нет GPS",
+      "am": "GPS የለም"
+    },
+    "shell.review.missing_time": {
+      "he": "זמן חסר",
+      "en": "Time missing",
+      "ar": "الوقت مفقود",
+      "ru": "Нет времени съёмки",
+      "am": "ሰዓት የለም"
+    },
+    "shell.review.timezone_needs_confirmation": {
+      "he": "אזור זמן דורש אישור",
+      "en": "Time zone needs confirmation",
+      "ar": "المنطقة الزمنية تحتاج إلى تأكيد",
+      "ru": "Часовой пояс требует подтверждения",
+      "am": "የሰዓት ክልሉ ማረጋገጫ ያስፈልገዋል"
+    },
+    "shell.review.address_needs_confirmation": {
+      "he": "כתובת ומספר בית דורשים אישור",
+      "en": "Address and house number need confirmation",
+      "ar": "العنوان ورقم المنزل يحتاجان إلى تأكيد",
+      "ru": "Адрес и номер дома требуют подтверждения",
+      "am": "አድራሻውና የቤት ቁጥሩ ማረጋገጫ ያስፈልጋቸዋል"
+    },
+    "shell.outgoing.title": {
+      "he": "תמונה נפרדת לבדיקה",
+      "en": "Separate photo for review",
+      "ar": "صورة منفصلة للمراجعة",
+      "ru": "Отдельное фото для проверки",
+      "am": "ለግምገማ የተለየ ፎቶ"
+    },
+    "shell.outgoing.image_description": {
+      "he": "התמונה המדויקת המיועדת להעברה בעתיד",
+      "en": "The exact photo intended to be sent in the future",
+      "ar": "الصورة نفسها المعدّة للإرسال مستقبلًا",
+      "ru": "Точное фото, которое будет передано в будущем",
+      "am": "ወደፊት እንዲላክ የታሰበው ትክክለኛ ፎቶ"
+    },
+    "shell.outgoing.explanation": {
+      "he": "המקור לא השתנה. נתוני EXIF הוסרו מהעותק. בדוק שהלוחית והעבירה קריאות; אל תאשר תמונה שאיבדה ראיה.",
+      "en": "The original is unchanged. EXIF data was removed from the copy. Check that the plate and the violation are readable; do not approve a photo that lost evidence.",
+      "ar": "الأصل لم يتغيّر. أُزيلت بيانات EXIF من النسخة. تأكّد من أن اللوحة والمخالفة مقروءتان؛ لا توافق على صورة فقدت دليلًا.",
+      "ru": "Оригинал не изменён. Данные EXIF удалены из копии. Проверьте, что номер и нарушение читаемы; не подтверждайте фото, потерявшее доказательство.",
+      "am": "ዋናው አልተለወጠም። የEXIF መረጃ ከቅጂው ተወግዷል። ሰሌዳውና ጥሰቱ የሚነበቡ መሆናቸውን ያረጋግጡ፤ ማስረጃ ያጣ ፎቶ አያጽድቁ።"
+    },
+    "shell.outgoing.no_sending": {
+      "he": "שליחה והתחברות אינן זמינות בגרסת הבדיקה. אין אישור שליחה ממסך זה.",
+      "en": "Sending and sign-in are not available in the test version. Nothing can be approved for sending from this screen.",
+      "ar": "الإرسال وتسجيل الدخول غير متاحين في النسخة التجريبية. لا توجد موافقة على الإرسال من هذه الشاشة.",
+      "ru": "Отправка и вход недоступны в тестовой версии. С этого экрана нельзя подтвердить отправку.",
+      "am": "መላክና መግባት በሙከራ ስሪቱ አይገኙም። ከዚህ ገጽ የመላክ ማጽደቅ የለም።"
+    },
+    "shell.outgoing.back_to_review": {
+      "he": "חזור לבדיקה",
+      "en": "Back to review",
+      "ar": "العودة إلى المراجعة",
+      "ru": "Вернуться к проверке",
+      "am": "ወደ ግምገማ ተመለስ"
+    },
+    "shell.import_location.title": {
+      "he": "נמצא מיקום בתמונה",
+      "en": "Location found in the photo",
+      "ar": "تم العثور على موقع في الصورة",
+      "ru": "В фото найдено местоположение",
+      "am": "በፎቶው ውስጥ ቦታ ተገኝቷል"
+    },
+    "shell.import_location.message": {
+      "he": "להשתמש במיקום מהתמונה לדיווח? ניתן גם בלי, ולסמן את המיקום ידנית.",
+      "en": "Use the photo's location for the report? You can also continue without it and mark the location manually.",
+      "ar": "هل تريد استخدام موقع الصورة للبلاغ؟ يمكنك أيضًا المتابعة بدونه وتحديد الموقع يدويًا.",
+      "ru": "Использовать местоположение из фото для обращения? Можно и без него, указав место вручную.",
+      "am": "የፎቶውን ቦታ ለሪፖርቱ ልጠቀም? ያለሱም መቀጠልና ቦታውን በእጅ መምረጥ ይቻላል።"
+    },
+    "shell.import_location.use": {
+      "he": "השתמש במיקום",
+      "en": "Use location",
+      "ar": "استخدام الموقع",
+      "ru": "Использовать место",
+      "am": "ቦታውን ተጠቀም"
+    },
+    "shell.import_location.skip": {
+      "he": "ללא מיקום",
+      "en": "Without location",
+      "ar": "بدون موقع",
+      "ru": "Без местоположения",
+      "am": "ያለ ቦታ"
+    },
+    "shell.status.draft_saved": {
+      "he": "נשמר מקומית, לא נשלח",
+      "en": "Saved on this device, not sent",
+      "ar": "تم الحفظ على الجهاز، لم يُرسل",
+      "ru": "Сохранено на устройстве, не отправлено",
+      "am": "በመሣሪያው ላይ ተቀምጧል፣ አልተላከም"
+    },
+    "shell.status.draft_save_failed": {
+      "he": "שמירה נכשלה, לא בוצעה שליחה",
+      "en": "Saving failed, nothing was sent",
+      "ar": "فشل الحفظ، لم يُرسل شيء",
+      "ru": "Не удалось сохранить, ничего не отправлено",
+      "am": "ማስቀመጥ አልተሳካም፣ ምንም አልተላከም"
+    },
+    "shell.status.settings_read_failed": {
+      "he": "לא ניתן לקרוא מידע מוצפן",
+      "en": "Encrypted data could not be read",
+      "ar": "تعذّرت قراءة البيانات المشفّرة",
+      "ru": "Не удалось прочитать зашифрованные данные",
+      "am": "የተመሰጠረውን መረጃ ማንበብ አልተቻለም"
+    },
+    "shell.status.evidence_duplicate_or_unsaved": {
+      "he": "הראיה כפולה או שלא נשמרה, לא בוצעה שליחה",
+      "en": "The evidence is a duplicate or was not saved; nothing was sent",
+      "ar": "الدليل مكرر أو لم يُحفظ، لم يُرسل شيء",
+      "ru": "Доказательство повторяется или не сохранено, ничего не отправлено",
+      "am": "ማስረጃው የተደገመ ነው ወይም አልተቀመጠም፣ ምንም አልተላከም"
+    },
+    "shell.status.evidence_restore_failed": {
+      "he": "לא ניתן לשחזר את הראיה; אין שליחה",
+      "en": "The evidence could not be restored; nothing is sent",
+      "ar": "تعذّرت استعادة الدليل؛ لا إرسال",
+      "ru": "Не удалось восстановить доказательство; отправки нет",
+      "am": "ማስረጃውን መመለስ አልተቻለም፤ ምንም አይላክም"
+    },
+    "shell.status.image_read_failed": {
+      "he": "התמונה לא נקראה, לא בוצעה שליחה",
+      "en": "The photo could not be read; nothing was sent",
+      "ar": "تعذّرت قراءة الصورة، لم يُرسل شيء",
+      "ru": "Не удалось прочитать фото, ничего не отправлено",
+      "am": "ፎቶው ሊነበብ አልቻለም፣ ምንም አልተላከም"
+    },
+    "shell.status.outgoing_prepare_failed": {
+      "he": "לא ניתן להכין תמונה לבדיקה; אין שליחה",
+      "en": "The photo for review could not be prepared; nothing is sent",
+      "ar": "تعذّر تجهيز الصورة للمراجعة؛ لا إرسال",
+      "ru": "Не удалось подготовить фото для проверки; отправки нет",
+      "am": "ለግምገማ ፎቶ ማዘጋጀት አልተቻለም፤ ምንም አይላክም"
+    },
+    "shell.status.settings_saved": {
+      "he": "נשמר מוצפן",
+      "en": "Saved encrypted",
+      "ar": "تم الحفظ مشفّرًا",
+      "ru": "Сохранено в зашифрованном виде",
+      "am": "ተመስጥሮ ተቀምጧል"
+    },
+    "shell.status.settings_save_failed": {
+      "he": "הצפנה או אימות נכשלו, לא נשמר מידע גלוי",
+      "en": "Encryption or authentication failed; no readable data was saved",
+      "ar": "فشل التشفير أو التحقق، لم تُحفظ أي بيانات مكشوفة",
+      "ru": "Шифрование или проверка подлинности не удались, открытые данные не сохранены",
+      "am": "ምስጠራ ወይም ማረጋገጫ አልተሳካም፣ ምንም ግልጽ መረጃ አልተቀመጠም"
+    },
+    "shell.status.import_cancelled": {
+      "he": "הייבוא בוטל, לא בוצעה שליחה",
+      "en": "Import cancelled, nothing was sent",
+      "ar": "أُلغي الاستيراد، لم يُرسل شيء",
+      "ru": "Импорт отменён, ничего не отправлено",
+      "am": "ማስገባቱ ተሰርዟል፣ ምንም አልተላከም"
+    },
+    "shell.debug.title": {
+      "he": "כלי בדיקה (מצב פיתוח בלבד)",
+      "en": "Test tools (development mode only)",
+      "ar": "أدوات الاختبار (وضع التطوير فقط)",
+      "ru": "Инструменты проверки (только режим разработки)",
+      "am": "የሙከራ መሣሪያዎች (የልማት ሁነታ ብቻ)"
+    },
+    "shell.debug.description": {
+      "he": "בדיקת פיתוח מקומית של חבילת ההצפנה: יוצרת דיווח מלאכותי, מצפינה ופותחת במכשיר. ללא רשת, ללא שליחה. מוסתרת לחלוטין מחוץ למצב פיתוח.",
+      "en": "Local development check of the encrypted package: creates a synthetic report, encrypts it and opens it on the device. No network, no sending. Completely hidden outside development mode.",
+      "ar": "فحص تطوير محلي لحزمة التشفير: ينشئ بلاغًا اصطناعيًا ويشفّره ويفتحه على الجهاز. بلا شبكة وبلا إرسال. مخفي تمامًا خارج وضع التطوير.",
+      "ru": "Локальная проверка зашифрованного пакета для разработки: создаёт синтетическое обращение, шифрует и открывает его на устройстве. Без сети, без отправки. Полностью скрыта вне режима разработки.",
+      "am": "የምስጠራ ጥቅሉ የአካባቢ የልማት ሙከራ፦ ሰው ሠራሽ ሪፖርት ይፈጥራል፣ ያመሰጥራል እና በመሣሪያው ላይ ይከፍታል። ያለ አውታረ መረብ፣ ያለ መላክ። ከልማት ሁነታ ውጭ ሙሉ በሙሉ ተደብቋል።"
+    },
+    "shell.debug.run_button": {
+      "he": "בדיקת פיתוח: חבילה מוצפנת ללא רשת",
+      "en": "Development check: encrypted package without network",
+      "ar": "فحص التطوير: حزمة مشفّرة بلا شبكة",
+      "ru": "Проверка разработки: зашифрованный пакет без сети",
+      "am": "የልማት ሙከራ፦ ያለ አውታረ መረብ የተመሰጠረ ጥቅል"
+    },
+    "shell.debug.running": {
+      "he": "מריץ בדיקה סינתטית מקומית",
+      "en": "Running local synthetic check",
+      "ar": "جارٍ تشغيل فحص اصطناعي محلي",
+      "ru": "Выполняется локальная синтетическая проверка",
+      "am": "የአካባቢ ሰው ሠራሽ ሙከራ በሂደት ላይ"
+    },
+    "shell.debug.failed": {
+      "he": "הבדיקה המקומית נכשלה, אין שליחה",
+      "en": "The local check failed; nothing is sent",
+      "ar": "فشل الفحص المحلي، لا إرسال",
+      "ru": "Локальная проверка не удалась, отправки нет",
+      "am": "የአካባቢው ሙከራ አልተሳካም፣ ምንም አይላክም"
+    },
+    "shell.submit.sent": {
+      "he": "נשלח לעירייה. מספר קריאה: {case_number}",
+      "en": "Sent to the municipality. Case number: {case_number}",
+      "ar": "أُرسل إلى البلدية. رقم البلاغ: {case_number}",
+      "ru": "Отправлено в муниципалитет. Номер обращения: {case_number}",
+      "am": "ለማዘጋጃ ቤቱ ተልኳል። የጉዳይ ቁጥር: {case_number}"
+    },
+    "shell.submit.case_number_received": {
+      "he": "התקבל בעירייה",
+      "en": "received by the municipality",
+      "ar": "استلمته البلدية",
+      "ru": "принято муниципалитетом",
+      "am": "በማዘጋጃ ቤቱ ተቀብሏል"
+    },
+    "shell.submit.already_sent": {
+      "he": "הדיווח כבר נשלח. מספר קריאה: {case_number}",
+      "en": "This report was already sent. Case number: {case_number}",
+      "ar": "تم إرسال هذا البلاغ مسبقًا. رقم البلاغ: {case_number}",
+      "ru": "Это обращение уже отправлено. Номер обращения: {case_number}",
+      "am": "ይህ ሪፖርት አስቀድሞ ተልኳል። የጉዳይ ቁጥር: {case_number}"
+    },
+    "shell.submit.blocked.not_approved": {
+      "he": "אשר את התוכן לפני שליחה",
+      "en": "Approve the content before sending",
+      "ar": "وافق على المحتوى قبل الإرسال",
+      "ru": "Подтвердите содержание перед отправкой",
+      "am": "ከመላክዎ በፊት ይዘቱን ያጽድቁ"
+    },
+    "shell.submit.blocked.missing_credentials": {
+      "he": "חסרים פרטי גישה לעירייה בהגדרות",
+      "en": "Municipal access details are missing in Settings",
+      "ar": "بيانات الوصول إلى البلدية ناقصة في الإعدادات",
+      "ru": "В настройках не хватает данных доступа к муниципалитету",
+      "am": "የማዘጋጃ ቤት መዳረሻ ዝርዝሮች በቅንብሮች ውስጥ የሉም"
+    },
+    "shell.submit.blocked.unsupported_category": {
+      "he": "הקטגוריה אינה נתמכת לשליחה",
+      "en": "This category can't be sent",
+      "ar": "هذه الفئة غير مدعومة للإرسال",
+      "ru": "Эта категория не поддерживается для отправки",
+      "am": "ይህ ምድብ ለመላክ አይደገፍም"
+    },
+    "shell.submit.blocked.address_unresolved": {
+      "he": "הכתובת לא נקבעה: {detail}",
+      "en": "The address could not be determined: {detail}",
+      "ar": "لم يتم تحديد العنوان: {detail}",
+      "ru": "Адрес не определён: {detail}",
+      "am": "አድራሻው አልተወሰነም: {detail}"
+    },
+    "shell.submit.blocked.input_invalid": {
+      "he": "קלט לא תקין: {detail}",
+      "en": "Invalid input: {detail}",
+      "ar": "مدخلات غير صالحة: {detail}",
+      "ru": "Неверные данные: {detail}",
+      "am": "ልክ ያልሆነ ግብዓት: {detail}"
+    },
+    "shell.submit.blocked.municipal_review_needed": {
+      "he": "המצב מול העירייה אינו ודאי. בדוק באפליקציית העירייה; לא בוצעה שליחה חוזרת. {detail}",
+      "en": "The status with the municipality is uncertain. Check in the municipality's app; nothing was sent again. {detail}",
+      "ar": "حالة البلاغ لدى البلدية غير مؤكدة. تحقق في تطبيق البلدية؛ لم تتم إعادة الإرسال. {detail}",
+      "ru": "Статус в муниципалитете неясен. Проверьте в приложении муниципалитета; повторная отправка не выполнялась. {detail}",
+      "am": "ከማዘጋጃ ቤቱ ጋር ያለው ሁኔታ እርግጠኛ አይደለም። በማዘጋጃ ቤቱ መተግበሪያ ውስጥ ያረጋግጡ፤ እንደገና አልተላከም። {detail}"
+    },
+    "shell.submit.blocked.municipal_api_failure": {
+      "he": "העירייה ענתה: {detail}",
+      "en": "The municipality replied: {detail}",
+      "ar": "ردّت البلدية: {detail}",
+      "ru": "Ответ муниципалитета: {detail}",
+      "am": "ማዘጋጃ ቤቱ መለሰ: {detail}"
+    },
+    "shell.submit.blocked.local_failure": {
+      "he": "שגיאה מקומית, לא בוצעה שליחה ({detail})",
+      "en": "Local error, nothing was sent ({detail})",
+      "ar": "خطأ محلي، لم يتم الإرسال ({detail})",
+      "ru": "Локальная ошибка, ничего не отправлено ({detail})",
+      "am": "የአካባቢ ስህተት፣ ምንም አልተላከም ({detail})"
+    },
+    "shell.submit.blocked.lookup_not_installed": {
+      "he": "קובץ הכתובות הפרטי לא מותקן במכשיר",
+      "en": "The private address file is not installed on this device",
+      "ar": "ملف العناوين الخاص غير مثبت على الجهاز",
+      "ru": "Частный файл адресов не установлен на устройстве",
+      "am": "የግል አድራሻ ፋይሉ በመሣሪያው ላይ አልተጫነም"
+    },
+    "shell.submit.draft_not_saved": {
+      "he": "הטיוטה לא נשמרה אחרי האישור. שמור ואשר מחדש לפני שליחה.",
+      "en": "The draft was not saved after approval. Save and approve again before sending.",
+      "ar": "لم تُحفظ المسودة بعد الموافقة. احفظ ووافق مجددًا قبل الإرسال.",
+      "ru": "Черновик не сохранён после подтверждения. Сохраните и подтвердите снова перед отправкой.",
+      "am": "ረቂቁ ከጸደቀ በኋላ አልተቀመጠም። ከመላክዎ በፊት ያስቀምጡ እና እንደገና ያጽድቁ።"
+    },
+    "shell.submit.sending": {
+      "he": "שולח לעירייה...",
+      "en": "Sending to the municipality...",
+      "ar": "جارٍ الإرسال إلى البلدية...",
+      "ru": "Отправка в муниципалитет...",
+      "am": "ወደ ማዘጋጃ ቤቱ በመላክ ላይ..."
+    },
+    "shell.unlock.submit_title": {
+      "he": "שליחת דיווח לעירייה",
+      "en": "Send report to the municipality",
+      "ar": "إرسال البلاغ إلى البلدية",
+      "ru": "Отправка обращения в муниципалитет",
+      "am": "ሪፖርት ወደ ማዘጋጃ ቤት መላክ"
+    },
+    "shell.unlock.submit_subtitle": {
+      "he": "אימות נעילת המכשיר מאשר שליחת הדיווח לעיריית ירושלים",
+      "en": "Confirming the device lock authorises sending the report to the Jerusalem Municipality",
+      "ar": "تأكيد قفل الجهاز يأذن بإرسال البلاغ إلى بلدية القدس",
+      "ru": "Подтверждение блокировки устройства разрешает отправку обращения в муниципалитет Иерусалима",
+      "am": "የመሣሪያ መቆለፊያ ማረጋገጫ ሪፖርቱን ወደ እየሩሳሌም ማዘጋጃ ቤት መላክን ይፈቅዳል"
+    },
+    "shell.unlock.settings_title": {
+      "he": "הגדרות פרטיות",
+      "en": "Privacy settings",
+      "ar": "إعدادات الخصوصية",
+      "ru": "Настройки конфиденциальности",
+      "am": "የግላዊነት ቅንብሮች"
+    },
+    "shell.unlock.settings_subtitle": {
+      "he": "אמת את נעילת המכשיר כדי לגשת לפרטים",
+      "en": "Confirm the device lock to access your details",
+      "ar": "أكّد قفل الجهاز للوصول إلى البيانات",
+      "ru": "Подтвердите блокировку устройства, чтобы открыть данные",
+      "am": "ዝርዝሮቹን ለማግኘት የመሣሪያውን መቆለፊያ ያረጋግጡ"
+    },
+    "settings.privacy.mlkit_note": {
+      "he": "Google ML Kit: התמונות והלוחיות נשארות במכשיר; נתוני שימוש וביצועים נשלחים ל-Google. ה-SDK עשוי לפנות לשרתיה לעדכונים.",
+      "en": "Google ML Kit: photos and plates stay on the device; usage and performance data is sent to Google. The SDK may contact Google's servers for updates.",
+      "ar": "Google ML Kit: تبقى الصور واللوحات على الجهاز؛ تُرسل بيانات الاستخدام والأداء إلى Google. قد تتصل حزمة SDK بخوادمها للحصول على التحديثات.",
+      "ru": "Google ML Kit: фото и номера остаются на устройстве; данные об использовании и производительности отправляются в Google. SDK может обращаться к её серверам за обновлениями.",
+      "am": "Google ML Kit፦ ፎቶዎቹና ሰሌዳዎቹ በመሣሪያው ላይ ይቆያሉ፤ የአጠቃቀምና የአፈጻጸም መረጃ ወደ Google ይላካል። SDK ለዝማኔዎች አገልጋዮቹን ሊያገኝ ይችላል።"
+    },
+    "settings.privacy.title": {
+      "he": "הגדרות פרטיות",
+      "en": "Privacy settings",
+      "ar": "إعدادات الخصوصية",
+      "ru": "Настройки конфиденциальности",
+      "am": "የግላዊነት ቅንብሮች"
+    },
+    "settings.privacy.description": {
+      "he": "כל מדווח מזין את פרטיו שלו. הפרטים מוצפנים במכשיר, ללא גיבוי. אין שליחה או בדיקת התחברות ממסך זה. פרטי הגישה העירוניים מוזנים ידנית ונשמרים מוצפנים במכשיר בלבד.",
+      "en": "Each reporter enters their own details. The details are encrypted on the device, with no backup. Nothing is sent and no sign-in is checked from this screen. Municipal access details are entered manually and stored encrypted on the device only.",
+      "ar": "يُدخل كل مُبلّغ بياناته بنفسه. تُشفَّر البيانات على الجهاز دون نسخ احتياطي. لا إرسال ولا فحص لتسجيل الدخول من هذه الشاشة. تُدخل بيانات الوصول البلدية يدويًا وتُحفظ مشفّرة على الجهاز فقط.",
+      "ru": "Каждый заявитель вводит свои данные сам. Данные шифруются на устройстве, без резервного копирования. С этого экрана ничего не отправляется и вход не проверяется. Муниципальные данные доступа вводятся вручную и хранятся в зашифрованном виде только на устройстве.",
+      "am": "እያንዳንዱ ሪፖርት አድራጊ የራሱን መረጃ ያስገባል። መረጃው በመሣሪያው ላይ ይመሰጠራል፣ ምትኬ የለም። ከዚህ ገጽ መላክም ሆነ የመግቢያ ፍተሻ የለም። የማዘጋጃ ቤት የመዳረሻ መረጃ በእጅ ይገባል እና በመሣሪያው ላይ ብቻ ተመስጥሮ ይቀመጣል።"
+    },
+    "settings.field.first_name": {
+      "he": "שם פרטי",
+      "en": "First name",
+      "ar": "الاسم الأول",
+      "ru": "Имя",
+      "am": "የመጀመሪያ ስም"
+    },
+    "settings.field.last_name": {
+      "he": "שם משפחה",
+      "en": "Last name",
+      "ar": "اسم العائلة",
+      "ru": "Фамилия",
+      "am": "የአባት ስም"
+    },
+    "settings.field.id_number": {
+      "he": "מספר זהות",
+      "en": "ID number",
+      "ar": "رقم الهوية",
+      "ru": "Номер удостоверения личности",
+      "am": "የመታወቂያ ቁጥር"
+    },
+    "settings.field.phone": {
+      "he": "טלפון",
+      "en": "Phone",
+      "ar": "الهاتف",
+      "ru": "Телефон",
+      "am": "ስልክ"
+    },
+    "settings.field.email": {
+      "he": "אימייל",
+      "en": "Email",
+      "ar": "البريد الإلكتروني",
+      "ru": "Эл. почта",
+      "am": "ኢሜይል"
+    },
+    "settings.api.title": {
+      "he": "גישת API עירונית (הזנה ידנית)",
+      "en": "Municipal API access (manual entry)",
+      "ar": "وصول API البلدي (إدخال يدوي)",
+      "ru": "Муниципальный доступ к API (ручной ввод)",
+      "am": "የማዘጋጃ ቤት API መዳረሻ (በእጅ ማስገባት)"
+    },
+    "settings.api.description": {
+      "he": "המפתחות מוזנים ידנית ונשמרים מוצפנים במכשיר בלבד, ללא גיבוי. הם אינם חלק מהאפליקציה ואינם נשלחים למקום אחר. שליחה חיה אינה זמינה ותופעל רק באישור נפרד.",
+      "en": "The keys are entered manually and stored encrypted on the device only, with no backup. They are not part of the app and are not sent anywhere else. Live sending is not available and will only be enabled with separate approval.",
+      "ar": "تُدخل المفاتيح يدويًا وتُحفظ مشفّرة على الجهاز فقط دون نسخ احتياطي. ليست جزءًا من التطبيق ولا تُرسل إلى أي مكان آخر. الإرسال المباشر غير متاح ولن يُفعَّل إلا بموافقة منفصلة.",
+      "ru": "Ключи вводятся вручную и хранятся в зашифрованном виде только на устройстве, без резервного копирования. Они не входят в приложение и никуда больше не отправляются. Отправка в реальном времени недоступна и будет включена только с отдельного разрешения.",
+      "am": "ቁልፎቹ በእጅ ይገባሉ እና በመሣሪያው ላይ ብቻ ተመስጥረው ይቀመጣሉ፣ ምትኬ የለም። የመተግበሪያው አካል አይደሉም፣ ወደ ሌላ ቦታም አይላኩም። ቀጥታ መላክ አይገኝም፣ የሚነቃውም በተለየ ፈቃድ ብቻ ነው።"
+    },
+    "settings.field.subscription_key": {
+      "he": "מפתח מנוי",
+      "en": "Subscription key",
+      "ar": "مفتاح الاشتراك",
+      "ru": "Ключ подписки",
+      "am": "የደንበኝነት ቁልፍ"
+    },
+    "settings.field.api_username": {
+      "he": "שם משתמש API",
+      "en": "API username",
+      "ar": "اسم مستخدم API",
+      "ru": "Имя пользователя API",
+      "am": "የAPI የተጠቃሚ ስም"
+    },
+    "settings.field.api_password": {
+      "he": "סיסמת API",
+      "en": "API password",
+      "ar": "كلمة مرور API",
+      "ru": "Пароль API",
+      "am": "የAPI የይለፍ ቃል"
+    },
+    "settings.save.button": {
+      "he": "אמת זהות ושמור מוצפן",
+      "en": "Verify identity and save encrypted",
+      "ar": "تحقّق من الهوية واحفظ مشفّرًا",
+      "ru": "Подтвердить личность и сохранить в зашифрованном виде",
+      "am": "ማንነትን አረጋግጥና ተመስጥሮ አስቀምጥ"
+    },
+    "settings.save.done": {
+      "he": "נשמר מוצפן, הפרטים הוסרו מהמסך",
+      "en": "Saved encrypted; the details were removed from the screen",
+      "ar": "تم الحفظ مشفّرًا، وأُزيلت البيانات من الشاشة",
+      "ru": "Сохранено в зашифрованном виде, данные убраны с экрана",
+      "am": "ተመስጥሮ ተቀምጧል፣ መረጃው ከገጹ ተወግዷል"
+    },
+    "settings.back": {
+      "he": "חזור",
+      "en": "Back",
+      "ar": "رجوع",
+      "ru": "Назад",
+      "am": "ተመለስ"
+    },
+    "settings.version": {
+      "he": "גרסה {version}",
+      "en": "Version {version}",
+      "ar": "الإصدار {version}",
+      "ru": "Версия {version}",
+      "am": "ስሪት {version}"
+    },
+    "settings.language.title": {
+      "he": "שפה",
+      "en": "Language",
+      "ar": "اللغة",
+      "ru": "Язык",
+      "am": "ቋንቋ"
+    },
+    "settings.language.system_default": {
+      "he": "ברירת המחדל של המערכת",
+      "en": "System default",
+      "ar": "افتراضي النظام",
+      "ru": "Как в системе",
+      "am": "የሥርዓቱ ነባሪ"
+    },
+    "shell.outgoing.size_summary": {
+      "he": {
+        "one": "{width} × {height}, {count} bytes",
+        "two": "{width} × {height}, {count} bytes",
+        "other": "{width} × {height}, {count} bytes"
+      },
+      "en": {
+        "one": "{width} × {height}, {count} byte",
+        "other": "{width} × {height}, {count} bytes"
+      },
+      "ar": {
+        "zero": "{width} × {height}، {count} بايت",
+        "one": "{width} × {height}، {count} بايت",
+        "two": "{width} × {height}، {count} بايت",
+        "few": "{width} × {height}، {count} بايت",
+        "many": "{width} × {height}، {count} بايت",
+        "other": "{width} × {height}، {count} بايت"
+      },
+      "ru": {
+        "one": "{width} × {height}, {count} байт",
+        "few": "{width} × {height}, {count} байта",
+        "many": "{width} × {height}, {count} байт",
+        "other": "{width} × {height}, {count} байта"
+      },
+      "am": {
+        "one": "{width} × {height}፣ {count} ባይት",
+        "other": "{width} × {height}፣ {count} ባይት"
+      }
     }
   }
 }

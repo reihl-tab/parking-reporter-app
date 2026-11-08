@@ -21,7 +21,8 @@ import org.json.JSONObject
  * on bad data: a malformed entry falls through the chain
  * active language -> he -> en -> the key itself (visible).
  *
- * PR-1 wires this into no screen. PR-2 adds the picker and the extraction.
+ * PR-1 added the core. PR-2a wires it in at the AppShell root (see LanguageState.kt) and
+ * extracts AppShell and SettingsScreen; PR-2b/2c extract the remaining PENDING sources.
  */
 
 /** Text direction of a language, as declared by its `dir` field. */
@@ -254,7 +255,7 @@ val LocalStrings = staticCompositionLocalOf { Strings(StringCatalog.EMPTY, Strin
 
 /**
  * Provides [LocalStrings] and the language's [LocalLayoutDirection] to [content].
- * Defined in PR-1 and not yet used; PR-2 places it at the AppShell root.
+ * AppShell provides it at its root with the active language (PR-2a).
  */
 @Composable
 fun ProvideStrings(catalog: StringCatalog, language: Language, content: @Composable () -> Unit) {
