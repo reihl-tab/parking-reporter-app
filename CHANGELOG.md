@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-11-08
+
+### Features
+
+- feat: deep link, share-sheet target and Quick Settings tile (#149 phase 1) (#151) (fb02b17)
+
 ## [0.12.2] - 2026-11-08
 
 ### Other changes
