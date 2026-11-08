@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.13.1] - 2026-11-08
+
+### Other changes
+
+- M-A: municipal 106 submission client port + contract tests (#155) (a05c50f)
+
 ## [0.13.0] - 2026-11-08
 
 ### Features
