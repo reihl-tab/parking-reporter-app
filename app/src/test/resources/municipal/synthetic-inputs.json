@@ -1,0 +1,31 @@
+{
+ "reporter": {
+  "first_name": "ישראל",
+  "last_name": "ישראלי",
+  "phone": "+972501234567",
+  "national_id": "000000018",
+  "email": "synthetic@example.com"
+ },
+ "login": {
+  "UserName": "synthetic-user",
+  "Password": "synthetic-password"
+ },
+ "token": "synthetic-token",
+ "contact_id": "synthetic-contact-id",
+ "report": {
+  "CaseDescription": "דיווח סינתטי לבדיקת התאמת מטען בלבד.",
+  "CaseSubjectCode": "1145",
+  "CaseStreetCode": "1630",
+  "CaseStreetName": "הפלמח",
+  "CaseHouseNumber": "900",
+  "CaseAddressText": "הפלמח 900",
+  "CoordinateX": 220000,
+  "CoordinateY": 630500,
+  "Language": 1,
+  "ApplicationCaseNumber": "ApplicationCaseNumber_VAL"
+ },
+ "case_id": "synthetic-case-id",
+ "webcase_id": "synthetic-webcase-id",
+ "file_name": "synthetic.jpg",
+ "jpeg_bytes_utf8": "synthetic-jpeg-bytes-not-a-photo"
+}

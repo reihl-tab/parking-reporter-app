@@ -16,7 +16,13 @@ class HardcodedUiStringLintTest {
 
     companion object {
         /** Internal/debug sources that may keep literals. */
-        val ALLOWLIST = setOf("SyntheticIntakeDemo.kt", "LoginDiagnostic.kt")
+        val ALLOWLIST = setOf(
+            "SyntheticIntakeDemo.kt",
+            "LoginDiagnostic.kt",
+            // Municipal protocol payloads (e.g. the city name in the API contact record),
+            // never rendered as UI.
+            "MunicipalPayloads.kt",
+        )
 
         /**
          * Sources whose UI literals are not extracted yet. PR-2 of #115 extracts them
