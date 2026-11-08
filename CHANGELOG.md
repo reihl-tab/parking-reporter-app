@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.9.5] - 2026-11-08
+
+### Other changes
+
+- ci: baseline issue/reason fields, wiki-sync persist-credentials false (#137) (#145) (8494d62)
+
 ## [0.9.4] - 2026-11-08
 
 ### Other changes
