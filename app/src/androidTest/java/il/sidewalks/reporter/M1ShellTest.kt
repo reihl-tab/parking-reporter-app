@@ -18,12 +18,19 @@ import il.sidewalks.reporter.ui.ReviewScreen
 import il.sidewalks.reporter.ui.SettingsScreen
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
 
 class M1ShellTest {
     @get:Rule val compose = createComposeRule()
+    // Issue #115 PR-2a: with no stored choice the UI follows the system locale, which is
+    // en-US on the CI emulator. These tests look texts up by their Hebrew wording, so the
+    // UI language is pinned to he through the real "ui-prefs" store.
+    @Before fun pinHebrewUiLanguage() {
+        il.sidewalks.reporter.i18n.UiPrefsLanguageStore.of(InstrumentationRegistry.getInstrumentation().targetContext).set("he")
+    }
     private fun draft() = ReviewDraft(Evidence("synthetic", "a".repeat(64), "2026-01-01T12:00:00Z", 31.0, 35.0),
         "1234567", "רחוב בדיקה 1", "sidewalk_parking", "רכב חונה על המדרכה", emptySet())
     private fun screenshot(name: String) {

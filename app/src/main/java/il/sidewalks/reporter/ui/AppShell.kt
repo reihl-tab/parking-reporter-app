@@ -17,8 +17,6 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -31,6 +29,12 @@ import il.sidewalks.reporter.core.ReviewDraft
 import il.sidewalks.reporter.core.SendGate
 import il.sidewalks.reporter.evidence.EvidenceReader
 import il.sidewalks.reporter.evidence.GalleryImport
+import il.sidewalks.reporter.i18n.LanguageResolver
+import il.sidewalks.reporter.i18n.ProvideStrings
+import il.sidewalks.reporter.i18n.Strings
+import il.sidewalks.reporter.i18n.rememberAppCatalog
+import il.sidewalks.reporter.i18n.rememberLanguageController
+import il.sidewalks.reporter.i18n.systemLanguageCode
 import il.sidewalks.reporter.ledger.ReportDatabase
 import il.sidewalks.reporter.ledger.ReportRecord
 import il.sidewalks.reporter.municipal.FileSubmissionStateStore
@@ -56,6 +60,13 @@ fun AppShell(
     val scope = rememberCoroutineScope()
     val database = remember { Room.databaseBuilder(context, ReportDatabase::class.java, "report-ledger.db").build() }
     DisposableEffect(Unit) { onDispose { database.close() } }
+    // Issue #115: the UI language comes from "ui-prefs" (no authentication) and switches
+    // text and layout direction live through ProvideStrings below.
+    val catalog = rememberAppCatalog()
+    val languageController = rememberLanguageController()
+    val selectedLanguage by languageController.selected.collectAsState()
+    val language = LanguageResolver.activeLanguage(catalog, selectedLanguage, systemLanguageCode())
+    val strings = remember(catalog, language.code) { Strings(catalog, language.code) }
     var page by remember { mutableStateOf("home") }
     var profile by remember { mutableStateOf<ReporterSettings?>(null) }
     var draft by remember { mutableStateOf<ReviewDraft?>(null) }
@@ -86,26 +97,6 @@ fun AppShell(
     var streetsDirectory by remember { mutableStateOf<StreetDirectory?>(null) }
     var submitting by remember { mutableStateOf(false) }
     var submissionNote by remember(draft?.evidence?.stableId) { mutableStateOf("") }
-    fun municipalOutcomeHebrew(outcome: SubmissionCoordinator.Outcome): String = when (outcome) {
-        is SubmissionCoordinator.Outcome.Submitted ->
-            "נשלח לעירייה. מספר קריאה: \u2066${outcome.caseNumber ?: "התקבל בעירייה"}\u2069"
-        is SubmissionCoordinator.Outcome.AlreadySubmitted ->
-            "הדיווח כבר נשלח. מספר קריאה: \u2066${outcome.caseNumber ?: ""}\u2069"
-        is SubmissionCoordinator.Outcome.Blocked -> when (outcome.reason) {
-            SubmissionCoordinator.Reason.NOT_APPROVED -> "אשר את התוכן לפני שליחה"
-            SubmissionCoordinator.Reason.MISSING_CREDENTIALS -> "חסרים פרטי גישה לעירייה בהגדרות"
-            SubmissionCoordinator.Reason.UNSUPPORTED_CATEGORY -> "הקטגוריה אינה נתמכת לשליחה"
-            SubmissionCoordinator.Reason.ADDRESS_UNRESOLVED -> "הכתובת לא נקבעה: ${outcome.detail}"
-            SubmissionCoordinator.Reason.INPUT_INVALID -> "קלט לא תקין: ${outcome.detail}"
-            SubmissionCoordinator.Reason.MUNICIPAL_REVIEW_NEEDED ->
-                "המצב מול העירייה אינו ודאי. בדוק באפליקציית העירייה; לא בוצעה שליחה חוזרת. ${outcome.detail}"
-            SubmissionCoordinator.Reason.MUNICIPAL_API_FAILURE -> "העירייה ענתה: ${outcome.detail}"
-            SubmissionCoordinator.Reason.LOCAL_FAILURE ->
-                "שגיאה מקומית, לא בוצעה שליחה (${outcome.detail})"
-            SubmissionCoordinator.Reason.LOOKUP_NOT_INSTALLED ->
-                "קובץ הכתובות הפרטי לא מותקן במכשיר"
-        }
-    }
     // The municipal address lookup is municipality-supplied private data
     // whose licence for publication is unresolved: it is NOT committed to
     // this public repo. Load the on-device private copy (pushed to the
@@ -134,16 +125,16 @@ fun AppShell(
         // the last saved one, and approved. A failed or dropped save must
         // never send stale text.
         if (!SendGate.readyToSend(shown, draft)) {
-            submissionNote = "הטיוטה לא נשמרה אחרי האישור. שמור ואשר מחדש לפני שליחה."
+            submissionNote = strings.t("shell.submit.draft_not_saved")
             return
         }
         // Device unlock gates every submit (owner 19:49), reusing the same
         // device-credential flow that protects the settings screen. The
         // prompt states what the unlock authorises: sending this report.
-        authenticate("שליחת דיווח לעירייה",
-            "אימות נעילת המכשיר מאשר שליחת הדיווח לעיריית ירושלים") {
+        authenticate(strings.t("shell.unlock.submit_title"),
+            strings.t("shell.unlock.submit_subtitle")) {
             submitting = true
-            submissionNote = "שולח לעירייה..."
+            submissionNote = strings.t("shell.submit.sending")
             scope.launch {
                 val outcome = withContext(Dispatchers.IO) {
                     try {
@@ -177,7 +168,7 @@ fun AppShell(
                             e.javaClass.simpleName)
                     }
                 }
-                submissionNote = municipalOutcomeHebrew(outcome)
+                submissionNote = municipalOutcomeText(strings, outcome)
                 if (outcome is SubmissionCoordinator.Outcome.Submitted ||
                     outcome is SubmissionCoordinator.Outcome.AlreadySubmitted) {
                     status = submissionNote
@@ -198,16 +189,16 @@ fun AppShell(
                 }
                 check(updated == 1)
                 revision += 1
-                draft = value; status = "נשמר מקומית, לא נשלח"
+                draft = value; status = strings.t("shell.status.draft_saved")
                 reload()
-            } catch (_: Exception) { status = "שמירה נכשלה, לא בוצעה שליחה" }
+            } catch (_: Exception) { status = strings.t("shell.status.draft_save_failed") }
             finally { saving = false }
         }
     }
     fun openSettings() {
-        authenticate("הגדרות פרטיות", "אמת את נעילת המכשיר כדי לגשת לפרטים") {
+        authenticate(strings.t("shell.unlock.settings_title"), strings.t("shell.unlock.settings_subtitle")) {
             try { profile = readSettings(); page = "settings" }
-            catch (_: Exception) { status = "לא ניתן לקרוא מידע מוצפן" }
+            catch (_: Exception) { status = strings.t("shell.status.settings_read_failed") }
         }
     }
     fun startReview(file: File, usePhotoLocation: Boolean = true) {
@@ -218,9 +209,9 @@ fun AppShell(
                     evidence = evidence.copy(latitude = null, longitude = null)
                 }
                 val missing = buildSet {
-                    if (evidence.latitude == null) add("GPS חסר")
-                    if (evidence.capturedAtIso == null) add("זמן חסר") else add("אזור זמן דורש אישור")
-                    add("כתובת ומספר בית דורשים אישור")
+                    if (evidence.latitude == null) add(strings.t("shell.review.missing_gps"))
+                    if (evidence.capturedAtIso == null) add(strings.t("shell.review.missing_time")) else add(strings.t("shell.review.timezone_needs_confirmation"))
+                    add(strings.t("shell.review.address_needs_confirmation"))
                 }
                 try {
                     withContext(Dispatchers.IO) {
@@ -240,7 +231,7 @@ fun AppShell(
                 reload(); page = "review"
             } catch (e: Exception) {
                 Log.w("AppShell", "review start failed", e)
-                status = "הראיה כפולה או שלא נשמרה, לא בוצעה שליחה"; page = "home"
+                status = strings.t("shell.status.evidence_duplicate_or_unsaved"); page = "home"
             }
         }
     }
@@ -251,7 +242,7 @@ fun AppShell(
             check(file.canonicalPath.startsWith(context.noBackupFilesDir.canonicalPath + "/") && file.isFile)
             check(EvidenceReader().read(file, record.stableId).originalSha256 == record.originalSha256)
             original = file; revision = record.revision; page = "review"
-        } catch (_: Exception) { status = "לא ניתן לשחזר את הראיה; אין שליחה" }
+        } catch (_: Exception) { status = strings.t("shell.status.evidence_restore_failed") }
     }
     // The system photo picker needs no permissions (no camera, no location).
     // EXIF time and GPS, when present, come from the picked original bytes.
@@ -271,7 +262,7 @@ fun AppShell(
             } catch (e: Exception) {
                 Log.w("AppShell", "shared/gallery image import failed", e)
                 copied?.let { orphan -> withContext(Dispatchers.IO) { GalleryImport.deleteOrphaned(orphan) } }
-                status = "התמונה לא נקראה, לא בוצעה שליחה"
+                status = strings.t("shell.status.image_read_failed")
             }
         }
     }
@@ -288,7 +279,7 @@ fun AppShell(
             null -> {}
         }
     }
-    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+    ProvideStrings(catalog, language) {
     Scaffold(
         bottomBar = {
             if (page == "home" || page == "settings" || page == "reports") {
@@ -297,19 +288,19 @@ fun AppShell(
                         selected = page == "home",
                         onClick = { profile = null; page = "home" },
                         icon = { Icon(Icons.Default.Home, contentDescription = null) },
-                        label = { Text("בית") },
+                        label = { Text(strings.t("shell.nav.home")) },
                     )
                     NavigationBarItem(
                         selected = page == "reports",
                         onClick = { profile = null; page = "reports" },
                         icon = { Icon(Icons.Default.List, contentDescription = null) },
-                        label = { Text("הדיווחים שלי") },
+                        label = { Text(strings.t("shell.nav.reports")) },
                     )
                     NavigationBarItem(
                         selected = page == "settings",
                         onClick = { openSettings() },
                         icon = { Icon(Icons.Default.Settings, contentDescription = null) },
-                        label = { Text("הגדרות") },
+                        label = { Text(strings.t("shell.nav.settings")) },
                     )
                 }
             }
@@ -344,69 +335,69 @@ fun AppShell(
                         }
                         check(derivative.originalHash == value.evidence.originalSha256)
                         outgoing = derivative; page = "outgoing"
-                    } catch (_: Exception) { status = "לא ניתן להכין תמונה לבדיקה; אין שליחה" }
+                    } catch (_: Exception) { status = strings.t("shell.status.outgoing_prepare_failed") }
                 }
             })
         }
         "outgoing" -> outgoing?.let { value ->
             Column(Modifier.fillMaxSize().systemBarsPadding().padding(16.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("תמונה נפרדת לבדיקה", style = MaterialTheme.typography.titleLarge)
+                Text(strings.t("shell.outgoing.title"), style = MaterialTheme.typography.titleLarge)
                 val bitmap = remember(value.hash) { BitmapFactory.decodeByteArray(value.jpeg, 0, value.jpeg.size).asImageBitmap() }
-                Image(bitmap, "התמונה המדויקת המיועדת להעברה בעתיד", Modifier.fillMaxWidth().height(360.dp))
-                Text("המקור לא השתנה. נתוני EXIF הוסרו מהעותק. בדוק שהלוחית והעבירה קריאות; אל תאשר תמונה שאיבדה ראיה.")
-                Text("${value.width} × ${value.height}, ${value.jpeg.size} bytes")
-                Text("שליחה והתחברות אינן זמינות בגרסת הבדיקה. אין אישור שליחה ממסך זה.")
-                TextButton(onClick = { outgoing = null; page = "review" }, modifier = Modifier.fillMaxWidth()) { Text("חזור לבדיקה") }
+                Image(bitmap, strings.t("shell.outgoing.image_description"), Modifier.fillMaxWidth().height(360.dp))
+                Text(strings.t("shell.outgoing.explanation"))
+                Text(strings.tp("shell.outgoing.size_summary", value.jpeg.size, mapOf("width" to value.width, "height" to value.height)))
+                Text(strings.t("shell.outgoing.no_sending"))
+                TextButton(onClick = { outgoing = null; page = "review" }, modifier = Modifier.fillMaxWidth()) { Text(strings.t("shell.outgoing.back_to_review")) }
             }
         }
         "settings" -> SettingsScreen(profile, save = { value, cleared ->
-            authenticate("הגדרות פרטיות", "אמת את נעילת המכשיר כדי לגשת לפרטים") {
+            authenticate(strings.t("shell.unlock.settings_title"), strings.t("shell.unlock.settings_subtitle")) {
                 try {
                     // The screen clears itself and profile is dropped after a save, so blank
                     // fields must keep the stored values: merge against a fresh read.
-                    saveSettings(mergeReporterSettings(value, readSettings())); profile = null; cleared(); status = "נשמר מוצפן"
+                    saveSettings(mergeReporterSettings(value, readSettings())); profile = null; cleared(); status = strings.t("shell.status.settings_saved")
                 }
-                catch (_: Exception) { status = "הצפנה או אימות נכשלו, לא נשמר מידע גלוי" }
+                catch (_: Exception) { status = strings.t("shell.status.settings_save_failed") }
             }
         }, back = { profile = null; page = "home" }, debugTools = if (BuildConfig.DEBUG) {
             {
-                Text("כלי בדיקה (מצב פיתוח בלבד)", style = MaterialTheme.typography.titleMedium)
-                Text("בדיקת פיתוח מקומית של חבילת ההצפנה: יוצרת דיווח מלאכותי, מצפינה ופותחת במכשיר. ללא רשת, ללא שליחה. מוסתרת לחלוטין מחוץ למצב פיתוח.")
+                Text(strings.t("shell.debug.title"), style = MaterialTheme.typography.titleMedium)
+                Text(strings.t("shell.debug.description"))
                 Button(onClick = {
                     scope.launch {
-                        status = "מריץ בדיקה סינתטית מקומית"
+                        status = strings.t("shell.debug.running")
                         status = withContext(Dispatchers.Default) {
                             try { il.sidewalks.reporter.intake.SyntheticIntakeDemo.run() }
-                            catch (_: Exception) { "הבדיקה המקומית נכשלה, אין שליחה" }
+                            catch (_: Exception) { strings.t("shell.debug.failed") }
                         }
                     }
-                }, modifier = Modifier.fillMaxWidth()) { Text("בדיקת פיתוח: חבילה מוצפנת ללא רשת") }
+                }, modifier = Modifier.fillMaxWidth()) { Text(strings.t("shell.debug.run_button")) }
                 if (status.isNotEmpty()) Text(status)
             }
-        } else null)
+        } else null, selectedLanguage = selectedLanguage, onLanguageSelected = languageController::select)
         else -> Column(Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("מדרכות פנויות", style = MaterialTheme.typography.headlineMedium)
-            Text("צלם תמונה כדי להתחיל דיווח", style = MaterialTheme.typography.titleLarge)
-            Text("הניתוח נעשה במכשיר. תוכל לבדוק ולתקן לפני שליחה.")
+            Text(strings.t("shell.home.title"), style = MaterialTheme.typography.headlineMedium)
+            Text(strings.t("shell.home.subtitle"), style = MaterialTheme.typography.titleLarge)
+            Text(strings.t("shell.home.on_device_note"))
             Button(onClick = { requestCamera { page = "camera" } }, modifier = Modifier.fillMaxWidth()) {
                 Icon(PhotoCameraIcon, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text("צלם תמונה")
+                Text(strings.t("shell.home.take_photo"))
             }
             OutlinedButton(onClick = {
                 pickImage.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-            }, modifier = Modifier.fillMaxWidth()) { Text("העלה תמונה") }
-            Text("העלאה מהגלריה אינה דורשת הרשאות; זמן ומיקום נקראים מהתמונה אם קיימים.", style = MaterialTheme.typography.bodySmall)
-            Text("גרסת בדיקה מקומית. אין שליחה.", style = MaterialTheme.typography.bodySmall)
-            Text("טיוטות", style = MaterialTheme.typography.titleMedium)
-            if (records.isEmpty() && draft == null) Text("אין טיוטות שמורות", style = MaterialTheme.typography.bodySmall)
+            }, modifier = Modifier.fillMaxWidth()) { Text(strings.t("shell.home.upload_photo")) }
+            Text(strings.t("shell.home.upload_note"), style = MaterialTheme.typography.bodySmall)
+            Text(strings.t("shell.home.test_build_note"), style = MaterialTheme.typography.bodySmall)
+            Text(strings.t("shell.home.drafts_title"), style = MaterialTheme.typography.titleMedium)
+            if (records.isEmpty() && draft == null) Text(strings.t("shell.home.no_drafts"), style = MaterialTheme.typography.bodySmall)
             records.forEach { record ->
-                OutlinedButton(onClick = { openRecord(record) }, modifier = Modifier.fillMaxWidth()) { Text("פתח טיוטה ${record.stableId.take(8)}") }
+                OutlinedButton(onClick = { openRecord(record) }, modifier = Modifier.fillMaxWidth()) { Text(strings.t("shell.home.open_draft", mapOf("id" to record.stableId.take(8)))) }
             }
-            if (draft != null) OutlinedButton(onClick = { page = "review" }, modifier = Modifier.fillMaxWidth()) { Text("המשך בדיקת טיוטה") }
+            if (draft != null) OutlinedButton(onClick = { page = "review" }, modifier = Modifier.fillMaxWidth()) { Text(strings.t("shell.home.continue_review")) }
             if (status.isNotEmpty()) Text(status)
-            Text("התחברות לשירות הדיווח עדיין אינה זמינה. פרטי גישה עירוניים אינם חלק מהאפליקציה.", style = MaterialTheme.typography.bodySmall)
-            Text("ביטול הרשאת מצלמה או אימות משאיר את המסך ללא פעולה. אין שמירת פרטים גלויים כחלופה.", style = MaterialTheme.typography.bodySmall)
+            Text(strings.t("shell.home.login_unavailable"), style = MaterialTheme.typography.bodySmall)
+            Text(strings.t("shell.home.permission_note"), style = MaterialTheme.typography.bodySmall)
         }
     }
     }
@@ -416,17 +407,46 @@ fun AppShell(
             onDismissRequest = {
                 pendingImport = null
                 scope.launch(Dispatchers.IO) { GalleryImport.deleteOrphaned(file) }
-                status = "הייבוא בוטל, לא בוצעה שליחה"
+                status = strings.t("shell.status.import_cancelled")
             },
-            title = { Text("נמצא מיקום בתמונה") },
-            text = { Text("להשתמש במיקום מהתמונה לדיווח? ניתן גם בלי, ולסמן את המיקום ידנית.") },
+            title = { Text(strings.t("shell.import_location.title")) },
+            text = { Text(strings.t("shell.import_location.message")) },
             confirmButton = {
-                TextButton(onClick = { pendingImport = null; startReview(file, usePhotoLocation = true) }) { Text("השתמש במיקום") }
+                TextButton(onClick = { pendingImport = null; startReview(file, usePhotoLocation = true) }) { Text(strings.t("shell.import_location.use")) }
             },
             dismissButton = {
-                TextButton(onClick = { pendingImport = null; startReview(file, usePhotoLocation = false) }) { Text("ללא מיקום") }
+                TextButton(onClick = { pendingImport = null; startReview(file, usePhotoLocation = false) }) { Text(strings.t("shell.import_location.skip")) }
             },
         )
     }
+    }
+}
+
+/**
+ * Issue #153 outcome -> the note shown under the review screen, in the active language
+ * (issue #115). The mapping is #160's, one key per outcome; [SubmissionCoordinator]
+ * never produces user-facing text itself.
+ */
+internal fun municipalOutcomeText(strings: Strings, outcome: SubmissionCoordinator.Outcome): String = when (outcome) {
+    is SubmissionCoordinator.Outcome.Submitted ->
+        strings.t("shell.submit.sent",
+            mapOf("case_number" to (outcome.caseNumber ?: strings.t("shell.submit.case_number_received"))))
+    is SubmissionCoordinator.Outcome.AlreadySubmitted ->
+        strings.t("shell.submit.already_sent", mapOf("case_number" to (outcome.caseNumber ?: "")))
+    is SubmissionCoordinator.Outcome.Blocked -> when (outcome.reason) {
+        SubmissionCoordinator.Reason.NOT_APPROVED -> strings.t("shell.submit.blocked.not_approved")
+        SubmissionCoordinator.Reason.MISSING_CREDENTIALS -> strings.t("shell.submit.blocked.missing_credentials")
+        SubmissionCoordinator.Reason.UNSUPPORTED_CATEGORY -> strings.t("shell.submit.blocked.unsupported_category")
+        SubmissionCoordinator.Reason.ADDRESS_UNRESOLVED ->
+            strings.t("shell.submit.blocked.address_unresolved", mapOf("detail" to outcome.detail))
+        SubmissionCoordinator.Reason.INPUT_INVALID ->
+            strings.t("shell.submit.blocked.input_invalid", mapOf("detail" to outcome.detail))
+        SubmissionCoordinator.Reason.MUNICIPAL_REVIEW_NEEDED ->
+            strings.t("shell.submit.blocked.municipal_review_needed", mapOf("detail" to outcome.detail))
+        SubmissionCoordinator.Reason.MUNICIPAL_API_FAILURE ->
+            strings.t("shell.submit.blocked.municipal_api_failure", mapOf("detail" to outcome.detail))
+        SubmissionCoordinator.Reason.LOCAL_FAILURE ->
+            strings.t("shell.submit.blocked.local_failure", mapOf("detail" to outcome.detail))
+        SubmissionCoordinator.Reason.LOOKUP_NOT_INSTALLED -> strings.t("shell.submit.blocked.lookup_not_installed")
     }
 }
