@@ -46,6 +46,7 @@ fun SettingsScreen(
     debugTools: (@Composable () -> Unit)? = null,
     selectedLanguage: String? = null,
     onLanguageSelected: ((String?) -> Unit)? = null,
+    onLicenses: (() -> Unit)? = null,
 ) {
     var firstName by remember { mutableStateOf(initial?.firstName.orEmpty()) }
     var lastName by remember { mutableStateOf(initial?.lastName.orEmpty()) }
@@ -94,6 +95,9 @@ fun SettingsScreen(
         debugTools?.let { tools ->
             HorizontalDivider()
             tools()
+        }
+        onLicenses?.let { open ->
+            TextButton(onClick = open, modifier = Modifier.fillMaxWidth()) { Text(s.t("licenses.screen.title")) }
         }
         TextButton(onClick = back, modifier = Modifier.fillMaxWidth()) { Text(s.t("settings.back")) }
         Text(s.t("settings.version", mapOf("version" to BuildConfig.VERSION_NAME)), style = MaterialTheme.typography.bodySmall)

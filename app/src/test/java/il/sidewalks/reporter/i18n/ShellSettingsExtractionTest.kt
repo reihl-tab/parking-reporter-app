@@ -158,8 +158,11 @@ class ShellSettingsExtractionTest {
     fun everyKeyTheTwoScreensUseExistsAndEveryScreenKeyIsUsed() {
         val used = keysUsedIn("AppShell.kt") + keysUsedIn("SettingsScreen.kt")
         for (key in used) assertTrue("$key is used but missing from strings.json", catalog.rawEntry(key) != null)
+        // SettingsScreen also links to the Licenses screen using that screen's own
+        // title key (#163); it is not one of the two screens' shell./settings. keys.
+        val ownUsed = used - "licenses.screen.title"
         val screenKeys = catalog.keys.filter { it.startsWith("shell.") || it.startsWith("settings.") }.toSet()
-        assertEquals("shell./settings. keys in the catalog vs the keys the two screens use", screenKeys, used)
+        assertEquals("shell./settings. keys in the catalog vs the keys the two screens use", screenKeys, ownUsed)
         assertEquals(extracted.keys + submitExtracted.keys + pickerKeys + "shell.outgoing.size_summary", screenKeys)
     }
 
@@ -229,7 +232,9 @@ class ShellSettingsExtractionTest {
     @Test
     fun appShellKeysUseTheShellPrefixAndSettingsKeysTheSettingsPrefix() {
         assertTrue(keysUsedIn("AppShell.kt").all { it.startsWith("shell.") })
-        assertTrue(keysUsedIn("SettingsScreen.kt").all { it.startsWith("settings.") })
+        // The one allowed exception is the Licenses-screen link button (#163), which
+        // shows that screen's own licenses.screen.title rather than duplicating it.
+        assertTrue(keysUsedIn("SettingsScreen.kt").all { it.startsWith("settings.") || it == "licenses.screen.title" })
     }
 
     @Test

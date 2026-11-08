@@ -374,7 +374,12 @@ fun AppShell(
                 }, modifier = Modifier.fillMaxWidth()) { Text(strings.t("shell.debug.run_button")) }
                 if (status.isNotEmpty()) Text(status)
             }
-        } else null, selectedLanguage = selectedLanguage, onLanguageSelected = languageController::select)
+        } else null, selectedLanguage = selectedLanguage, onLanguageSelected = languageController::select,
+            onLicenses = { page = "licenses" })
+        // Third-party licences and data attributions (owner decision 2026-11-08).
+        // AppShell's ProvideStrings already supplies the catalog and active language
+        // (#115 PR-2a), so the screen just reads LocalStrings.
+        "licenses" -> LicensesScreen(onBack = { page = "settings" })
         else -> Column(Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(strings.t("shell.home.title"), style = MaterialTheme.typography.headlineMedium)
             Text(strings.t("shell.home.subtitle"), style = MaterialTheme.typography.titleLarge)

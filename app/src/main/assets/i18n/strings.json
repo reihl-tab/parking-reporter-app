@@ -695,6 +695,104 @@
         "one": "{width} × {height}፣ {count} ባይት",
         "other": "{width} × {height}፣ {count} ባይት"
       }
+    },
+    "licenses.screen.title": {
+      "he": "רישיונות וצד שלישי",
+      "en": "Licenses & third parties",
+      "ar": "التراخيص والجهات الخارجية",
+      "ru": "Лицензии и сторонние компоненты",
+      "am": "ፍቃዶች እና የሶስተኛ ወገን"
+    },
+    "licenses.screen.intro": {
+      "he": "האפליקציה משתמשת בנתונים פתוחים ובספריות צד שלישי. הקרדיטים והרישיונות להלן.",
+      "en": "The app uses open data and third-party libraries. Attributions and licences below.",
+      "ar": "يستخدم التطبيق بيانات مفتوحة ومكتبات خارجية. الإسنادات والتراخيص أدناه.",
+      "ru": "Приложение использует открытые данные и сторонние библиотеки. Атрибуция и лицензии ниже.",
+      "am": "መተግበሪያው ክፍት ውሂብ እና የሶስተኛ ወገን ላይብረሪዎችን ይጠቀማል። ክሬዲቶች እና ፍቃዶች ከዚህ በታች።"
+    },
+    "licenses.osm.title": {
+      "he": "© OpenStreetMap contributors (ODbL 1.0)",
+      "en": "© OpenStreetMap contributors (ODbL 1.0)",
+      "ar": "© OpenStreetMap contributors (ODbL 1.0)",
+      "ru": "© OpenStreetMap contributors (ODbL 1.0)",
+      "am": "© OpenStreetMap contributors (ODbL 1.0)"
+    },
+    "licenses.osm.body": {
+      "he": "נקודות הכתובות מבוססות על נתוני OpenStreetMap, © תורמי OpenStreetMap, רישיון ODbL 1.0: openstreetmap.org/copyright — מסד הנתונים הנגזר של הכתובות זמין ברישיון ODbL 1.0 כקובץ מצורף לגרסאות האפליקציה, או דרך מחולל הקוד הפתוח המצורף.",
+      "en": "Address points are based on OpenStreetMap data, © OpenStreetMap contributors, ODbL 1.0: openstreetmap.org/copyright - the derivative address database is available under ODbL 1.0 as an asset attached to app releases, or via the bundled open-source generator.",
+      "ar": "تستند نقاط العناوين إلى بيانات OpenStreetMap، © مساهمو OpenStreetMap، رخصة ODbL 1.0: openstreetmap.org/copyright - قاعدة العناوين المشتقة متاحة بموجب ODbL 1.0 كملف مرفق بإصدارات التطبيق، أو عبر المولّد المفتوح المصدر المرفق.",
+      "ru": "Адресные точки основаны на данных OpenStreetMap, © участники OpenStreetMap, лицензия ODbL 1.0: openstreetmap.org/copyright - производная база адресов доступна по лицензии ODbL 1.0 как файл, приложенный к релизам приложения, или через прилагаемый генератор с открытым кодом.",
+      "am": "የአድራሻ ነጥቦች በOpenStreetMap ውሂብ ላይ የተመሰረቱ ናቸው፣ © የOpenStreetMap አበርካቾች፣ ODbL 1.0 ፍቃድ: openstreetmap.org/copyright - የተራመደው የአድራሻ ዳታቤዝ በODbL 1.0 ሥር እንደ መተግበሪያ ስሪቶች አባሪ ፋይል ወይም በተያያዘው ክፍት ምንጭ አመንጭ ይገኛል።"
+    },
+    "licenses.registry.title": {
+      "he": "רשימת רחובות ישראל (data.gov.il)",
+      "en": "Israel national street registry (data.gov.il)",
+      "ar": "سجل الشوارع الوطني الإسرائيلي (data.gov.il)",
+      "ru": "Национальный реестр улиц Израиля (data.gov.il)",
+      "am": "የእስራኤል ብሔራዊ መንገዶች መዝገብ (data.gov.il)"
+    },
+    "licenses.registry.body": {
+      "he": "קודי הרחובות ושמותיהם מבוססים על רשימת הרחובות הלאומית של רשות האוכלוסין וההגירה, פורטל הנתונים הממשלתי data.gov.il, לפי רישיון השימוש של האתר ובציון המקור.",
+      "en": "Street codes and names are based on the national street list of the Population and Immigration Authority, published on the government open-data portal data.gov.il, used under the site's licence with source attribution.",
+      "ar": "تستند رموز الشوارع وأسماؤها إلى قائمة الشوارع الوطنية الصادرة عن سلطة السكان والهجرة، المنشورة على بوابة البيانات الحكومية data.gov.il، وتُستخدم وفق رخصة الموقع مع ذكر المصدر.",
+      "ru": "Коды и названия улиц основаны на национальном списке улиц Управления населения и иммиграции, опубликованном на портале открытых данных data.gov.il, и используются по лицензии сайта с указанием источника.",
+      "am": "የመንገድ ኮዶች እና ስሞች በሕዝብ እና በስደት ባለሥልጣን ብሔራዊ መንገዶች ዝርዝር ላይ የተመሰረቱ ናቸው፣ በመንግሥት ክፍት ውሂብ ፖርታል data.gov.il ላይ የታተመ፣ በጣቢያው ፍቃድ ሥር ምንጭ በመጥቀስ ይዋላል።"
+    },
+    "licenses.mlkit.title": {
+      "he": "Google ML Kit Text Recognition",
+      "en": "Google ML Kit Text Recognition",
+      "ar": "Google ML Kit Text Recognition",
+      "ru": "Google ML Kit Text Recognition",
+      "am": "Google ML Kit Text Recognition"
+    },
+    "licenses.mlkit.body": {
+      "he": "זיהוי טקסט בתמונות באמצעות Google ML Kit, בכפוף לתנאי השימוש של Google APIs: developers.google.com/terms",
+      "en": "On-image text recognition by Google ML Kit, subject to the Google APIs Terms of Service: developers.google.com/terms",
+      "ar": "التعرف على النص في الصور بواسطة Google ML Kit، وفقًا لشروط استخدام Google APIs: developers.google.com/terms",
+      "ru": "Распознавание текста на изображениях с помощью Google ML Kit в соответствии с условиями использования Google APIs: developers.google.com/terms",
+      "am": "በምስሎች ላይ ያለውን ጽሑፍ መለየት በGoogle ML Kit፣ በGoogle APIs የአገልግሎት ውሎች ሥር: developers.google.com/terms"
+    },
+    "licenses.apache.title": {
+      "he": "Apache-2.0 libraries",
+      "en": "Apache-2.0 libraries",
+      "ar": "Apache-2.0 libraries",
+      "ru": "Apache-2.0 libraries",
+      "am": "Apache-2.0 libraries"
+    },
+    "licenses.apache.body": {
+      "he": "AndroidX, Kotlin, Compose, CameraX, Room, OkHttp, Tink, kotlinx-coroutines ו-tesseract4android מופצים ברישיון Apache 2.0.",
+      "en": "AndroidX, Kotlin, Compose, CameraX, Room, OkHttp, Tink, kotlinx-coroutines and tesseract4android are distributed under the Apache License 2.0.",
+      "ar": "تُوزع مكتبات AndroidX وKotlin وCompose وCameraX وRoom وOkHttp وTink وkotlinx-coroutines وtesseract4android بموجب رخصة Apache 2.0.",
+      "ru": "AndroidX, Kotlin, Compose, CameraX, Room, OkHttp, Tink, kotlinx-coroutines и tesseract4android распространяются по лицензии Apache 2.0.",
+      "am": "AndroidX, Kotlin, Compose, CameraX, Room, OkHttp, Tink, kotlinx-coroutines እና tesseract4android በApache License 2.0 ሥር ይሰራጫሉ።"
+    },
+    "licenses.tesseract.title": {
+      "he": "Tesseract OCR",
+      "en": "Tesseract OCR",
+      "ar": "Tesseract OCR",
+      "ru": "Tesseract OCR",
+      "am": "Tesseract OCR"
+    },
+    "licenses.tesseract.body": {
+      "he": "Tesseract - רישיון Apache 2.0; Leptonica - רישיון בסגנון BSD; libjpeg - רישיון IJG; libpng - רישיון ההתייחסות של libpng. הטקסטים המלאים להלן.",
+      "en": "Tesseract - Apache License 2.0; Leptonica - BSD-style licence; libjpeg - IJG licence; libpng - libpng reference licence. Full texts below.",
+      "ar": "Tesseract - رخصة Apache 2.0؛ Leptonica - رخصة بنمط BSD؛ libjpeg - رخصة IJG؛ libpng - الرخصة المرجعية لـlibpng. النصوص الكاملة أدناه.",
+      "ru": "Tesseract - лицензия Apache 2.0; Leptonica - лицензия в стиле BSD; libjpeg - лицензия IJG; libpng - референс-лицензия libpng. Полные тексты ниже.",
+      "am": "Tesseract - Apache 2.0 ፍቃድ፤ Leptonica - BSD-ዓይነት ፍቃድ፤ libjpeg - IJG ፍቃድ፤ libpng - የlibpng ማጣቀሻ ፍቃድ። ሙሉ ጽሑፎች ከዚህ በታች።"
+    },
+    "licenses.texts.title": {
+      "he": "טקסטים מלאים של רישיונות",
+      "en": "Full licence texts",
+      "ar": "النصوص الكاملة للتراخيص",
+      "ru": "Полные тексты лицензий",
+      "am": "ሙሉ የፍቃድ ጽሑፎች"
+    },
+    "licenses.back.label": {
+      "he": "חזור",
+      "en": "Back",
+      "ar": "رجوع",
+      "ru": "Назад",
+      "am": "ተመለስ"
     }
   }
 }
