@@ -5,6 +5,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -14,6 +17,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.room.Room
+import il.sidewalks.reporter.BuildConfig
 import il.sidewalks.reporter.capture.CaptureScreen
 import il.sidewalks.reporter.core.ReviewDraft
 import il.sidewalks.reporter.evidence.EvidenceReader
@@ -23,7 +27,6 @@ import il.sidewalks.reporter.security.ReporterSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.json.JSONObject
 import java.io.File
 
 @Composable
@@ -47,7 +50,6 @@ fun AppShell(
     var saving by remember { mutableStateOf(false) }
     suspend fun reload() { records = withContext(Dispatchers.IO) { database.reports().all() } }
     LaunchedEffect(Unit) { reload() }
-    var showTools by remember { mutableStateOf(false) }
     var status by remember { mutableStateOf("") }
     fun saveDraft(value: ReviewDraft) {
         if (saving) return
@@ -67,7 +69,34 @@ fun AppShell(
             finally { saving = false }
         }
     }
+    fun openSettings() {
+        authenticate {
+            try { profile = readSettings(); page = "settings" }
+            catch (_: Exception) { status = "לא ניתן לקרוא מידע מוצפן" }
+        }
+    }
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+    Scaffold(
+        bottomBar = {
+            if (page == "home" || page == "settings") {
+                NavigationBar {
+                    NavigationBarItem(
+                        selected = page == "home",
+                        onClick = { profile = null; page = "home" },
+                        icon = { Icon(Icons.Default.Home, contentDescription = null) },
+                        label = { Text("בית") },
+                    )
+                    NavigationBarItem(
+                        selected = page == "settings",
+                        onClick = { openSettings() },
+                        icon = { Icon(Icons.Default.Settings, contentDescription = null) },
+                        label = { Text("הגדרות") },
+                    )
+                }
+            }
+        },
+    ) { innerPadding ->
+    Box(Modifier.padding(innerPadding)) {
     when (page) {
         "camera" -> CaptureScreen(onCaptured = { file ->
             scope.launch {
@@ -121,7 +150,7 @@ fun AppShell(
                 Text("המקור לא השתנה. נתוני EXIF הוסרו מהעותק. בדוק שהלוחית והעבירה קריאות; אל תאשר תמונה שאיבדה ראיה.")
                 Text("${value.width} × ${value.height}, ${value.jpeg.size} bytes")
                 Text("שליחה והתחברות אינן זמינות בגרסת הבדיקה. אין אישור שליחה ממסך זה.")
-                TextButton(onClick = { outgoing = null; page = "review" }) { Text("חזור לבדיקה") }
+                TextButton(onClick = { outgoing = null; page = "review" }, modifier = Modifier.fillMaxWidth()) { Text("חזור לבדיקה") }
             }
         }
         "settings" -> SettingsScreen(profile, save = { value, cleared ->
@@ -129,21 +158,32 @@ fun AppShell(
                 try { saveSettings(value); profile = null; cleared(); status = "נשמר מוצפן" }
                 catch (_: Exception) { status = "הצפנה או אימות נכשלו, לא נשמר מידע גלוי" }
             }
-        }, back = { profile = null; page = "home" })
+        }, back = { profile = null; page = "home" }, debugTools = if (BuildConfig.DEBUG) {
+            {
+                Text("כלי בדיקה (מצב פיתוח בלבד)", style = MaterialTheme.typography.titleMedium)
+                Text("בדיקת פיתוח מקומית של חבילת ההצפנה: יוצרת דיווח מלאכותי, מצפינה ופותחת במכשיר. ללא רשת, ללא שליחה. מוסתרת לחלוטין מחוץ למצב פיתוח.")
+                Button(onClick = {
+                    scope.launch {
+                        status = "מריץ בדיקה סינתטית מקומית"
+                        status = withContext(Dispatchers.Default) {
+                            try { il.sidewalks.reporter.intake.SyntheticIntakeDemo.run() }
+                            catch (_: Exception) { "הבדיקה המקומית נכשלה, אין שליחה" }
+                        }
+                    }
+                }, modifier = Modifier.fillMaxWidth()) { Text("בדיקת פיתוח: חבילה מוצפנת ללא רשת") }
+                if (status.isNotEmpty()) Text(status)
+            }
+        } else null)
         else -> Column(Modifier.fillMaxSize().systemBarsPadding().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("מדרכות פנויות", style = MaterialTheme.typography.headlineMedium)
             Text("צלם תמונה כדי להתחיל דיווח", style = MaterialTheme.typography.titleLarge)
             Text("הניתוח נעשה במכשיר. תוכל לבדוק ולתקן לפני שליחה.")
-            Button(onClick = { requestCamera { page = "camera" } }) { Text("צלם תמונה") }
-            TextButton(onClick = { authenticate {
-                try { profile = readSettings(); page = "settings" }
-                catch (_: Exception) { status = "לא ניתן לקרוא מידע מוצפן" }
-            } }) { Text("הגדרות") }
+            Button(onClick = { requestCamera { page = "camera" } }, modifier = Modifier.fillMaxWidth()) { Text("צלם תמונה") }
             Text("גרסת בדיקה מקומית. אין שליחה.", style = MaterialTheme.typography.bodySmall)
-            TextButton(onClick = { showTools = !showTools }) { Text("טיוטות וכלי בדיקה") }
-            if (showTools) {
+            Text("טיוטות", style = MaterialTheme.typography.titleMedium)
+            if (records.isEmpty() && draft == null) Text("אין טיוטות שמורות", style = MaterialTheme.typography.bodySmall)
             records.forEach { record ->
-                TextButton(onClick = {
+                OutlinedButton(onClick = {
                     try {
                         draft = il.sidewalks.reporter.ledger.DraftCodec.decode(record.draftJson).copy(approvedDigest = record.reviewedDigest)
                         val file = File(context.noBackupFilesDir, record.originalRelativePath)
@@ -151,27 +191,15 @@ fun AppShell(
                         check(EvidenceReader().read(file, record.stableId).originalSha256 == record.originalSha256)
                         original = file; revision = record.revision; page = "review"
                     } catch (_: Exception) { status = "לא ניתן לשחזר את הראיה; אין שליחה" }
-                }) { Text("פתח טיוטה ${record.stableId.take(8)}") }
+                }, modifier = Modifier.fillMaxWidth()) { Text("פתח טיוטה ${record.stableId.take(8)}") }
             }
-            if (draft != null) Button(onClick = { page = "review" }) { Text("המשך בדיקת טיוטה") }
-            Button(onClick = { authenticate {
-                try { profile = readSettings(); page = "settings" }
-                catch (_: Exception) { status = "לא ניתן לקרוא מידע מוצפן, נדרש בירור" }
-            } }) { Text("הגדרות פרטיות") }
-            Button(onClick = {
-                scope.launch {
-                    status = "מריץ בדיקה סינתטית מקומית"
-                    status = withContext(Dispatchers.Default) {
-                        try { il.sidewalks.reporter.intake.SyntheticIntakeDemo.run() }
-                        catch (_: Exception) { "הבדיקה המקומית נכשלה, אין שליחה" }
-                    }
-                }
-            }) { Text("בדוק חבילה מוצפנת ללא רשת") }
-            Text("התחברות לשירות הדיווח עדיין אינה זמינה. פרטי גישה עירוניים אינם חלק מהאפליקציה.")
-            }
-            Text(status)
-            Text("ביטול הרשאת מצלמה או אימות משאיר את המסך ללא פעולה. אין שמירת פרטים גלויים כחלופה.")
+            if (draft != null) OutlinedButton(onClick = { page = "review" }, modifier = Modifier.fillMaxWidth()) { Text("המשך בדיקת טיוטה") }
+            if (status.isNotEmpty()) Text(status)
+            Text("התחברות לשירות הדיווח עדיין אינה זמינה. פרטי גישה עירוניים אינם חלק מהאפליקציה.", style = MaterialTheme.typography.bodySmall)
+            Text("ביטול הרשאת מצלמה או אימות משאיר את המסך ללא פעולה. אין שמירת פרטים גלויים כחלופה.", style = MaterialTheme.typography.bodySmall)
         }
+    }
+    }
     }
     }
 }

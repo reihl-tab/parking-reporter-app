@@ -140,12 +140,15 @@ class M1ShellTest {
         assertEquals(il.sidewalks.reporter.intake.EncryptedPackage.sha256(original), output.originalHash)
         file.delete()
     }
-    @Test fun homeDemoExplainsNoNetworkAndCreatesSyntheticPackage() {
+    @Test fun debugOnlyDemoHiddenFromHomeAndRunsFromSettings() {
         compose.setContent { MaterialTheme {
             il.sidewalks.reporter.ui.AppShell(authenticate = { it() }, requestCamera = {}, readSettings = { null }, saveSettings = {})
         } }
-        compose.onNodeWithText("טיוטות וכלי בדיקה").performScrollTo().performClick()
-        compose.onNodeWithText("בדוק חבילה מוצפנת ללא רשת").performScrollTo().performClick()
+        compose.onNodeWithText("טיוטות וכלי בדיקה").assertDoesNotExist()
+        compose.onNodeWithText("בדיקת פיתוח: חבילה מוצפנת ללא רשת").assertDoesNotExist()
+        compose.onNodeWithText("הגדרות").performClick()
+        compose.onNodeWithText("הגדרות פרטיות").performScrollTo().assertExists()
+        compose.onNodeWithText("בדיקת פיתוח: חבילה מוצפנת ללא רשת").performScrollTo().performClick()
         compose.waitUntil(15_000) {
             compose.onAllNodesWithText("הבדיקה הסינתטית הצליחה", substring = true).fetchSemanticsNodes().isNotEmpty()
         }
@@ -180,6 +183,9 @@ class M1ShellTest {
         } }
         compose.onNodeWithText("צלם תמונה").assertExists()
         compose.onNodeWithText("שם פרטי").assertDoesNotExist()
+        compose.onNodeWithText("בית").assertExists()
+        compose.onNodeWithText("הגדרות").assertExists()
+        compose.onNodeWithText("בדיקת פיתוח: חבילה מוצפנת ללא רשת").assertDoesNotExist()
         screenshot("design-home-synthetic.png")
     }
     @Test fun originalEvidenceHashAndMissingMetadata() {

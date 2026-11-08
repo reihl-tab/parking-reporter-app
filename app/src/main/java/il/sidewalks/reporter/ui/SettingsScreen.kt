@@ -15,7 +15,7 @@ import il.sidewalks.reporter.security.ReporterSettings
 
 /** Caller obtains fresh system authentication before opening and again before saving. */
 @Composable
-fun SettingsScreen(initial: ReporterSettings?, save: (ReporterSettings, () -> Unit) -> Unit, back: () -> Unit) {
+fun SettingsScreen(initial: ReporterSettings?, save: (ReporterSettings, () -> Unit) -> Unit, back: () -> Unit, debugTools: (@Composable () -> Unit)? = null) {
     var firstName by remember { mutableStateOf(initial?.firstName.orEmpty()) }
     var lastName by remember { mutableStateOf(initial?.lastName.orEmpty()) }
     var id by remember { mutableStateOf(initial?.idNumber.orEmpty()) }
@@ -34,9 +34,13 @@ fun SettingsScreen(initial: ReporterSettings?, save: (ReporterSettings, () -> Un
         OutlinedTextField(email, { email = it; saved = false }, label = { Text("אימייל") }, modifier = Modifier.fillMaxWidth())
         Button(onClick = { save(ReporterSettings(firstName, lastName, phone, id, email)) {
             firstName = ""; lastName = ""; id = ""; phone = ""; email = ""; saved = true
-        } }) { Text("אמת זהות ושמור מוצפן") }
+        } }, modifier = Modifier.fillMaxWidth()) { Text("אמת זהות ושמור מוצפן") }
         if (saved) Text("נשמר מוצפן, הפרטים הוסרו מהמסך")
-        TextButton(onClick = back) { Text("חזור") }
+        debugTools?.let { tools ->
+            HorizontalDivider()
+            tools()
+        }
+        TextButton(onClick = back, modifier = Modifier.fillMaxWidth()) { Text("חזור") }
         Text("גרסה " + BuildConfig.VERSION_NAME, style = MaterialTheme.typography.bodySmall)
     }
     }

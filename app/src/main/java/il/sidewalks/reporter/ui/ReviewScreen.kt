@@ -90,7 +90,7 @@ fun ReviewScreen(initial: ReviewDraft, image: ImageBitmap?, onSave: (ReviewDraft
         Text("התמונות והלוחיות מעובדות במכשיר ואינן נשלחות ל-Google. ML Kit שולח ל-Google נתוני שימוש וביצועים ועשוי לפנות לשרתיה לעדכונים. תוצאה היא הצעה בלבד.")
         if (il.sidewalks.reporter.core.ReportCategory.from(draft.subject)?.needsPlate != false) {
         Row { Checkbox(checked = useGoogle, enabled = !recognizing, onCheckedChange = { useGoogle = it; plates = emptyList(); ocrStatus = "" }); Text("זיהוי עם Google ML Kit במקום Tesseract") }
-        Button(enabled = image != null && !recognizing, onClick = { scope.launch { recognize() } }) { Text(if (recognizing) "מזהה במכשיר..." else "הצע לוחית מתוך הצילום") }
+        Button(enabled = image != null && !recognizing, onClick = { scope.launch { recognize() } }, modifier = Modifier.fillMaxWidth()) { Text(if (recognizing) "מזהה במכשיר..." else "הצע לוחית מתוך הצילום") }
         Text(ocrStatus)
         plates.forEach { plate -> TextButton(onClick = { draft = draft.edit(plate = plate) }) { Text("הצעה בלבד: \u2066$plate\u2069") } }
         if (il.sidewalks.reporter.core.ReportCategory.from(draft.subject)?.needsPlate == true) OutlinedTextField(draft.plate, { draft = draft.edit(plate = it) }, singleLine = true,
@@ -109,7 +109,7 @@ fun ReviewScreen(initial: ReviewDraft, image: ImageBitmap?, onSave: (ReviewDraft
                 geocoding = false
                 geocodeStatus = if (suggestions.isEmpty()) "אין הצעות, הזן כתובת שבדקת" else "בדוק ואשר את מספר הבית בעצמך"
             }
-        }) { Text("חפש הצעות כתובת לפי המיקום") }
+        }, modifier = Modifier.fillMaxWidth()) { Text("חפש הצעות כתובת לפי המיקום") }
         Text(geocodeStatus)
         suggestions.forEach { suggestion ->
             TextButton(onClick = { draft = draft.edit(address = suggestion.display).copy(unresolved = setOf("כתובת דורשת אישור")) }) {
@@ -122,17 +122,17 @@ fun ReviewScreen(initial: ReviewDraft, image: ImageBitmap?, onSave: (ReviewDraft
         OutlinedTextField(time, { time = it; draft = draft.copy(unresolved = setOf("זמן דורש אישור"), approvedDigest = null) }, textStyle = TextStyle(textDirection = TextDirection.Ltr), label = { Text("זמן מאושר עם אזור זמן (ISO)") }, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(latitude, { latitude = it; draft = draft.copy(unresolved = setOf("מיקום דורש אישור"), approvedDigest = null) }, label = { Text("קו רוחב") }, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(longitude, { longitude = it; draft = draft.copy(unresolved = setOf("מיקום דורש אישור"), approvedDigest = null) }, label = { Text("קו אורך") }, modifier = Modifier.fillMaxWidth())
-        Button(onClick = { draft = draft.confirmEvidence(time, latitude.toDoubleOrNull(), longitude.toDoubleOrNull()) }) { Text("אשר זמן, מיקום וכתובת שבדקת") }
+        Button(onClick = { draft = draft.confirmEvidence(time, latitude.toDoubleOrNull(), longitude.toDoubleOrNull()) }, modifier = Modifier.fillMaxWidth()) { Text("אשר זמן, מיקום וכתובת שבדקת") }
         if (draft.unresolved.isNotEmpty()) Text("דרוש בירור: ${draft.unresolved.joinToString()}")
         }
         Text("כל שינוי מבטל אישור. האישור כאן אינו שולח לעירייה או לרשת חברתית.")
-        Button(enabled = draft.isReady(), onClick = { draft = draft.approve(); onSave(draft) }) { Text("אשר את התוכן לבדיקה") }
+        Button(enabled = draft.isReady(), onClick = { draft = draft.approve(); onSave(draft) }, modifier = Modifier.fillMaxWidth()) { Text("אשר את התוכן לבדיקה") }
         Text(if (draft.isApproved()) "התוכן אושר מקומית, לא נשלח" else "התוכן לא אושר")
-        Button(onClick = { onSave(draft) }) { Text("שמור טיוטה") }
-        onOutgoingPreview?.let { action -> Button(onClick = action) { Text("בדוק תמונה נפרדת ללא נתוני צילום") } }
+        Button(onClick = { onSave(draft) }, modifier = Modifier.fillMaxWidth()) { Text("שמור טיוטה") }
+        onOutgoingPreview?.let { action -> Button(onClick = action, modifier = Modifier.fillMaxWidth()) { Text("בדוק תמונה נפרדת ללא נתוני צילום") } }
         Button(onClick = {}, enabled = false, modifier = Modifier.fillMaxWidth()) { Text("שלח") }
         Text("שליחה אינה זמינה בגרסת הבדיקה", style = MaterialTheme.typography.bodySmall)
-        TextButton(onClick = onBack) { Text("חזור") }
+        TextButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("חזור") }
     }
     }
 }
