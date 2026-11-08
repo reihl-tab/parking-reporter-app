@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.9.4] - 2026-11-08
+
+### Other changes
+
+- chore: re-pin vulnerability scan to v1.0.9 (#139) (c186839)
+
 ## [0.9.3] - 2026-11-08
 
 ### Other changes
