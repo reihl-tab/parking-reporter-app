@@ -66,12 +66,13 @@ Lessons from past independent reviews. Run through this list before asking for a
 **Test gates must actually gate**
 - Never append `|| true` to a test, summary or coverage check. If a step must collect evidence before failing, record the exit code to a file and `test` it after collection.
 - Know what your runner reports: `adb shell am instrument` exits 0 even when tests fail, so a summary/results parser is the real gate, not the command exit code.
+- Never pipe a test run through `tee` without `set -o pipefail` (default `bash -e` has none), and pass `--check` to the summary step: otherwise a failing or zero-test run still leaves the job green.
 - A test job that runs zero tests must fail, not pass.
 - After changing gate logic, replay the failure cases (one failing test, zero tests, nonzero exit), not only the green case.
 
 **CI and workflow hygiene**
 - Never put `[skip ci]` in a commit whose merge is supposed to trigger a downstream workflow; the marker survives squash merges onto main.
-- A `GITHUB_TOKEN`-created PR runs no `pull_request` checks; say so in the workflow and make human review the explicit gate.
+- A `GITHUB_TOKEN`-created PR runs no `pull_request` checks, and a `GITHUB_TOKEN` push does not trigger workflows at all; say so in the workflow and make human review the explicit gate.
 - No force-push to branches that may carry human edits; build on top of the remote branch and push fast-forward only.
 - Scope credentials: `persist-credentials: false` on checkouts that do not push; hold tokens only in the step that needs them.
 - Redirect backgrounded processes (`> /dev/null 2>&1 &`) or they hold the step open.
@@ -79,7 +80,7 @@ Lessons from past independent reviews. Run through this list before asking for a
 **Scripts and data**
 - Normalize types at trust boundaries (for example `str()` an ID from JSON before comparing with a CSV string), or idempotence breaks on the second run.
 - Compare canonical forms, not raw text, when deciding "did this change" - formatting drift must not open reformat-only PRs.
-- Write files atomically (temp file + rename), never in place.
+- Write files atomically (temp file + rename), never in place; the temp file must live on the same filesystem as the target or the rename is not atomic.
 - When backfilling rows, extend the schema before writing, and test against a minimal input schema.
 - Skips must be counted and printed; a silently skipped eligible record is a lost record.
 
