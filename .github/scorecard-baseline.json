@@ -14,8 +14,8 @@
    "rule": "job-write",
    "scope": "release",
    "evidence": "contents: write",
-   "issue": "https://github.com/reihlinstinct/parking-reporter-app/issues/73",
-   "reason": "Semantic-release job creates release commits/tags; job-scoped; reviewed."
+   "issue": "https://github.com/reihlinstinct/parking-reporter-app/issues/71",
+   "reason": "release job only (push to main, skips chore(release) commits): pushes the release commit and vX.Y.Z tag and creates the GitHub release; top level stays contents: read; see docs/WRITE_GRANTS.md."
   },
   {
    "path": ".github/workflows/scorecard.yml",
@@ -38,8 +38,8 @@
    "rule": "job-write",
    "scope": "sync",
    "evidence": "contents: write",
-   "issue": "https://github.com/reihlinstinct/parking-reporter-app/issues/73",
-   "reason": "Wiki sync job pushes docs/wiki/ to the repo wiki (documented in-file); job-scoped; reviewed."
+   "issue": "https://github.com/reihlinstinct/parking-reporter-app/issues/71",
+   "reason": "sync job only (push to main on docs/wiki/** or dispatch): pushes top-level docs/wiki/*.md to this repo's own .wiki.git, no PAT; top level stays contents: read; see docs/WRITE_GRANTS.md."
   }
  ]
 }
