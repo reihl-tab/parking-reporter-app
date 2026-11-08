@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.13.2] - 2026-11-08
+
+### Other changes
+
+- M-B: gated municipal submit on the review screen (#153) (#160) (4c1c18a)
+
 ## [0.13.1] - 2026-11-08
 
 ### Other changes
