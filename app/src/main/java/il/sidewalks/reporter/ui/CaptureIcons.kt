@@ -1,0 +1,22 @@
+package il.sidewalks.reporter.ui
+
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.addPathNodes
+import androidx.compose.ui.unit.dp
+
+/** Material "photo camera" glyph, inlined so the app needs no icons-extended dependency. */
+val PhotoCameraIcon: ImageVector = ImageVector.Builder(
+    name = "PhotoCamera",
+    defaultWidth = 24.dp,
+    defaultHeight = 24.dp,
+    viewportWidth = 24f,
+    viewportHeight = 24f,
+).addPath(
+    pathData = addPathNodes(
+        "M12,15.2c1.77,0 3.2,-1.43 3.2,-3.2s-1.43,-3.2 -3.2,-3.2 -3.2,1.43 -3.2,3.2 1.43,3.2 3.2,3.2z" +
+            "M9,2L7.17,4L4,4c-1.1,0 -2,0.9 -2,2v12c0,1.1 0.9,2 2,2h16c1.1,0 2,-0.9 2,-2L22,6c0,-1.1 -0.9,-2 -2,-2h-3.17L15,2L9,2z"
+    ),
+    fill = SolidColor(Color.Black),
+).build()

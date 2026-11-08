@@ -225,4 +225,49 @@ class M1ShellTest {
         compose.runOnIdle { assertEquals("בדיקה", saved?.firstName) }
         compose.onNodeWithText("אמת זהות ושמור מוצפן").performScrollTo().assertIsNotEnabled()
     }
+    @Test fun homeShowsTwoCaptureButtonsAndReportsNav() {
+        compose.setContent { MaterialTheme {
+            il.sidewalks.reporter.ui.AppShell(authenticate = { it() }, requestCamera = {}, readSettings = { null }, saveSettings = {})
+        } }
+        compose.onNodeWithText("צלם תמונה").assertExists()
+        compose.onNodeWithText("העלה תמונה").assertExists()
+        compose.onNodeWithText("הדיווחים שלי").assertExists()
+        compose.onNodeWithText("הדיווחים שלי").performClick()
+        compose.onNodeWithText("טיוטות שלא אושרו").assertExists()
+        compose.onNodeWithText("אין טיוטות ממתינות").assertExists()
+        compose.onNodeWithText("אושרו וממתינים לשליחה").assertExists()
+        compose.onNodeWithText("היסטוריית דיווחים").assertExists()
+        compose.onNodeWithText("בית").performClick()
+        compose.onNodeWithText("צלם תמונה").assertExists()
+    }
+    @Test fun reportsScreenSeededDraftOpens() {
+        val records = listOf(
+            ReportRecord("aaaabbbb", "a".repeat(64), "originals/a.jpg", 0, "{}", null),
+            ReportRecord("ccccdddd", "b".repeat(64), "originals/c.jpg", 0, "{}", "digest"),
+        )
+        var opened: String? = null
+        compose.setContent { MaterialTheme { il.sidewalks.reporter.ui.ReportsScreen(records, { opened = it.stableId }) } }
+        compose.onNodeWithText("פתח טיוטה aaaabbbb").performClick()
+        compose.runOnIdle { assertEquals("aaaabbbb", opened) }
+        compose.onNodeWithText("פתח דיווח ccccdddd").assertExists()
+    }
+    @Test fun galleryImportPreservesBytesAndExifMetadata() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val src = File(context.cacheDir, "synthetic-pick.jpg")
+        val bmp = Bitmap.createBitmap(64, 64, Bitmap.Config.ARGB_8888)
+        src.outputStream().use { bmp.compress(Bitmap.CompressFormat.JPEG, 95, it) }
+        val exif = androidx.exifinterface.media.ExifInterface(src)
+        exif.setLatLong(31.77, 35.21)
+        exif.setAttribute(androidx.exifinterface.media.ExifInterface.TAG_DATETIME_ORIGINAL, "2026:01:01 12:00:00")
+        exif.saveAttributes()
+        val srcBytes = src.readBytes()
+        val originals = File(context.noBackupFilesDir, "test-originals")
+        val copied = il.sidewalks.reporter.evidence.GalleryImport.copyToOriginals({ src.inputStream() }, originals)
+        assertArrayEquals(srcBytes, copied.readBytes())
+        val evidence = il.sidewalks.reporter.evidence.EvidenceReader().read(copied, "gallery")
+        assertNotNull(evidence.capturedAtIso)
+        assertEquals(31.77, evidence.latitude!!, 0.001)
+        assertEquals(35.21, evidence.longitude!!, 0.001)
+        copied.delete(); src.delete()
+    }
 }
