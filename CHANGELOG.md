@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-11-08
+
+### Features
+
+- feat(ui): bottom navigation with Settings, debug-only demo gate, consistent RTL alignment (#112) (ee8384a)
+
 ## [0.7.2] - 2026-11-08
 
 ### Other changes
