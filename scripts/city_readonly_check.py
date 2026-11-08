@@ -24,7 +24,7 @@ from parking_report.subjects import catalog_fingerprint, flatten_category_tree
 # against the live municipality, 2026-11-08. Secret-free: sha256 over
 # (code, name, path) rows. Update intentionally when the catalog changes.
 EXPECTED_CATALOG_FINGERPRINT = (
-    "77613b820e657c43c7df6558a5f1d24c3a4bcd1ea7d691bb4bb55db2607c66ab"
+    "47e2f39cd4e347e449627c7a9fa2bd4b9d1e096cdf33c531f0683b493b594438"
 )
 
 
