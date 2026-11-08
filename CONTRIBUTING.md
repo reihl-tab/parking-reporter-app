@@ -30,6 +30,8 @@
 
 With Python 3 installed, run `python3 scripts/check_repository.py` from the repository root. This checks the scaffolding; it is not an Android test suite or a full secret scanner.
 
+The Python tooling smoke tests install from the hash-locked `requirements-lock.txt` with `pip install --require-hashes -r requirements-lock.txt`; see docs/DEPENDENCY-LOCKS.md for the full commands and how to regenerate the lock.
+
 Run the Gradle commands in README.md for Android build, lint, unit tests and emulator tests. Never use a skipped or placeholder job as evidence of correctness.
 
 ## Issues: labels, milestones and order
