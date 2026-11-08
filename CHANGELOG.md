@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-11-08
+
+### Features
+
+- feat: manually entered municipal API credentials in encrypted settings (#128) (54661e5)
+
 ## [0.9.7] - 2026-11-08
 
 ### Other changes
