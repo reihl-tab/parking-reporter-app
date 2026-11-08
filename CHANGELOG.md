@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.9.7] - 2026-11-08
+
+### Other changes
+
+- ci: add bounded privacy guard (advisory mode) (#146) (c31da31)
+
 ## [0.9.6] - 2026-11-08
 
 ### Other changes
