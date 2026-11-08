@@ -71,6 +71,16 @@ jobs:
         if: always()
         run: python3 scripts/test_summary.py --title 'Unit tests (debug)' --junit app/build/test-results/testDebugUnitTest --jacoco app/build/reports/jacoco
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: unit-test-report
+          path: |
+            app/build/test-results/testDebugUnitTest/
+            app/build/reports/jacoco/
+            app/build/reports/lint-results-debug.html
+          if-no-files-found: warn
+          retention-days: 14
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
           name: m1-preview-apk
           path: app/build/outputs/apk/debug/*.apk
@@ -118,25 +128,39 @@ jobs:
             adb shell svc wifi disable
             adb shell svc data disable
             mkdir -p app/build/reports/androidTests/screenshots
-            adb shell am instrument -w -r il.sidewalks.reporter.test/androidx.test.runner.AndroidJUnitRunner | tee app/build/reports/androidTests/instrumentation.txt
-            python3 scripts/test_summary.py --title 'Instrumented tests (emulator, API 30)' --instrumentation app/build/reports/androidTests/instrumentation.txt --check
+            # The emulator action runs every script line in its own sh:
+            # no variables, background jobs or shell options survive across
+            # lines. The instrumented exit code therefore goes to a file.
+            adb shell screenrecord --time-limit 180 /sdcard/test-run.mp4 > /dev/null 2>&1 &
+            adb shell am instrument -w -r il.sidewalks.reporter.test/androidx.test.runner.AndroidJUnitRunner > app/build/reports/androidTests/instrumentation.txt 2>&1; echo $? > app/build/reports/androidTests/instrumentation.rc; cat app/build/reports/androidTests/instrumentation.txt
+            adb shell pkill -INT screenrecord || true
+            sleep 2
+            adb pull /sdcard/test-run.mp4 app/build/reports/androidTests/test-run.mp4 || true
+            adb shell rm /sdcard/test-run.mp4 || true
+            python3 scripts/test_summary.py --title 'Instrumented tests (emulator, API 30)' --instrumentation app/build/reports/androidTests/instrumentation.txt --check; echo $? > app/build/reports/androidTests/summary.rc
+            for f in $(adb shell run-as il.sidewalks.reporter ls files/ | tr -d '\r' | grep '\.png$'); do adb shell run-as il.sidewalks.reporter cat "files/$f" > "app/build/reports/androidTests/screenshots/$f" || true; done
             adb shell run-as il.sidewalks.reporter cat files/m0-synthetic.png > app/build/reports/androidTests/screenshots/m0-synthetic.png
-            test -s app/build/reports/androidTests/screenshots/m0-synthetic.png
             adb shell run-as il.sidewalks.reporter cat files/m1-review-synthetic.png > app/build/reports/androidTests/screenshots/m1-review-synthetic.png
             adb shell run-as il.sidewalks.reporter cat files/m1-settings-synthetic.png > app/build/reports/androidTests/screenshots/m1-settings-synthetic.png
-            test -s app/build/reports/androidTests/screenshots/m1-review-synthetic.png
-            test -s app/build/reports/androidTests/screenshots/m1-settings-synthetic.png
             adb shell run-as il.sidewalks.reporter cat files/m1-home-intake-synthetic.png > app/build/reports/androidTests/screenshots/m1-home-intake-synthetic.png
-            test -s app/build/reports/androidTests/screenshots/m1-home-intake-synthetic.png
             adb shell run-as il.sidewalks.reporter cat files/m2-ocr-synthetic.png > app/build/reports/androidTests/screenshots/m2-ocr-synthetic.png
-            test -s app/build/reports/androidTests/screenshots/m2-ocr-synthetic.png
             adb shell run-as il.sidewalks.reporter cat files/design-home-synthetic.png > app/build/reports/androidTests/screenshots/design-home-synthetic.png
             adb shell run-as il.sidewalks.reporter cat files/design-sign-synthetic.png > app/build/reports/androidTests/screenshots/design-sign-synthetic.png
-            test -s app/build/reports/androidTests/screenshots/design-home-synthetic.png
-            test -s app/build/reports/androidTests/screenshots/design-sign-synthetic.png
             adb shell run-as il.sidewalks.reporter cat files/design-sign-actions-synthetic.png > app/build/reports/androidTests/screenshots/design-sign-actions-synthetic.png
             adb shell run-as il.sidewalks.reporter cat files/ocr-comparison.json > app/build/reports/androidTests/ocr-comparison.json
+            # Evidence is collected first, so a failing run still ships its
+            # video, screenshots and summaries; only then the presence checks
+            # and the recorded exit codes fail the job.
+            test -s app/build/reports/androidTests/screenshots/m0-synthetic.png
+            test -s app/build/reports/androidTests/screenshots/m1-review-synthetic.png
+            test -s app/build/reports/androidTests/screenshots/m1-settings-synthetic.png
+            test -s app/build/reports/androidTests/screenshots/m1-home-intake-synthetic.png
+            test -s app/build/reports/androidTests/screenshots/m2-ocr-synthetic.png
+            test -s app/build/reports/androidTests/screenshots/design-home-synthetic.png
+            test -s app/build/reports/androidTests/screenshots/design-sign-synthetic.png
             test -s app/build/reports/androidTests/ocr-comparison.json
+            test "$(cat app/build/reports/androidTests/instrumentation.rc)" = "0"
+            test "$(cat app/build/reports/androidTests/summary.rc)" = "0"
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:
