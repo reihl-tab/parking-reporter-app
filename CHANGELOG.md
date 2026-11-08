@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.9.3] - 2026-11-08
+
+### Other changes
+
+- build(deps): bump certifi from 2025.11.12 to 2026.10.18 (#123) (6d11b5f)
+
 ## [0.9.2] - 2026-11-08
 
 ### Other changes
