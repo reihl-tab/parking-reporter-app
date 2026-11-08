@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-11-08
+
+### Other changes
+
+- ci: maintainer-approved read-only city checks (#119) (0468368)
+
 ## [0.7.1] - 2026-11-08
 
 ### Other changes
