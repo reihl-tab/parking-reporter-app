@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-11-08
+
+### Features
+
+- feat: two-button capture, gallery EXIF import, my-reports screen (#138) (d329673)
+
 ## [0.11.0] - 2026-11-08
 
 ### Features
