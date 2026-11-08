@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.12.2] - 2026-11-08
+
+### Other changes
+
+- data: refresh expected catalog fingerprint after live check 2026-11-08 (subject 1291 whitespace) (#156) (f876ef9)
+
 ## [0.12.1] - 2026-11-08
 
 ### Other changes
