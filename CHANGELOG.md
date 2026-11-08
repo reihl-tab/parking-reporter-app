@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.8.3] - 2026-11-08
+
+### Other changes
+
+- ci: test-evidence artifacts (JUnit+JaCoCo, emulator screen recording, per-test screenshots) (#118) (8d8a39b)
+
 ## [0.8.2] - 2026-11-08
 
 ### Other changes
