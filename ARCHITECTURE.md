@@ -50,3 +50,7 @@ flowchart LR
 - Approval is local and binds an exact content digest; it is not a submission receipt.
 - Anything leaving the device is an encrypted package to a pinned receiver public key; the private decryption key never lives in the app.
 - Transport, enrollment and municipal filing are proposed stages (M5) and remain outside this preview.
+
+## Platform roadmap
+
+Android first, then port everything to iOS (owner decision 2026-11-08). This supersedes #45: the earlier plan of one shared UI codebase with simultaneous iPhone and Android development is replaced. The iOS app is a later port of the Android app, re-implementing the same design and screens; cross-platform parity planning lives in issue #149. No iOS work now. Design choices should stay portable: shared feature names/phrases per locale, a shared deep-link contract (open capture/report screen, optionally with a photo attached), and report-flow logic kept separable from the Compose UI.
