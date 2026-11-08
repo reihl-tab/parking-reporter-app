@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-11-08
+
+### Features
+
+- feat: municipal taxonomy parity - captured catalog asset, fingerprint loader, category mapping (#101) (d7ec942)
+
 ## [0.8.4] - 2026-11-08
 
 ### Other changes
