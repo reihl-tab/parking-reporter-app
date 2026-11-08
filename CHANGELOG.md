@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-11-08
+
+### Features
+
+- feat(i18n): language picker and shell/settings string extraction (PR-2a of #115) (#154) (ca4e64a)
+
 ## [0.13.2] - 2026-11-08
 
 ### Other changes
