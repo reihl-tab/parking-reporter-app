@@ -6,6 +6,10 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+### Security
+
+- `VehicleRegistryConfig` now requires an https `baseUrl` when an `apiKey` is set, so the key header is never sent in plaintext; the rejection message carries neither the key nor the URL. A config without a key is unchanged. (#114)
+
 ## [0.7.0] - 2026-11-08
 
 ### Features

@@ -16,6 +16,10 @@ import java.util.concurrent.TimeUnit
 
 /** Synthetic plates and recorded synthetic JSON only (src/test/resources/registry). No live network. */
 class VehicleRegistryClientTest {
+    private companion object {
+        const val TEST_HTTPS_BASE_URL = "https://registry.invalid"
+    }
+
     private val resourceId = "00000000-0000-4000-8000-000000000102"
     private val plate = "1234567"
 
@@ -184,6 +188,26 @@ class VehicleRegistryClientTest {
         assertEquals(PlateNumber.parse("1234567"), PlateNumber.parse("12 345 67"))
     }
 
+    /**
+     * Test-only path for a keyed config: the config keeps a real https base URL (so the production
+     * https rule applies unchanged), and the injected OkHttp client rewrites each request to the
+     * plain-http MockWebServer. The client never sees the http URL. `.invalid` never resolves.
+     */
+    private fun keyedClientRoutedTo(server: MockWebServer, apiKey: String, seenUrls: MutableList<String>): VehicleRegistryClient {
+        val routing = VehicleRegistryClient.safeClient().newBuilder()
+            .addInterceptor { chain ->
+                val original = chain.request()
+                seenUrls += original.url.toString()
+                val target = original.url.newBuilder().scheme("http").host(server.hostName).port(server.port).build()
+                chain.proceed(original.newBuilder().url(target).build())
+            }.build()
+        return VehicleRegistryClient(
+            VehicleRegistryConfig(resourceId = resourceId, baseUrl = TEST_HTTPS_BASE_URL, apiKey = apiKey, minRequestIntervalMillis = 0L),
+            routing,
+            FakeClock(),
+        )
+    }
+
     @Test fun apiKeyHeaderSentOnlyWhenSet() {
         MockWebServer().use { server ->
             server.enqueue(json("not_found.json"))
@@ -192,8 +216,61 @@ class VehicleRegistryClientTest {
         }
         MockWebServer().use { server ->
             server.enqueue(json("not_found.json"))
-            client(server, apiKey = "synthetic-api-key").lookup(plate)
+            val seenUrls = mutableListOf<String>()
+            assertEquals(VehicleLookupResult.NotFound, keyedClientRoutedTo(server, "synthetic-api-key", seenUrls).lookup(plate))
             assertEquals("synthetic-api-key", server.takeRequest().getHeader(VehicleRegistryClient.API_KEY_HEADER))
+            assertEquals(1, seenUrls.size)
+            assertTrue(seenUrls.single(), seenUrls.single().startsWith("$TEST_HTTPS_BASE_URL/api/3/action/datastore_search?"))
+        }
+    }
+
+    @Test fun apiKeyWithHttpBaseUrlIsRejected() {
+        for (baseUrl in listOf("http://registry.invalid", "HTTP://registry.invalid/", "http://127.0.0.1:8080")) {
+            val error = runCatching { VehicleRegistryConfig(resourceId, baseUrl = baseUrl, apiKey = "synthetic-api-key") }.exceptionOrNull()
+            assertTrue(baseUrl, error is IllegalArgumentException)
+        }
+        MockWebServer().use { server ->
+            val error = runCatching { client(server, apiKey = "synthetic-api-key") }.exceptionOrNull()
+            assertTrue(error is IllegalArgumentException)
+            assertEquals(0, server.requestCount)
+        }
+    }
+
+    @Test fun apiKeyWithMalformedBaseUrlIsRejected() {
+        for (baseUrl in listOf("", "registry.invalid", "ftp://registry.invalid", "https//registry.invalid", "https://")) {
+            val error = runCatching { VehicleRegistryConfig(resourceId, baseUrl = baseUrl, apiKey = "synthetic-api-key") }.exceptionOrNull()
+            assertTrue(baseUrl, error is IllegalArgumentException)
+        }
+    }
+
+    @Test fun apiKeyWithHttpsBaseUrlIsAccepted() {
+        for (baseUrl in listOf(TEST_HTTPS_BASE_URL, "$TEST_HTTPS_BASE_URL/", "HTTPS://registry.invalid:8443", VehicleRegistryConfig.DEFAULT_BASE_URL)) {
+            val config = VehicleRegistryConfig(resourceId, baseUrl = baseUrl, apiKey = "synthetic-api-key")
+            assertEquals("synthetic-api-key", config.apiKey)
+            VehicleRegistryClient(config)
+        }
+        assertEquals("synthetic-api-key", VehicleRegistryConfig(resourceId, apiKey = "synthetic-api-key").apiKey)
+    }
+
+    @Test fun nullKeyWithHttpBaseUrlIsStillAccepted() {
+        assertNull(VehicleRegistryConfig(resourceId, baseUrl = "http://registry.invalid").apiKey)
+        MockWebServer().use { server ->
+            assertTrue(server.url("/").isHttps.not())
+            server.enqueue(json("not_found.json"))
+            assertEquals(VehicleLookupResult.NotFound, client(server, apiKey = null).lookup(plate))
+            assertNull(server.takeRequest().getHeader(VehicleRegistryClient.API_KEY_HEADER))
+        }
+    }
+
+    @Test fun httpsRejectionMessageNamesNeitherKeyNorUrl() {
+        val key = "synthetic-api-key-7f3a"
+        val baseUrl = "http://synthetic-host.invalid:8080/synthetic-path"
+        val error = runCatching { VehicleRegistryConfig(resourceId, baseUrl = baseUrl, apiKey = key) }.exceptionOrNull()
+        assertTrue(error is IllegalArgumentException)
+        val text = "${error?.message} ${error.toString()}"
+        assertTrue(text, text.contains("https"))
+        for (secret in listOf(key, "7f3a", baseUrl, "synthetic-host", "synthetic-path", "8080")) {
+            assertFalse(secret, text.contains(secret))
         }
     }
 

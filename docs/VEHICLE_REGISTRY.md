@@ -56,6 +56,7 @@ flowchart LR
 - Rate limit: a minimum interval between network requests (default 1 s). A request inside the interval is denied with `Error(RATE_LIMITED)`, not queued. Cache hits do not count.
 - Cache: in memory, LRU (default 128 entries) with a TTL (default 6 hours). `Found` and `NotFound` are cached; errors are not. Both the TTL and the limiter use an injectable monotonic clock.
 - API key: `VehicleRegistryConfig.apiKey` is nullable and `null` by default. When set it is sent as the `Authorization` header, and only then. It comes from the encrypted settings (separate work), never from the repository or the build.
+- HTTPS with a key: when `apiKey` is set, `VehicleRegistryConfig` rejects a `baseUrl` that is not https (or does not parse) with an `IllegalArgumentException` whose message names neither the key nor the URL; with no key, any base URL is accepted as before. (#114)
 - Privacy: no logging. `PlateNumber`, `VehicleRecord` and `VehicleRegistryConfig` redact the plate and the key in `toString()`, and errors carry only a kind and an HTTP status, never a server text or an exception message.
 - `lookup()` blocks; callers run it off the main thread.
 
