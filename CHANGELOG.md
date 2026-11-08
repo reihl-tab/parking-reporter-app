@@ -6,6 +6,10 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+### Added
+
+- Read-only data.gov.il vehicle registry lookup client (`registry/VehicleRegistryClient.kt`): plate validation, typed found / not-found / error result, rate limit and in-memory TTL cache, optional API key header. Not wired into the UI yet. Dataset and fields in docs/VEHICLE_REGISTRY.md. (#102)
+
 ## [0.6.4] - 2026-11-07
 
 ### Other changes
