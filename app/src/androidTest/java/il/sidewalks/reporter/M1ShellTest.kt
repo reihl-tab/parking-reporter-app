@@ -157,7 +157,7 @@ class M1ShellTest {
     }
     @Test fun debugOnlyDemoHiddenFromHomeAndRunsFromSettings() {
         compose.setContent { MaterialTheme {
-            il.sidewalks.reporter.ui.AppShell(authenticate = { it() }, requestCamera = {}, readSettings = { null }, saveSettings = {})
+            il.sidewalks.reporter.ui.AppShell(authenticate = { _, _, action -> action() }, requestCamera = {}, readSettings = { null }, saveSettings = {})
         } }
         compose.onNodeWithText("טיוטות וכלי בדיקה").assertDoesNotExist()
         compose.onNodeWithText("בדיקת פיתוח: חבילה מוצפנת ללא רשת").assertDoesNotExist()
@@ -194,7 +194,7 @@ class M1ShellTest {
     }
     @Test fun photoFirstHomeScreenshot() {
         compose.setContent { MaterialTheme {
-            il.sidewalks.reporter.ui.AppShell(authenticate = { it() }, requestCamera = {}, readSettings = { null }, saveSettings = {})
+            il.sidewalks.reporter.ui.AppShell(authenticate = { _, _, action -> action() }, requestCamera = {}, readSettings = { null }, saveSettings = {})
         } }
         compose.onNodeWithText("צלם תמונה").assertExists()
         compose.onNodeWithText("שם פרטי").assertDoesNotExist()
@@ -227,7 +227,7 @@ class M1ShellTest {
     }
     @Test fun homeShowsTwoCaptureButtonsAndReportsNav() {
         compose.setContent { MaterialTheme {
-            il.sidewalks.reporter.ui.AppShell(authenticate = { it() }, requestCamera = {}, readSettings = { null }, saveSettings = {})
+            il.sidewalks.reporter.ui.AppShell(authenticate = { _, _, action -> action() }, requestCamera = {}, readSettings = { null }, saveSettings = {})
         } }
         compose.onNodeWithText("צלם תמונה").assertExists()
         compose.onNodeWithText("העלה תמונה").assertExists()

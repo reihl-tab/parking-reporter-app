@@ -58,7 +58,7 @@ class EntryPointsTest {
             val signal = mutableStateOf(EntrySignal(1, EntryIntents.Request.SharedPhoto(uri.toString())))
             compose.setContent {
                 MaterialTheme {
-                    AppShell(authenticate = { it() }, requestCamera = { it() },
+                    AppShell(authenticate = { _, _, action -> action() }, requestCamera = { it() },
                         readSettings = { null }, saveSettings = {}, entry = signal)
                 }
             }
@@ -83,7 +83,7 @@ class EntryPointsTest {
         val signal = mutableStateOf(EntrySignal(1, EntryIntents.Request.NewReport))
         compose.setContent {
             MaterialTheme {
-                AppShell(authenticate = { it() }, requestCamera = { cameraRequested = true },
+                AppShell(authenticate = { _, _, action -> action() }, requestCamera = { cameraRequested = true },
                     readSettings = { null }, saveSettings = {}, entry = signal)
             }
         }

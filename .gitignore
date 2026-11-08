@@ -34,3 +34,4 @@ gradle/wrapper/gradle-wrapper.jar
 
 # Verified upstream model fetched only at build time.
 app/src/main/assets/tessdata/*.traineddata
+app/src/main/assets/addresses.json

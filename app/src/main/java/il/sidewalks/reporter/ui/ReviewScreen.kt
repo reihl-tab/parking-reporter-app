@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import il.sidewalks.reporter.core.ReviewDraft
 
 @Composable
-fun ReviewScreen(initial: ReviewDraft, image: ImageBitmap?, onSave: (ReviewDraft) -> Unit, onBack: () -> Unit, onOutgoingPreview: (() -> Unit)? = null) {
+fun ReviewScreen(initial: ReviewDraft, image: ImageBitmap?, onSave: (ReviewDraft) -> Unit, onBack: () -> Unit, onOutgoingPreview: (() -> Unit)? = null, onSubmit: ((ReviewDraft) -> Unit)? = null, submitting: Boolean = false, submissionNote: String = "") {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var plates by remember(initial.evidence.stableId) { mutableStateOf<List<String>>(emptyList()) }
@@ -130,8 +130,14 @@ fun ReviewScreen(initial: ReviewDraft, image: ImageBitmap?, onSave: (ReviewDraft
         Text(if (draft.isApproved()) "התוכן אושר מקומית, לא נשלח" else "התוכן לא אושר")
         Button(onClick = { onSave(draft) }, modifier = Modifier.fillMaxWidth()) { Text("שמור טיוטה") }
         onOutgoingPreview?.let { action -> Button(onClick = action, modifier = Modifier.fillMaxWidth()) { Text("בדוק תמונה נפרדת ללא נתוני צילום") } }
-        Button(onClick = {}, enabled = false, modifier = Modifier.fillMaxWidth()) { Text("שלח") }
-        Text("שליחה אינה זמינה בגרסת הבדיקה", style = MaterialTheme.typography.bodySmall)
+        if (onSubmit != null) {
+            // Send the draft this screen actually shows, not some other copy.
+            Button(enabled = draft.isApproved() && !submitting, onClick = { onSubmit(draft) }, modifier = Modifier.fillMaxWidth()) { Text(if (submitting) "שולח לעירייה..." else "שלח לעירייה") }
+            if (submissionNote.isNotEmpty()) Text(submissionNote, style = MaterialTheme.typography.bodySmall)
+        } else {
+            Button(onClick = {}, enabled = false, modifier = Modifier.fillMaxWidth()) { Text("שלח") }
+            Text("שליחה אינה זמינה בגרסת הבדיקה", style = MaterialTheme.typography.bodySmall)
+        }
         TextButton(onClick = onBack, modifier = Modifier.fillMaxWidth()) { Text("חזור") }
     }
     }

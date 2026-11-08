@@ -28,10 +28,16 @@ import il.sidewalks.reporter.EntrySignal
 import il.sidewalks.reporter.EntryIntents
 import il.sidewalks.reporter.capture.CaptureScreen
 import il.sidewalks.reporter.core.ReviewDraft
+import il.sidewalks.reporter.core.SendGate
 import il.sidewalks.reporter.evidence.EvidenceReader
 import il.sidewalks.reporter.evidence.GalleryImport
 import il.sidewalks.reporter.ledger.ReportDatabase
 import il.sidewalks.reporter.ledger.ReportRecord
+import il.sidewalks.reporter.municipal.FileSubmissionStateStore
+import il.sidewalks.reporter.municipal.OkHttpMunicipalClient
+import il.sidewalks.reporter.municipal.MunicipalInputException
+import il.sidewalks.reporter.municipal.StreetDirectory
+import il.sidewalks.reporter.municipal.SubmissionCoordinator
 import il.sidewalks.reporter.security.ReporterSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -40,7 +46,7 @@ import java.io.File
 
 @Composable
 fun AppShell(
-    authenticate: (() -> Unit) -> Unit,
+    authenticate: (title: String, subtitle: String, action: () -> Unit) -> Unit,
     requestCamera: (() -> Unit) -> Unit,
     readSettings: () -> ReporterSettings?,
     saveSettings: (ReporterSettings) -> Unit,
@@ -74,6 +80,112 @@ fun AppShell(
     }
     var status by remember { mutableStateOf("") }
     var pendingImport by remember { mutableStateOf<File?>(null) }
+    // M-B submission state (issue #153): one attempt per user action, device
+    // unlock at every submit (owner 19:49; no master toggle), durable
+    // per-report municipal state under noBackupFilesDir/submissions/.
+    var streetsDirectory by remember { mutableStateOf<StreetDirectory?>(null) }
+    var submitting by remember { mutableStateOf(false) }
+    var submissionNote by remember(draft?.evidence?.stableId) { mutableStateOf("") }
+    fun municipalOutcomeHebrew(outcome: SubmissionCoordinator.Outcome): String = when (outcome) {
+        is SubmissionCoordinator.Outcome.Submitted ->
+            "נשלח לעירייה. מספר קריאה: \u2066${outcome.caseNumber ?: "התקבל בעירייה"}\u2069"
+        is SubmissionCoordinator.Outcome.AlreadySubmitted ->
+            "הדיווח כבר נשלח. מספר קריאה: \u2066${outcome.caseNumber ?: ""}\u2069"
+        is SubmissionCoordinator.Outcome.Blocked -> when (outcome.reason) {
+            SubmissionCoordinator.Reason.NOT_APPROVED -> "אשר את התוכן לפני שליחה"
+            SubmissionCoordinator.Reason.MISSING_CREDENTIALS -> "חסרים פרטי גישה לעירייה בהגדרות"
+            SubmissionCoordinator.Reason.UNSUPPORTED_CATEGORY -> "הקטגוריה אינה נתמכת לשליחה"
+            SubmissionCoordinator.Reason.ADDRESS_UNRESOLVED -> "הכתובת לא נקבעה: ${outcome.detail}"
+            SubmissionCoordinator.Reason.INPUT_INVALID -> "קלט לא תקין: ${outcome.detail}"
+            SubmissionCoordinator.Reason.MUNICIPAL_REVIEW_NEEDED ->
+                "המצב מול העירייה אינו ודאי. בדוק באפליקציית העירייה; לא בוצעה שליחה חוזרת. ${outcome.detail}"
+            SubmissionCoordinator.Reason.MUNICIPAL_API_FAILURE -> "העירייה ענתה: ${outcome.detail}"
+            SubmissionCoordinator.Reason.LOCAL_FAILURE ->
+                "שגיאה מקומית, לא בוצעה שליחה (${outcome.detail})"
+            SubmissionCoordinator.Reason.LOOKUP_NOT_INSTALLED ->
+                "קובץ הכתובות הפרטי לא מותקן במכשיר"
+        }
+    }
+    // The municipal address lookup is municipality-supplied private data
+    // whose licence for publication is unresolved: it is NOT committed to
+    // this public repo. Load the on-device private copy (pushed to the
+    // app-specific external dir, or the no-backup dir); the bundled asset is
+    // a dev-only fallback when a developer places the file there locally.
+    fun loadStreetDirectory(context: android.content.Context): StreetDirectory {
+        val candidates = listOf(
+            File(context.getExternalFilesDir(null), "addresses.json"),
+            File(context.noBackupFilesDir, "addresses.json"),
+        )
+        for (candidate in candidates) {
+            if (candidate.isFile) {
+                return StreetDirectory.load(candidate.readText(Charsets.UTF_8))
+            }
+        }
+        val bundled = try {
+            context.assets.open("addresses.json").bufferedReader().readText()
+        } catch (_: Exception) {
+            throw MunicipalInputException("address lookup not installed on device")
+        }
+        return StreetDirectory.load(bundled)
+    }
+    fun submitReport(shown: ReviewDraft) {
+        if (submitting) return
+        // Send exactly what the review screen shows: the shown draft must be
+        // the last saved one, and approved. A failed or dropped save must
+        // never send stale text.
+        if (!SendGate.readyToSend(shown, draft)) {
+            submissionNote = "הטיוטה לא נשמרה אחרי האישור. שמור ואשר מחדש לפני שליחה."
+            return
+        }
+        // Device unlock gates every submit (owner 19:49), reusing the same
+        // device-credential flow that protects the settings screen. The
+        // prompt states what the unlock authorises: sending this report.
+        authenticate("שליחת דיווח לעירייה",
+            "אימות נעילת המכשיר מאשר שליחת הדיווח לעיריית ירושלים") {
+            submitting = true
+            submissionNote = "שולח לעירייה..."
+            scope.launch {
+                val outcome = withContext(Dispatchers.IO) {
+                    try {
+                        val settings = readSettings()
+                            ?: return@withContext SubmissionCoordinator.Outcome.Blocked(
+                                SubmissionCoordinator.Reason.MISSING_CREDENTIALS, "settings unreadable")
+                        val directory = streetsDirectory
+                            ?: loadStreetDirectory(context).also { streetsDirectory = it }
+                        val file = original
+                            ?: return@withContext SubmissionCoordinator.Outcome.Blocked(
+                                SubmissionCoordinator.Reason.INPUT_INVALID, "missing original")
+                        SubmissionCoordinator(
+                            { s -> OkHttpMunicipalClient(
+                                subscriptionKey = s.municipalSubscriptionKey,
+                                username = s.municipalUsername,
+                                password = s.municipalPassword) },
+                            directory,
+                            { id -> FileSubmissionStateStore.forReport(
+                                File(context.noBackupFilesDir, "submissions"), id) },
+                        ).submitApproved(shown, settings, file)
+                    } catch (e: MunicipalInputException) {
+                        SubmissionCoordinator.Outcome.Blocked(
+                            SubmissionCoordinator.Reason.LOOKUP_NOT_INSTALLED,
+                            e.message ?: "lookup not installed")
+                    } catch (e: Exception) {
+                        // A local crash is NOT a municipal answer: log the
+                        // class name only and label the failure as local.
+                        Log.w("AppShell", "submission crashed: " + e.javaClass.simpleName)
+                        SubmissionCoordinator.Outcome.Blocked(
+                            SubmissionCoordinator.Reason.LOCAL_FAILURE,
+                            e.javaClass.simpleName)
+                    }
+                }
+                submissionNote = municipalOutcomeHebrew(outcome)
+                if (outcome is SubmissionCoordinator.Outcome.Submitted ||
+                    outcome is SubmissionCoordinator.Outcome.AlreadySubmitted) {
+                    status = submissionNote
+                }
+                submitting = false
+            }
+        }
+    }
     fun saveDraft(value: ReviewDraft) {
         if (saving) return
         saving = true
@@ -93,7 +205,7 @@ fun AppShell(
         }
     }
     fun openSettings() {
-        authenticate {
+        authenticate("הגדרות פרטיות", "אמת את נעילת המכשיר כדי לגשת לפרטים") {
             try { profile = readSettings(); page = "settings" }
             catch (_: Exception) { status = "לא ניתן לקרוא מידע מוצפן" }
         }
@@ -218,7 +330,12 @@ fun AppShell(
                     } catch (_: Exception) { null }
                 }
             }
-            ReviewScreen(value, image, ::saveDraft, onBack = { page = "home" }, onOutgoingPreview = {
+            // Live submit is always visible (owner 19:49: no master toggle
+            // and no settings pre-read; the per-submit device unlock is the
+            // gate, and missing credentials answer after it).
+            ReviewScreen(value, image, ::saveDraft, onBack = { page = "home" },
+                onSubmit = { shown -> submitReport(shown) },
+                submitting = submitting, submissionNote = submissionNote, onOutgoingPreview = {
                 scope.launch {
                     try {
                         val derivative = withContext(Dispatchers.IO) {
@@ -243,7 +360,7 @@ fun AppShell(
             }
         }
         "settings" -> SettingsScreen(profile, save = { value, cleared ->
-            authenticate {
+            authenticate("הגדרות פרטיות", "אמת את נעילת המכשיר כדי לגשת לפרטים") {
                 try {
                     // The screen clears itself and profile is dropped after a save, so blank
                     // fields must keep the stored values: merge against a fresh read.

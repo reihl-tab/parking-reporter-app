@@ -45,10 +45,10 @@ class MainActivity : ComponentActivity() {
         cameraAction = null
         if (granted) action?.invoke()
     }
-    private fun authenticate(action: () -> Unit) {
+    private fun authenticate(title: String, subtitle: String, action: () -> Unit) {
         val manager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
         @Suppress("DEPRECATION")
-        val intent = manager.createConfirmDeviceCredentialIntent("הגדרות פרטיות", "אמת את נעילת המכשיר כדי לגשת לפרטים") ?: return
+        val intent = manager.createConfirmDeviceCredentialIntent(title, subtitle) ?: return
         authenticatedAction = action
         authentication.launch(intent)
     }

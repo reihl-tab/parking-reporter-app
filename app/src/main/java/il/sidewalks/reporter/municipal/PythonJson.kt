@@ -82,4 +82,139 @@ object PythonJson {
         }
         out.append('"')
     }
+
+    /**
+     * Minimal strict JSON reader: the inverse of [dumps] for the value shapes
+     * submission states carry (objects, arrays, strings, numbers, booleans,
+     * null). Hand-rolled so JVM unit tests need no Android framework; rejects
+     * trailing data, duplicate-ish weirdness stays last-wins like json.loads.
+     */
+    fun loads(text: String): Any? {
+        val parser = Reader(text)
+        val value = parser.readValue()
+        parser.skipWhitespace()
+        if (!parser.atEnd()) throw MunicipalInputException("Trailing data in JSON.")
+        return value
+    }
+
+    private class Reader(private val text: String) {
+        private var pos = 0
+        fun atEnd(): Boolean = pos >= text.length
+        fun skipWhitespace() { while (pos < text.length && text[pos].isWhitespace()) pos++ }
+        private fun peek(): Char = if (atEnd()) throw MunicipalInputException("Unexpected end of JSON.") else text[pos]
+        private fun expect(c: Char) {
+            if (atEnd() || text[pos] != c) throw MunicipalInputException("Malformed JSON near offset $pos.")
+            pos++
+        }
+
+        fun readValue(): Any? {
+            skipWhitespace()
+            return when (peek()) {
+                '{' -> readObject()
+                '[' -> readArray()
+                '"' -> readString()
+                't' -> readLiteral("true", true)
+                'f' -> readLiteral("false", false)
+                'n' -> readLiteral("null", null)
+                else -> readNumber()
+            }
+        }
+
+        private fun readObject(): MutableMap<String, Any?> {
+            expect('{')
+            val out = LinkedHashMap<String, Any?>()
+            skipWhitespace()
+            if (peek() == '}') { pos++; return out }
+            while (true) {
+                skipWhitespace()
+                val key = readString()
+                skipWhitespace(); expect(':')
+                out[key] = readValue()
+                skipWhitespace()
+                if (peek() == ',') { pos++; continue }
+                expect('}')
+                return out
+            }
+        }
+
+        private fun readArray(): MutableList<Any?> {
+            expect('[')
+            val out = mutableListOf<Any?>()
+            skipWhitespace()
+            if (peek() == ']') { pos++; return out }
+            while (true) {
+                out.add(readValue())
+                skipWhitespace()
+                if (peek() == ',') { pos++; continue }
+                expect(']')
+                return out
+            }
+        }
+
+        private fun readString(): String {
+            expect('"')
+            val out = StringBuilder()
+            while (true) {
+                if (atEnd()) throw MunicipalInputException("Unterminated string in JSON.")
+                when (val c = text[pos++]) {
+                    '"' -> return out.toString()
+                    '\\' -> {
+                        if (atEnd()) throw MunicipalInputException("Bad escape in JSON.")
+                        when (val e = text[pos++]) {
+                            '"', '\\', '/' -> out.append(e)
+                            'b' -> out.append('\b')
+                            'f' -> out.append('\u000C')
+                            'n' -> out.append('\n')
+                            'r' -> out.append('\r')
+                            't' -> out.append('\t')
+                            'u' -> {
+                                if (pos + 4 > text.length) throw MunicipalInputException("Bad unicode escape in JSON.")
+                                val hex = text.substring(pos, pos + 4)
+                                pos += 4
+                                val code = try { hex.toInt(16) } catch (_: NumberFormatException) {
+                                    throw MunicipalInputException("Bad unicode escape in JSON.")
+                                }
+                                out.append(code.toChar())
+                            }
+                            else -> throw MunicipalInputException("Bad escape in JSON.")
+                        }
+                    }
+                    else -> out.append(c)
+                }
+            }
+        }
+
+        private fun readLiteral(word: String, value: Any?): Any? {
+            if (!text.startsWith(word, pos)) throw MunicipalInputException("Malformed JSON near offset $pos.")
+            pos += word.length
+            return value
+        }
+
+        private fun readNumber(): Any {
+            val start = pos
+            if (peek() == '-') pos++
+            while (!atEnd() && text[pos].isDigit()) pos++
+            val integerEnd = pos
+            if (!atEnd() && text[pos] == '.') {
+                pos++
+                while (!atEnd() && text[pos].isDigit()) pos++
+            }
+            if (!atEnd() && (text[pos] == 'e' || text[pos] == 'E')) {
+                pos++
+                if (!atEnd() && (text[pos] == '+' || text[pos] == '-')) pos++
+                while (!atEnd() && text[pos].isDigit()) pos++
+            }
+            val raw = text.substring(start, pos)
+            if (raw.isEmpty() || raw == "-") throw MunicipalInputException("Malformed number in JSON.")
+            return if (pos == integerEnd) {
+                try { raw.toLong() } catch (_: NumberFormatException) {
+                    throw MunicipalInputException("Integer out of range in JSON.")
+                }
+            } else {
+                try { raw.toDouble() } catch (_: NumberFormatException) {
+                    throw MunicipalInputException("Malformed number in JSON.")
+                }
+            }
+        }
+    }
 }
