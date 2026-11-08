@@ -1,0 +1,17 @@
+# Hashed dependencies for the city-readonly-checks workflow (#116).
+# Only what parking_report.api106 + subjects import: Pillow, pyproj
+# (+ its certifi dependency), filelock. Versions match the helper's
+# api extra bounds (Pillow>=13,<14, pyproj>=3.6,<4, filelock>=3.13,<5).
+# cp312 manylinux x86_64 wheel + sdist hashes from PyPI, 2026-11-08.
+pillow==13.0.0 \
+  --hash=sha256:42d63be3af4f9b951b199b0a9d23365d37ab14687e6d77b74940432c8515c4ca \
+  --hash=sha256:cdcd1ba258178f7356d74170c9a81ba4eab6a5d55748bc402a5a2a6fe6be3510
+pyproj==3.7.2 \
+  --hash=sha256:1edc34266c0c23ced85f95a1ee8b47c9035eae6aca5b6b340327250e8e281630 \
+  --hash=sha256:39a0cf1ecc7e282d1d30f36594ebd55c9fae1fda8a2622cee5d100430628f88c
+filelock==3.20.0 \
+  --hash=sha256:339b4732ffda5cd79b13f4e2711a31b0365ce445d95d243bb996273d072546a2 \
+  --hash=sha256:711e943b4ec6be42e1d4e6690b48dc175c822967466bb31c0c293f34334c13f4
+certifi==2025.11.12 \
+  --hash=sha256:97de8790030bbd5c2d96b7ec782fc2f7820ef8dba6db909ccf95449f2d062d4b \
+  --hash=sha256:d8ab5478f2ecd78af242878415affce761ca6bc54a22a27e026d7c25357c3316

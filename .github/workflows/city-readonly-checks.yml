@@ -1,0 +1,51 @@
+name: City read-only checks
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: city-readonly-checks
+  cancel-in-progress: false
+jobs:
+  city-readonly-checks:
+    # Maintainer-approved only: manual dispatch by the repository owner on
+    # main, behind the city-readonly-checks environment (required reviewer).
+    # Read-only by design: logs in and reads the subject catalog; never
+    # submits, amends, or lists cases. Secrets load at runtime from the
+    # environment and are never printed; the check script is secret-free.
+    if: ${{ github.repository == 'reihlinstinct/parking-reporter-app' && github.ref == 'refs/heads/main' && github.actor == github.repository_owner }}
+    environment: city-readonly-checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+      - run: python3 --version | grep -q '^Python 3\.12\.'
+      - name: Fetch the pinned read-only catalog client
+        run: |
+          set -euo pipefail
+          umask 077
+          curl -fsSL -o "$RUNNER_TEMP/helper.tar.gz" \
+            'https://github.com/reihlinstinct/parking-report-helper/archive/51dd5c02916b1ebbe62fdd2390132f9f58a39eb8.tar.gz'
+          echo '99d95dabe5714c87f5de31aff47ccac65f4e7a24b01eebe5e19584fd7915f798  '"$RUNNER_TEMP/helper.tar.gz" | sha256sum -c -
+          mkdir -p city-checks-helper
+          tar -xzf "$RUNNER_TEMP/helper.tar.gz" -C city-checks-helper --strip-components=1
+          rm "$RUNNER_TEMP/helper.tar.gz"
+      - name: Install hashed runtime dependencies
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet --require-hashes \
+            -r city-checks-requirements.txt
+      - name: Run read-only checks
+        env:
+          PARKING_106_SUBSCRIPTION_KEY: ${{ secrets.CITY_106_SUBSCRIPTION_KEY }}
+          PARKING_106_USERNAME: ${{ secrets.CITY_106_USERNAME }}
+          PARKING_106_PASSWORD: ${{ secrets.CITY_106_PASSWORD }}
+          PYTHONPATH: city-checks-helper/src
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          python3 scripts/city_readonly_check.py
