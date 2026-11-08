@@ -2,6 +2,7 @@ package il.sidewalks.reporter.registry
 
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONArray
@@ -88,7 +89,9 @@ sealed interface VehicleLookupResult {
 
 /**
  * Runtime configuration. [resourceId] has no default: the caller passes it (for example
- * [KNOWN_VEHICLE_RESOURCE_ID]). [apiKey] is optional; the public dataset needs none.
+ * [KNOWN_VEHICLE_RESOURCE_ID]). [apiKey] is optional; the public dataset needs none. When
+ * [apiKey] is set, [baseUrl] must be an https URL, so the key never travels in plaintext; a
+ * base URL that does not parse counts as not https.
  */
 class VehicleRegistryConfig(
     val resourceId: String,
@@ -103,6 +106,7 @@ class VehicleRegistryConfig(
         require(cacheTtlMillis >= 0) { "cacheTtlMillis must be >= 0" }
         require(cacheMaxEntries >= 0) { "cacheMaxEntries must be >= 0" }
         require(minRequestIntervalMillis >= 0) { "minRequestIntervalMillis must be >= 0" }
+        require(apiKey == null || isHttpsUrl(baseUrl)) { "baseUrl must be an https URL when apiKey is set" }
     }
 
     override fun toString(): String =
@@ -116,6 +120,8 @@ class VehicleRegistryConfig(
         const val DEFAULT_CACHE_TTL_MILLIS = 6L * 60 * 60 * 1000
         const val DEFAULT_CACHE_MAX_ENTRIES = 128
         const val DEFAULT_MIN_REQUEST_INTERVAL_MILLIS = 1_000L
+        /** Same normalisation as the client's request URL; unparsable counts as not https. */
+        private fun isHttpsUrl(url: String): Boolean = url.trimEnd('/').toHttpUrlOrNull()?.isHttps == true
         private val RESOURCE_ID = Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
     }
 }
