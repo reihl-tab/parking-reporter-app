@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-11-08
+
+### Features
+
+- feat(i18n): string catalog, plural rules and bidi isolates (infrastructure) (#148) (6af42b9)
+
 ## [0.10.0] - 2026-11-08
 
 ### Features
