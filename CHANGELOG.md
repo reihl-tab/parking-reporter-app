@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-11-08
+
+### Other changes
+
+- build(deps): bump filelock from 3.20.0 to 4.2.1 (#122) (5df3bc4)
+
 ## [0.9.0] - 2026-11-08
 
 ### Features
