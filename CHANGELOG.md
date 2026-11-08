@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.14.2] - 2026-11-08
+
+### Other changes
+
+- docs/licenses: match the \u00a74.6 wording to reality, fix ML Kit terms link (#166) (6c41e7b)
+
 ## [0.14.1] - 2026-11-08
 
 ### Other changes
