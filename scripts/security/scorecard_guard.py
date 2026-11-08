@@ -44,7 +44,9 @@ def install_commands(line):
             name=Path(token).name
             if not (re.fullmatch(r'pip(?:3(?:\.\d+)?)?',name) or name=='pipx'):continue
             pos=idx+1
-            while pos<len(segment) and segment[pos].startswith('--'):
+            # Skip global options before the subcommand, long (--isolated) and
+            # short (-q, -vv) alike, so `pip -q install x` is still an install.
+            while pos<len(segment) and segment[pos].startswith('-') and segment[pos]!='-':
                 opt=segment[pos];pos+=1
                 if opt in PIP_VALUE_OPTIONS and pos<len(segment):pos+=1
             if pos<len(segment) and segment[pos]=='install':
@@ -163,23 +165,117 @@ def scan_text(path: str, text: str) -> list[Finding]:
                     add('requirements-path','dependencies',req)
     return list(dict.fromkeys(result))
 
+# Hash-locked requirement files (#70). Each lock is generated from a human-edited
+# input of exact pins; the header command is part of the evidence.
+LOCKS=(
+    ('requirements-lock.txt','requirements.txt',
+     'uv pip compile --universal --generate-hashes --python-version 3.12 requirements.txt -o requirements-lock.txt'),
+)
+PIN=re.compile(r'^([A-Za-z0-9][A-Za-z0-9_.-]*)(?:\[[\w,.-]+\])?==([A-Za-z0-9_.!+-]+)\s*(?:;[^#]*)?$')
+HASH=re.compile(r'--hash=sha256:[a-f0-9]{64}')
+
+def canonical(name):
+    return re.sub(r'[-_.]+','-',name).lower()
+
+def lock_entries(text):
+    """(requirement, hashes, via) per entry of a uv/pip-compile style lock."""
+    entries=[];via=None
+    for line in re.sub(r'\\\s*\n\s*',' ',text).splitlines():
+        stripped=line.strip()
+        if not stripped:continue
+        if stripped.startswith('#'):
+            if entries and line.startswith((' ','\t')):
+                note=stripped.lstrip('#').strip()
+                if note.startswith('via'):via=entries[-1][2];note=note[3:].strip()
+                if via is not None and note:via.append(note)
+            continue
+        via=None
+        tokens=stripped.split(' --hash=')
+        hashes=['--hash='+t.split()[0] for t in tokens[1:] if t.split()]
+        entries.append((tokens[0].strip(),hashes,[]))
+    return entries
+
+def check_lock(root, lock, source, command):
+    findings=[]
+    def add(path,rule,evidence):findings.append(Finding(path,rule,'dependencies',evidence.strip()))
+    src=root/source;target=root/lock
+    if not src.is_file():return findings
+    if src.is_symlink() or target.is_symlink():
+        add(lock,'symlink-input','lock or input is a symlink');return findings
+    if not target.is_file():
+        add(lock,'lock-missing',source+' has no hash-locked '+lock);return findings
+    inputs={}
+    for line in src.read_text(encoding='utf-8').splitlines():
+        line=line.split('#',1)[0].strip()
+        if not line:continue
+        m=PIN.match(line)
+        if not m:add(source,'lock-input-unpinned',line);continue
+        inputs[canonical(m[1])]=m[2]
+    text=target.read_text(encoding='utf-8')
+    header=[l[1:].strip() for l in text.splitlines() if l.startswith('#')]
+    if command not in header:add(lock,'lock-command','header lacks: '+command)
+    top={}
+    for req,hashes,via in lock_entries(text):
+        m=PIN.match(req)
+        good=bool(m) and bool(hashes) and all(HASH.fullmatch(h) for h in hashes)
+        if not good:add(lock,'lock-unhashed',req);continue
+        if '-r '+source in via:top[canonical(m[1])]=m[2]
+    for name in sorted(set(inputs)|set(top)):
+        if inputs.get(name)!=top.get(name):
+            add(lock,'lock-input-mismatch',f'{name}: {source} {inputs.get(name)} != lock {top.get(name)}')
+    return findings
+
+def markdown_code(text):
+    """Code a reader copies from Markdown: fenced blocks and inline code spans."""
+    out=[];fence=None
+    for line in text.splitlines():
+        m=re.match(r'^\s*(`{3,}|~{3,})',line)
+        if fence:
+            if m and m[1][0]==fence[0] and len(m[1])>=len(fence):fence=None
+            else:out.append(line)
+            continue
+        if m:fence=m[1];continue
+        out.extend(span for _,span in re.findall(r'(`+)(.+?)\1',line))
+    return '\n'.join(out)
+
+def python_strings(text):
+    """String literals of a Python script, one per line; a list or tuple holding
+    strings (an argv) is also joined, any other element read as one argument."""
+    import ast
+    try:tree=ast.parse(text)
+    except (SyntaxError,ValueError):return text
+    out=[]
+    for node in ast.walk(tree):
+        if isinstance(node,ast.Constant) and isinstance(node.value,str):out.extend(node.value.splitlines())
+        elif isinstance(node,(ast.List,ast.Tuple)) and any(isinstance(e,ast.Constant) and isinstance(e.value,str) for e in node.elts):
+            out.append(shlex.join(e.value if isinstance(e,ast.Constant) and isinstance(e.value,str) else '_' for e in node.elts))
+    return '\n'.join(out)
+
+def input_text(p):
+    text=p.read_text(encoding='utf-8')
+    if p.suffix=='.md':return markdown_code(text)
+    if p.suffix=='.py':return python_strings(text)
+    return text
+
 def scan(root: Path) -> list[Finding]:
     files = set()
     for p in (root/'.github/workflows').glob('*'):
         if p.suffix in ('.yml','.yaml'):files.add(p)
     for p in root.rglob('*'):
         if any(x in ('.git','.venv','venv','node_modules','vendor','build','dist') for x in p.relative_to(root).parts):continue
-        if p.is_file() and (p.name.startswith('Dockerfile') or p.suffix == '.dockerfile' or (p.suffix == '.sh' and 'scripts' in p.relative_to(root).parts)):
+        parts=p.relative_to(root).parts
+        if p.is_file() and (p.name.startswith('Dockerfile') or p.suffix in ('.dockerfile','.md')
+                            or (p.suffix in ('.sh','.py') and parts[0] in ('scripts','tools'))):
             files.add(p)
     findings=[]
     for p in sorted(files):
         if p.is_symlink():
             findings.append(Finding(p.relative_to(root).as_posix(),'symlink-input','filesystem','symlink not scanned'));continue
-        findings.extend(scan_text(p.relative_to(root).as_posix(), p.read_text(encoding='utf-8')))
+        findings.extend(scan_text(p.relative_to(root).as_posix(), input_text(p)))
     # Requirements hash verification, only for static -r files named by guarded inputs.
     for p in sorted(files):
         if p.is_symlink():continue
-        text=re.sub(r'\\\s*\n\s*',' ',p.read_text(encoding='utf-8'))
+        text=re.sub(r'\\\s*\n\s*',' ',input_text(p))
         reqs=[]
         for line in text.splitlines():
             if line.lstrip().startswith('#'):continue
@@ -201,6 +297,7 @@ def scan(root: Path) -> list[Finding]:
                 if not line or line.startswith('#'):continue
                 if not re.match(r'^[A-Za-z0-9_.-]+(?:\[[\w,.-]+\])?==[^\s;]+',line) or not re.search(r'--hash=sha256:[a-f0-9]{64}(?:\s|$)',line):
                     findings.append(Finding(req,'unhashed-requirement','dependencies',line))
+    for lock,source,command in LOCKS:findings.extend(check_lock(root,lock,source,command))
     return list(dict.fromkeys(findings))
 
 def evaluate(findings, baseline):
