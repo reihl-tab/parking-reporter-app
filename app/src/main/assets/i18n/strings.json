@@ -718,11 +718,11 @@
       "am": "© OpenStreetMap contributors (ODbL 1.0)"
     },
     "licenses.osm.body": {
-      "he": "נקודות הכתובות מבוססות על נתוני OpenStreetMap, © תורמי OpenStreetMap, רישיון ODbL 1.0: openstreetmap.org/copyright — מסד הנתונים הנגזר של הכתובות זמין ברישיון ODbL 1.0 כקובץ מצורף לגרסאות האפליקציה, או דרך מחולל הקוד הפתוח המצורף.",
-      "en": "Address points are based on OpenStreetMap data, © OpenStreetMap contributors, ODbL 1.0: openstreetmap.org/copyright - the derivative address database is available under ODbL 1.0 as an asset attached to app releases, or via the bundled open-source generator.",
-      "ar": "تستند نقاط العناوين إلى بيانات OpenStreetMap، © مساهمو OpenStreetMap، رخصة ODbL 1.0: openstreetmap.org/copyright - قاعدة العناوين المشتقة متاحة بموجب ODbL 1.0 كملف مرفق بإصدارات التطبيق، أو عبر المولّد المفتوح المصدر المرفق.",
-      "ru": "Адресные точки основаны на данных OpenStreetMap, © участники OpenStreetMap, лицензия ODbL 1.0: openstreetmap.org/copyright - производная база адресов доступна по лицензии ODbL 1.0 как файл, приложенный к релизам приложения, или через прилагаемый генератор с открытым кодом.",
-      "am": "የአድራሻ ነጥቦች በOpenStreetMap ውሂብ ላይ የተመሰረቱ ናቸው፣ © የOpenStreetMap አበርካቾች፣ ODbL 1.0 ፍቃድ: openstreetmap.org/copyright - የተራመደው የአድራሻ ዳታቤዝ በODbL 1.0 ሥር እንደ መተግበሪያ ስሪቶች አባሪ ፋይል ወይም በተያያዘው ክፍት ምንጭ አመንጭ ይገኛል።"
+      "he": "נקודות הכתובות מבוססות על נתוני OpenStreetMap, © תורמי OpenStreetMap, רישיון ODbL 1.0: openstreetmap.org/copyright — מסד הנתונים הנגזר של הכתובות מופץ ברישיון ODbL 1.0 וניתן לשחזור מדויק בעזרת מחולל הקוד הפתוח במאגר האפליקציה והקלטים המקובעים המתועדים בו.",
+      "en": "Address points are based on OpenStreetMap data, © OpenStreetMap contributors, ODbL 1.0: openstreetmap.org/copyright - the derivative address database is distributed under ODbL 1.0 and can be reproduced exactly with the open-source generator in the app's repository and its documented pinned inputs.",
+      "ar": "تستند نقاط العناوين إلى بيانات OpenStreetMap، © مساهمو OpenStreetMap، رخصة ODbL 1.0: openstreetmap.org/copyright - قاعدة العناوين المشتقة موزعة بموجب ODbL 1.0 ويمكن إعادة إنتاجها بدقة عبر المولّد المفتوح المصدر في مستودع التطبيق ومدخلاته المثبتة الموثقة.",
+      "ru": "Адресные точки основаны на данных OpenStreetMap, © участники OpenStreetMap, лицензия ODbL 1.0: openstreetmap.org/copyright - производная база адресов распространяется по лицензии ODbL 1.0 и может быть точно воспроизведена генератором с открытым кодом из репозитория приложения и его задокументированными зафиксированными входными данными.",
+      "am": "የአድራሻ ነጥቦች በOpenStreetMap ውሂብ ላይ የተመሰረቱ ናቸው፣ © የOpenStreetMap አበርካቾች፣ ODbL 1.0 ፍቃድ: openstreetmap.org/copyright - የተራመደው የአድራሻ ዳታቤዝ በODbL 1.0 ሥር ይሰራጫል እና በመተግበሪያው ማከማቻ ውስጥ ባለው ክፍት ምንጭ አመንጭ እና በተመዘገቡ ተቆልፈው በሚገኙ ግቤቶች በትክክል መድገም ይቻላል።"
     },
     "licenses.registry.title": {
       "he": "רשימת רחובות ישראל (data.gov.il)",
@@ -746,11 +746,11 @@
       "am": "Google ML Kit Text Recognition"
     },
     "licenses.mlkit.body": {
-      "he": "זיהוי טקסט בתמונות באמצעות Google ML Kit, בכפוף לתנאי השימוש של Google APIs: developers.google.com/terms",
-      "en": "On-image text recognition by Google ML Kit, subject to the Google APIs Terms of Service: developers.google.com/terms",
-      "ar": "التعرف على النص في الصور بواسطة Google ML Kit، وفقًا لشروط استخدام Google APIs: developers.google.com/terms",
-      "ru": "Распознавание текста на изображениях с помощью Google ML Kit в соответствии с условиями использования Google APIs: developers.google.com/terms",
-      "am": "በምስሎች ላይ ያለውን ጽሑፍ መለየት በGoogle ML Kit፣ በGoogle APIs የአገልግሎት ውሎች ሥር: developers.google.com/terms"
+      "he": "זיהוי טקסט בתמונות באמצעות Google ML Kit, בכפוף לתנאי השימוש של Google APIs: developers.google.com/ml-kit/terms",
+      "en": "On-image text recognition by Google ML Kit, subject to the Google APIs Terms of Service: developers.google.com/ml-kit/terms",
+      "ar": "التعرف على النص في الصور بواسطة Google ML Kit، وفقًا لشروط استخدام Google APIs: developers.google.com/ml-kit/terms",
+      "ru": "Распознавание текста на изображениях с помощью Google ML Kit в соответствии с условиями использования Google APIs: developers.google.com/ml-kit/terms",
+      "am": "በምስሎች ላይ ያለውን ጽሑፍ መለየት በGoogle ML Kit፣ በGoogle APIs የአገልግሎት ውሎች ሥር: developers.google.com/ml-kit/terms"
     },
     "licenses.apache.title": {
       "he": "Apache-2.0 libraries",

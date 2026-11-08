@@ -94,5 +94,5 @@ both sides is expected for addresses outside OSM/registry coverage).
   version-1 file behaves.
 - Street names mapping to more than one municipal code are dropped from
   the streets section (the resolver refuses ambiguous names anyway).
-- This document travels with the generator; the in-app attribution lives
-  in `app/src/main/assets/i18n/strings.json` (`licenses.*` keys).
+- The in-app attribution lives in
+  `app/src/main/assets/i18n/strings.json` (`licenses.*` keys).
