@@ -8,7 +8,7 @@ Hebrew user guide: the [wiki](https://github.com/reihlinstinct/parking-reporter-
 
 ## Current capabilities
 
-CameraX original-byte capture, SHA-256, EXIF metadata, manual corrections, optional geocoder suggestions, encrypted reporter settings, local Room ledger and digest-bound manual review. No live report submission, bundled municipal secrets or cloud photo recognition. The offline encrypted-package demo uses generated synthetic data and an in-memory sink, never the network.
+CameraX original-byte capture, SHA-256, EXIF metadata, manual corrections, optional geocoder suggestions, encrypted reporter settings, local Room ledger and digest-bound manual review. The captured municipal 106 subject catalog ships as a checksummed offline asset with local-category mapping ([taxonomy parity](docs/MUNICIPAL_TAXONOMY.md)). No live report submission, bundled municipal secrets or cloud photo recognition. The offline encrypted-package demo uses generated synthetic data and an in-memory sink, never the network.
 
 ## Build and tests
 
@@ -41,7 +41,7 @@ Every workflow ends with a `Run summary` job that writes a summary to the top of
 | M5 | Approved submission, receipt and uncertain-state reconciliation |
 | M6 | Optional separate plate-masked social export |
 
-See [design](docs/DESIGN.md), [preview status](M1_STATUS.md), [security](SECURITY.md), [contributing](CONTRIBUTING.md) and [release checklist](docs/RELEASE_CHECKLIST.md).
+See [design](docs/DESIGN.md), [preview status](M1_STATUS.md), [taxonomy parity](docs/MUNICIPAL_TAXONOMY.md), [security](SECURITY.md), [contributing](CONTRIBUTING.md) and [release checklist](docs/RELEASE_CHECKLIST.md).
 
 ## Safety
 

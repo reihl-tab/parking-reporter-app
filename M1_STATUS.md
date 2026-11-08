@@ -6,6 +6,8 @@ Implemented: CameraX capture, original hash and metadata reading, manual correct
 
 Local Android compile, lint (zero errors), 17 unit tests and APK packaging have passed. Instrumented tests compile; emulator/device results must be checked in current CI. No claim of physical-camera or authenticated Keystore validation.
 
+Taxonomy parity landed: captured municipal 106 subject catalog (86 subjects, verified live 2026-11-08) ships as a checksummed offline asset, and every local category maps to its municipal subject code. DESIGN M4 Hebrew-text and approval-digest parity remain open.
+
 Open: device OS coverage, authentication, camera lifecycle, schema/migration fixtures, EXIF orientation, visual inspection, M2-M4 parity, encrypted-intake authentication and synthetic full-photo transport. No real municipal calls or production enrollment.
 
 ## Offline encrypted preview

@@ -21,6 +21,7 @@ android {
     }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     lint { abortOnError = true }
+    sourceSets { getByName("test") { resources.srcDir("src/main/assets") } }
     buildTypes {
         debug {
             isTestCoverageEnabled = true
