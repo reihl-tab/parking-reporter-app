@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-11-08
+
+### Other changes
+
+- registry: require https baseUrl when an API key is set (#117) (692f433)
+
 ### Security
 
 - `VehicleRegistryConfig` now requires an https `baseUrl` when an `apiKey` is set, so the key header is never sent in plaintext; the rejection message carries neither the key nor the URL. A config without a key is unchanged. (#114)
