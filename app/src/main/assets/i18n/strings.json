@@ -1,0 +1,104 @@
+{
+  "languages": [
+    {
+      "code": "he",
+      "name": "עברית",
+      "dir": "rtl",
+      "default": true
+    },
+    {
+      "code": "en",
+      "name": "English",
+      "dir": "ltr",
+      "default": false,
+      "status": "machine-draft, needs native review"
+    },
+    {
+      "code": "ar",
+      "name": "العربية",
+      "dir": "rtl",
+      "default": false,
+      "status": "machine-draft, needs native review"
+    },
+    {
+      "code": "ru",
+      "name": "Русский",
+      "dir": "ltr",
+      "default": false,
+      "status": "machine-draft, needs native review"
+    },
+    {
+      "code": "am",
+      "name": "አማርኛ",
+      "dir": "ltr",
+      "default": false,
+      "status": "machine-draft, needs native review"
+    }
+  ],
+  "strings": {
+    "common.ok": {
+      "he": "אישור",
+      "en": "OK",
+      "ar": "موافق",
+      "ru": "ОК",
+      "am": "እሺ"
+    },
+    "common.cancel": {
+      "he": "ביטול",
+      "en": "Cancel",
+      "ar": "إلغاء",
+      "ru": "Отмена",
+      "am": "ሰርዝ"
+    },
+    "common.retry": {
+      "he": "נסו שוב",
+      "en": "Try again",
+      "ar": "حاول مرة أخرى",
+      "ru": "Повторить",
+      "am": "እንደገና ይሞክሩ"
+    },
+    "common.error.generic": {
+      "he": "משהו השתבש. נסו שוב.",
+      "en": "Something went wrong. Please try again.",
+      "ar": "حدث خطأ ما. حاول مرة أخرى.",
+      "ru": "Что-то пошло не так. Попробуйте ещё раз.",
+      "am": "የሆነ ችግር ተፈጥሯል። እባክዎ እንደገና ይሞክሩ።"
+    },
+    "common.plate_label": {
+      "he": "מספר רכב: {plate}",
+      "en": "Plate number: {plate}",
+      "ar": "رقم اللوحة: {plate}",
+      "ru": "Номер автомобиля: {plate}",
+      "am": "የሰሌዳ ቁጥር: {plate}"
+    },
+    "common.reports_count": {
+      "he": {
+        "one": "דיווח אחד",
+        "two": "שני דיווחים",
+        "other": "{count} דיווחים"
+      },
+      "en": {
+        "one": "{count} report",
+        "other": "{count} reports"
+      },
+      "ar": {
+        "zero": "لا توجد بلاغات",
+        "one": "بلاغ واحد",
+        "two": "بلاغان",
+        "few": "{count} بلاغات",
+        "many": "{count} بلاغًا",
+        "other": "{count} بلاغ"
+      },
+      "ru": {
+        "one": "{count} обращение",
+        "few": "{count} обращения",
+        "many": "{count} обращений",
+        "other": "{count} обращения"
+      },
+      "am": {
+        "one": "{count} ሪፖርት",
+        "other": "{count} ሪፖርቶች"
+      }
+    }
+  }
+}
