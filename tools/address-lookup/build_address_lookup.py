@@ -39,10 +39,16 @@ OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 # Inputs are pinned so a re-run reproduces the same database
 # (docs/address-lookup.md records the pin of each shipped build).
 OVERPASS_DATE = "2026-11-08T00:00:00Z"
-# Jerusalem municipality boundary (OSM relation 1381350).
+# Jerusalem municipality boundary (OSM relation 1381350). The area is
+# built from the relation selected inside the dated query (rel + map_to_area)
+# instead of a hard-coded area id. Overpass documents that areas derived from
+# relations always represent current data, so the boundary geometry itself
+# is not covered by [date:]: see docs/address-lookup.md ("Reproduce").
+OVERPASS_RELATION = 1381350
 OVERPASS_QUERY = (
     '[out:json][timeout:180][date:"' + OVERPASS_DATE + '"];\n'
-    "area(3601381350)->.jerusalem;\n"
+    f"rel({OVERPASS_RELATION});\n"
+    "map_to_area->.jerusalem;\n"
     "(\n"
     '  node["addr:housenumber"]["addr:street"](area.jerusalem);\n'
     '  way["addr:housenumber"]["addr:street"](area.jerusalem);\n'
@@ -132,6 +138,13 @@ def load_address_points():
     payload = urllib.parse.urlencode({"data": OVERPASS_QUERY}).encode()
     raw = fetch(OVERPASS_URL, data=payload)
     data = json.loads(raw)
+    # Which database state served the run (Overpass's osm3s block), when the
+    # server reports it: the attic date answers the [date:] pin, the areas
+    # base says how current the boundary area was.
+    osm3s = data.get("osm3s") or {}
+    for key in ("timestamp_osm_base", "timestamp_areas_base"):
+        if osm3s.get(key):
+            print(f"overpass {key}: {osm3s[key]}", file=sys.stderr)
     points = set()
     for el in data.get("elements", []):
         tags = el.get("tags", {})
@@ -154,6 +167,17 @@ def load_address_points():
     return [list(p) for p in ordered]
 
 
+def addresses_section_sha256(addresses):
+    """sha256 of the addresses section alone (the ODbL Derivative Database).
+
+    Hashed over its canonical compact JSON so recipients can verify it without
+    the whole file; validate_lookup.py --addresses-sha256 uses the same
+    expression (docs/address-lookup.md).
+    """
+    section = json.dumps(addresses, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(section).hexdigest()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out", default="addresses.json")
@@ -171,13 +195,10 @@ def main():
         json.dump(out, fh, ensure_ascii=False, indent=1, sort_keys=True)
         fh.write("\n")
     digest = hashlib.sha256(open(args.out, "rb").read()).hexdigest()
-    # The addresses section alone (the ODbL Derivative Database), hashed over its
-    # canonical compact JSON so recipients can verify it without the whole file.
-    section = json.dumps(addresses, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
-    section_digest = hashlib.sha256(section).hexdigest()
+    section_digest = addresses_section_sha256(addresses)
     print(f"wrote {args.out}: {len(streets)} streets, {len(addresses)} addresses",
           file=sys.stderr)
-    print(f"inputs: overpass date={OVERPASS_DATE} relation=1381350; "
+    print(f"inputs: overpass date={OVERPASS_DATE} relation={OVERPASS_RELATION} (map_to_area); "
           f"registry resource={STREETS_RESOURCE_ID} locality={JERUSALEM_LOCALITY}",
           file=sys.stderr)
     print(f"sha256: {digest}", file=sys.stderr)
