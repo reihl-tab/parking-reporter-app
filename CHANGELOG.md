@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.16.3] - 2026-11-09
+
+### Other changes
+
+- ci: keep the release PAT out of the checkout credential store (#177) (7427da2)
+
 ## [0.16.2] - 2026-11-09
 
 ### Other changes
