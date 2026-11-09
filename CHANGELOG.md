@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.16.1] - 2026-11-09
+
+### Other changes
+
+- trial: M0 engine-level live trial (login-only diagnostic + digest-gated single submit) (#168) (daaf9b3)
+
 ## [0.16.0] - 2026-11-09
 
 ### Features
