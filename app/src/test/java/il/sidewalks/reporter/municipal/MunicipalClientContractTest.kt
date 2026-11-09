@@ -199,6 +199,70 @@ class MunicipalClientContractTest {
     }
 
     @Test
+    fun disconnectFollowedBySuccessIsNotSilentlyRetried() {
+        MockWebServer().use { server ->
+            // OkHttp only retries silently when a pooled connection that has
+            // already carried a response fails; a failure on a fresh connection
+            // is never retried, whatever the setting. So one successful call
+            // first warms the connection, then the next request is dropped on
+            // that reused connection with a success queued behind it. A silent
+            // retry would open a new connection, consume the success and return
+            // normally; with retryOnConnectionFailure(false) the call fails
+            // after exactly one attempt and the success stays unused.
+            server.enqueue(MockResponse().setBody("""{"Success":true,"Token":"synthetic-token"}"""))
+            server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST))
+            server.enqueue(MockResponse().setBody("""{"Success":true,"ContactIdInCRM":"synthetic-contact-id"}"""))
+            val api = client(server)
+            assertEquals("synthetic-token", api.login())
+            val before = server.requestCount
+            assertThrows(MunicipalApiException::class.java) {
+                api.upsertContact("synthetic-token", LinkedHashMap())
+            }
+            assertEquals("the dropped request must be attempted exactly once", 1, server.requestCount - before)
+            server.takeRequest()
+            assertEquals(1, server.takeRequest().sequenceNumber)
+        }
+    }
+
+    /** `{"Success":true,"Token":"synthetic-token","Pad":"xxx…"}` of exactly [size] bytes. */
+    private fun successBodyOfSize(size: Long): okio.Buffer {
+        val head = """{"Success":true,"Token":"synthetic-token","Pad":"""".toByteArray()
+        val tail = "\"}".toByteArray()
+        val pad = size - head.size - tail.size
+        val chunk = ByteArray(65536) { 'x'.code.toByte() }
+        val body = okio.Buffer().write(head)
+        var left = pad
+        while (left > 0) {
+            val n = minOf(left, chunk.size.toLong()).toInt()
+            body.write(chunk, 0, n)
+            left -= n
+        }
+        body.write(tail)
+        check(body.size == size)
+        return body
+    }
+
+    @Test
+    fun oversizedSuccessfulJsonIsRejectedByTheCap() {
+        MockWebServer().use { server ->
+            // Valid JSON that would be a successful login if parsed: only the
+            // 16 MB read cap can refuse it.
+            server.enqueue(MockResponse().setBody(successBodyOfSize(16L * 1024 * 1024 + 1)))
+            val error = assertThrows(MunicipalApiException::class.java) { client(server).login() }
+            assertEquals("Login: municipality did not confirm success.", error.message)
+            assertEquals(1, server.requestCount)
+        }
+    }
+
+    @Test
+    fun successfulJsonExactlyAtTheCapIsAccepted() {
+        MockWebServer().use { server ->
+            server.enqueue(MockResponse().setBody(successBodyOfSize(16L * 1024 * 1024)))
+            assertEquals("synthetic-token", client(server).login())
+        }
+    }
+
+    @Test
     fun networkFailureMapsToApiException() {
         // A shut-down server refuses connections immediately.
         val dead = MockWebServer()
