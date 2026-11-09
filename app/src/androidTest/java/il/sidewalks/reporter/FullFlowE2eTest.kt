@@ -3,16 +3,7 @@ package il.sidewalks.reporter
 import android.net.Uri
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
-import androidx.compose.ui.test.captureToImage
-import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performTextReplacement
-import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
 import il.sidewalks.reporter.ledger.ReportDatabase
@@ -31,7 +22,6 @@ import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
-import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
@@ -46,19 +36,14 @@ import org.junit.Test
  * no private data, and no live mode. The app manifest forbids cleartext;
  * app/src/debug scopes a loopback-only exception to test builds.
  * Device-unlock is replaced by a pass-through only in this synthetic test.
+ * The UI driving itself lives in FlowDriver, shared with the opt-in live
+ * submission E2E so both exercise the identical flow code path.
  */
 class FullFlowE2eTest {
     @get:Rule val compose = createComposeRule()
 
     @Before fun pinHebrewUiLanguage() {
         il.sidewalks.reporter.i18n.UiPrefsLanguageStore.of(InstrumentationRegistry.getInstrumentation().targetContext).set("he")
-    }
-
-    private fun screenshot(name: String) {
-        val context = InstrumentationRegistry.getInstrumentation().targetContext
-        File(context.filesDir, name).outputStream().use {
-            compose.onRoot().captureToImage().asAndroidBitmap().compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
-        }
     }
 
     private val sharedUri = Uri.parse("content://il.sidewalks.reporter.testshare/shared-entry-synthetic.jpg")
@@ -112,57 +97,6 @@ class FullFlowE2eTest {
         }
     }
 
-    /** Shared-photo entry through a locally approved draft. */
-    private fun driveToApproved(text: String) {
-        compose.waitUntil(15_000) {
-            compose.onAllNodesWithText("בדיקת הדיווח").fetchSemanticsNodes().isNotEmpty()
-        }
-        compose.onNodeWithText("נדרש תיקון קטגוריה ▾").performScrollTo().performClick()
-        compose.onNodeWithText("חניה על המדרכה").performClick()
-        compose.onNodeWithText("ערוך").performScrollTo().performClick()
-        compose.onNodeWithText("לוחית ללא מקפים").performScrollTo().performTextReplacement("12345678")
-        compose.onNodeWithText("רחוב ומספר בית שאישרת").performScrollTo().performTextReplacement("רחוב בדיקה 1")
-        compose.onNodeWithText("הטקסט המדויק לבדיקה").performScrollTo().performTextReplacement(text)
-        compose.onNodeWithText("זמן מאושר עם אזור זמן (ISO)").performScrollTo().performTextReplacement("2026-01-01T12:00:00+02:00")
-        compose.onNodeWithText("קו רוחב").performScrollTo().performTextReplacement("31.77")
-        compose.onNodeWithText("קו אורך").performScrollTo().performTextReplacement("35.2137")
-        compose.onNodeWithText("אשר זמן, מיקום וכתובת שבדקת").performScrollTo().performClick()
-        compose.waitUntil(10_000) {
-            try { compose.onNodeWithText("אשר את התוכן לבדיקה").assertIsEnabled(); true }
-            catch (e: AssertionError) { false }
-        }
-        compose.onNodeWithText("אשר את התוכן לבדיקה").performScrollTo().performClick()
-        compose.waitUntil(15_000) {
-            compose.onAllNodesWithText("התוכן אושר מקומית, לא נשלח").fetchSemanticsNodes().isNotEmpty()
-        }
-        screenshot("e2e-review-synthetic.png")
-    }
-
-    private fun tapSendAndAwaitCaseNumber() {
-        // The send gate compares the shown draft to the last SAVED one and
-        // the post-approval save is asynchronous; retry the tap if the gate
-        // answers "not saved" before the save lands.
-        var attempt = 0
-        while (true) {
-            attempt += 1
-            compose.onNodeWithText("שלח לעירייה").performScrollTo().performClick()
-            try {
-                compose.waitUntil(45_000) {
-                    compose.onAllNodesWithText("נשלח לעירייה. מספר קריאה", substring = true)
-                        .fetchSemanticsNodes().isNotEmpty() ||
-                        compose.onAllNodesWithText("הטיוטה לא נשמרה", substring = true)
-                            .fetchSemanticsNodes().isNotEmpty()
-                }
-            } catch (e: androidx.compose.ui.test.ComposeTimeoutException) {
-                fail("no submission outcome shown")
-            }
-            if (compose.onAllNodesWithText("נשלח לעירייה. מספר קריאה", substring = true)
-                .fetchSemanticsNodes().isNotEmpty()) return
-            if (attempt >= 3) fail("draft-not-saved persisted across retries")
-            Thread.sleep(500)
-        }
-    }
-
     @Test fun fullReportFlowStubbedServer() {
         claimSyntheticPhoto()
         val settings = ReporterSettings(
@@ -183,10 +117,19 @@ class FullFlowE2eTest {
                     OkHttpMunicipalClient.forTesting(server.url("/"),
                         s.municipalSubscriptionKey, s.municipalUsername, s.municipalPassword)
                 }
+                val driver = FlowDriver(compose)
                 val text = "רכב חונה על המדרכה בתרחיש בדיקה סינתטי"
-                driveToApproved(text)
-                tapSendAndAwaitCaseNumber()
-                screenshot("e2e-submitted-synthetic.png")
+                driver.driveToApproved(FlowFields(
+                    text = text,
+                    plate = "12345678",
+                    address = "רחוב בדיקה 1",
+                    capturedAtIso = "2026-01-01T12:00:00+02:00",
+                    latitude = "31.77",
+                    longitude = "35.2137",
+                    categoryLabel = "חניה על המדרכה"))
+                driver.screenshot("e2e-review-synthetic.png")
+                driver.tapSendAndAwaitCaseNumber()
+                driver.screenshot("e2e-submitted-synthetic.png")
 
                 val login = requireNotNull(server.takeRequest(5, TimeUnit.SECONDS)) { "Login never reached the stub" }
                 val contact = requireNotNull(server.takeRequest(5, TimeUnit.SECONDS)) { "contact never reached the stub" }

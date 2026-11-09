@@ -1,0 +1,367 @@
+name: Live emulator E2E (owner-approved)
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type FILE-LIVE-REPORT to file ONE real case through the app UI with the staged TRIAL_* data'
+        required: true
+        type: string
+      approved_sha256:
+        description: 'sha256 of the exact owner-approved Hebrew text (must match the staged TRIAL_APPROVED_TEXT)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  # Cross-run duplicate guard: reads earlier runs' encrypted run records.
+  actions: read
+concurrency:
+  group: live-emulator-e2e
+  cancel-in-progress: false
+
+jobs:
+  # One real submission through the real app UI in an emulator, recorded.
+  # Gated by the m0-trial-submit environment (required reviewer: the owner),
+  # by the confirm phrase, by the approved-text digest binding and by the
+  # cross-run duplicate guard. Evidence (screen recording, screenshots, raw
+  # instrumentation output, case number, submission state) is uploaded only
+  # openssl-encrypted with TRIAL_DATA_KEY; the public log carries only the
+  # scrubbed LIVE_E2E markers the test writes.
+  live-e2e:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    environment: m0-trial-submit
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - run: sh scripts/prepare_wrapper.sh
+      - name: Validate dispatch inputs before any secret is read
+        env:
+          CONFIRM_INPUT: ${{ inputs.confirm }}
+          APPROVED_SHA256_INPUT: ${{ inputs.approved_sha256 }}
+        run: |
+          # The dispatch values reach the shell only as quoted env vars,
+          # never through workflow-expression interpolation.
+          test "$CONFIRM_INPUT" = 'FILE-LIVE-REPORT' || { echo 'confirm input mismatch - refusing to run'; exit 1; }
+          printf '%s' "$APPROVED_SHA256_INPUT" | grep -qxE '[0-9a-f]{64}'
+      - name: Refuse a digest an earlier live run already took
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPROVED_SHA256_INPUT: ${{ inputs.approved_sha256 }}
+          TRIAL_DATA_KEY: ${{ secrets.TRIAL_DATA_KEY }}
+        run: |
+          set -euo pipefail
+          # Cross-run duplicate guard: every past run that staged params left
+          # a small encrypted run record naming its approved digest. Records
+          # that cannot be decrypted fail CLOSED. Records expire with their
+          # 14-day artifact retention; a re-dispatch after that window needs
+          # the manual 106 check the docs describe. Runs are serialized by
+          # the workflow concurrency group, so no concurrent run can sneak
+          # past this check.
+          mkdir -p /tmp/live-e2e/prior
+          resp=$(curl -sS -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/artifacts?name=live-e2e-run-record-encrypted&per_page=100")
+          # The listing also returns artifacts past their retention (expired
+          # ones cannot be downloaded); skip them - that matches the
+          # documented 14-day memory of this guard. per_page=100 covers the
+          # first page only, which is far above this dispatch-only volume.
+          count=$(jq -r '[.artifacts[] | select(.expired | not)] | length' <<<"$resp")
+          echo "prior run records found: $count"
+          if [ "$count" != "0" ]; then
+            while IFS=$'\t' read -r id url; do
+              [ -n "$id" ] || continue
+              curl -fsSL -H "Authorization: Bearer $GH_TOKEN" "$url" -o "/tmp/live-e2e/prior/$id.zip" || {
+                echo 'cannot download a prior run record - refusing (fail closed)'; exit 1; }
+              unzip -o -q "/tmp/live-e2e/prior/$id.zip" -d "/tmp/live-e2e/prior/$id"
+              enc=$(find "/tmp/live-e2e/prior/$id" -name '*.enc' | head -1)
+              plain=$(openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in "$enc" -pass env:TRIAL_DATA_KEY) || {
+                echo 'cannot decrypt a prior run record - refusing (fail closed)'; exit 1; }
+              prior=$(jq -r '.approvedSha256' <<<"$plain")
+              if [ "$prior" = "$APPROVED_SHA256_INPUT" ]; then
+                echo 'this approved digest already went through a live run - refusing to re-dispatch'
+                exit 1
+              fi
+            done < <(jq -r '.artifacts[] | select(.expired | not) | [.id, .archive_download_url] | @tsv' <<<"$resp")
+          fi
+          echo 'no prior live run took this digest'
+      - name: Build app and test APKs
+        run: sh gradlew --no-daemon assembleDebug assembleDebugAndroidTest
+      - name: Egress probe (login-only, no case writes)
+        id: probe
+        continue-on-error: true
+        env:
+          J106_LIVE_TRIAL: login-only
+          J106_SUBSCRIPTION_KEY: ${{ secrets.J106_SUBSCRIPTION_KEY }}
+          J106_APP_USERNAME: ${{ secrets.J106_APP_USERNAME }}
+          J106_APP_PASSWORD: ${{ secrets.J106_APP_PASSWORD }}
+          TRIAL_STATE_DIR: /tmp/trial-state
+          TRIAL_RESULT_PATH: /tmp/trial-result.txt
+          EGRESS_MARKER_PATH: /tmp/egress-blocked
+        run: |
+          sh gradlew --no-daemon testDebugUnitTest --tests 'il.sidewalks.reporter.municipal.EngineLiveTrialTest'
+      - name: Bring up owner L2TP fallback (only after proven egress block)
+        id: vpn
+        if: steps.probe.outcome == 'failure'
+        env:
+          VPN_L2TP_SERVER: ${{ secrets.VPN_L2TP_SERVER }}
+          VPN_L2TP_PSK: ${{ secrets.VPN_L2TP_PSK }}
+          VPN_L2TP_USERNAME: ${{ secrets.VPN_L2TP_USERNAME }}
+          VPN_L2TP_PASSWORD: ${{ secrets.VPN_L2TP_PASSWORD }}
+        run: |
+          # The marker is written by the probe only when login failed with a
+          # 403 or a connect failure, i.e. no case write was attempted. Any
+          # other failure must not retry anything.
+          if [ ! -f /tmp/egress-blocked ]; then
+            echo 'no egress-blocked marker: probe failure was not a proven egress block, no fallback'
+            echo 'ready=0' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          sudo apt-get update -qq > /dev/null 2>&1
+          sudo apt-get install -y strongswan xl2tpd ppp > /dev/null 2>&1
+          sudo --preserve-env=VPN_L2TP_SERVER,VPN_L2TP_PSK,VPN_L2TP_USERNAME,VPN_L2TP_PASSWORD \
+            python3 trial/l2tp.py up-bounded
+          echo 'ready=1' >> "$GITHUB_OUTPUT"
+      - name: Re-probe through the tunnel (login-only)
+        if: steps.vpn.outputs.ready == '1'
+        env:
+          J106_LIVE_TRIAL: login-only
+          J106_SUBSCRIPTION_KEY: ${{ secrets.J106_SUBSCRIPTION_KEY }}
+          J106_APP_USERNAME: ${{ secrets.J106_APP_USERNAME }}
+          J106_APP_PASSWORD: ${{ secrets.J106_APP_PASSWORD }}
+          TRIAL_STATE_DIR: /tmp/trial-state
+          TRIAL_RESULT_PATH: /tmp/trial-result.txt
+        run: |
+          rm -f /tmp/trial-result.txt
+          sh gradlew --no-daemon testDebugUnitTest --tests 'il.sidewalks.reporter.municipal.EngineLiveTrialTest'
+          grep -q 'TRIAL_RESULT LOGIN_OK' /tmp/trial-result.txt
+      - name: Fail when the probe failed without a proven egress block
+        if: steps.probe.outcome == 'failure' && steps.vpn.outputs.ready != '1'
+        run: exit 1
+      - name: Resolve the staged category label
+        env:
+          TRIAL_SUBJECT: ${{ secrets.TRIAL_SUBJECT }}
+          LIVE_CATEGORY_PATH: /tmp/live-e2e/category.txt
+        run: |
+          # The picker label comes from the same TRIAL_SUBJECT code the
+          # engine trial files with (sidewalk_parking when unset), resolved
+          # through the app's own catalog - never a free-text input.
+          mkdir -p /tmp/live-e2e
+          sh gradlew --no-daemon testDebugUnitTest --tests 'il.sidewalks.reporter.core.LiveCategoryResolutionTest'
+          grep -q '^LIVE_CATEGORY label=.' /tmp/live-e2e/category.txt
+      - name: Decrypt the staged trial photo
+        env:
+          TRIAL_DATA_KEY: ${{ secrets.TRIAL_DATA_KEY }}
+        run: |
+          umask 077
+          mkdir -p /tmp/live-e2e
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
+            -in trial/trial-photo.jpg.enc -out /tmp/live-e2e/photo.jpg -pass env:TRIAL_DATA_KEY
+          test -s /tmp/live-e2e/photo.jpg
+      - name: Stage live params (private)
+        env:
+          J106_SUBSCRIPTION_KEY: ${{ secrets.J106_SUBSCRIPTION_KEY }}
+          J106_APP_USERNAME: ${{ secrets.J106_APP_USERNAME }}
+          J106_APP_PASSWORD: ${{ secrets.J106_APP_PASSWORD }}
+          REPORTER_FIRST_NAME: ${{ secrets.REPORTER_FIRST_NAME }}
+          REPORTER_LAST_NAME: ${{ secrets.REPORTER_LAST_NAME }}
+          REPORTER_PHONE: ${{ secrets.REPORTER_PHONE }}
+          REPORTER_ID_NUMBER: ${{ secrets.REPORTER_ID_NUMBER }}
+          REPORTER_EMAIL: ${{ secrets.REPORTER_EMAIL }}
+          TRIAL_APPROVED_TEXT: ${{ secrets.TRIAL_APPROVED_TEXT }}
+          TRIAL_PLATE: ${{ secrets.TRIAL_PLATE }}
+          TRIAL_ADDRESS: ${{ secrets.TRIAL_ADDRESS }}
+          TRIAL_LAT: ${{ secrets.TRIAL_LAT }}
+          TRIAL_LON: ${{ secrets.TRIAL_LON }}
+          TRIAL_CAPTURED_AT: ${{ secrets.TRIAL_CAPTURED_AT }}
+          APPROVED_SHA256_INPUT: ${{ inputs.approved_sha256 }}
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p /tmp/live-e2e
+          python3 - <<'PY'
+          import hashlib, json, os, sys
+          text = os.environ["TRIAL_APPROVED_TEXT"]
+          digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
+          if digest != os.environ["APPROVED_SHA256_INPUT"].lower():
+              sys.exit("approved text digest mismatch - refusing to stage")
+          with open("/tmp/live-e2e/category.txt", encoding="utf-8") as fh:
+              label = fh.read().strip().split("label=", 1)[1]
+          params = {
+              "subscriptionKey": os.environ["J106_SUBSCRIPTION_KEY"],
+              "username": os.environ["J106_APP_USERNAME"],
+              "password": os.environ["J106_APP_PASSWORD"],
+              "firstName": os.environ["REPORTER_FIRST_NAME"],
+              "lastName": os.environ["REPORTER_LAST_NAME"],
+              "phone": os.environ["REPORTER_PHONE"],
+              "idNumber": os.environ["REPORTER_ID_NUMBER"],
+              "email": os.environ["REPORTER_EMAIL"],
+              "text": text,
+              "approvedSha256": digest,
+              "plate": os.environ.get("TRIAL_PLATE", ""),
+              "address": os.environ["TRIAL_ADDRESS"],
+              "lat": os.environ["TRIAL_LAT"],
+              "lon": os.environ["TRIAL_LON"],
+              "capturedAt": os.environ["TRIAL_CAPTURED_AT"],
+              "categoryLabel": label,
+          }
+          with open("/tmp/live-e2e/params.json", "w", encoding="utf-8") as fh:
+              json.dump(params, fh, ensure_ascii=False)
+          print("params staged (values withheld)")
+          PY
+          touch /tmp/live-e2e/staged.ok
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Run the live submission in the emulator (screen recorded)
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
+        with:
+          api-level: 30
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          # The emulator action runs every script line in its own sh: no
+          # variables, background jobs or shell options survive across lines.
+          script: |
+            adb install -r app/build/outputs/apk/debug/app-debug.apk
+            adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            adb shell "run-as il.sidewalks.reporter.test sh -c 'cat > files/live-photo.jpg'" < /tmp/live-e2e/photo.jpg
+            adb shell "run-as il.sidewalks.reporter sh -c 'cat > files/live-params.json'" < /tmp/live-e2e/params.json
+            ( for i in 1 2 3 4 5 6; do if [ -f /tmp/live-e2e/stop-rec ]; then break; fi; adb shell screenrecord --time-limit 170 /sdcard/live-rec-$i.mp4 >/dev/null 2>&1; done ) &
+            adb shell am instrument -w -r -e class il.sidewalks.reporter.live.LiveEmulatorSubmissionTest il.sidewalks.reporter.test/androidx.test.runner.AndroidJUnitRunner > /tmp/live-e2e/instrumentation.txt 2>&1; echo $? > /tmp/live-e2e/instrumentation.rc
+            touch /tmp/live-e2e/stop-rec
+            adb shell pkill -INT screenrecord || true
+            sleep 3
+            adb pull /sdcard/live-rec-1.mp4 /tmp/live-e2e/seg1.mp4 || true
+            adb pull /sdcard/live-rec-2.mp4 /tmp/live-e2e/seg2.mp4 || true
+            adb pull /sdcard/live-rec-3.mp4 /tmp/live-e2e/seg3.mp4 || true
+            adb pull /sdcard/live-rec-4.mp4 /tmp/live-e2e/seg4.mp4 || true
+            adb pull /sdcard/live-rec-5.mp4 /tmp/live-e2e/seg5.mp4 || true
+            adb pull /sdcard/live-rec-6.mp4 /tmp/live-e2e/seg6.mp4 || true
+            adb shell rm -f /sdcard/live-rec-1.mp4 /sdcard/live-rec-2.mp4 /sdcard/live-rec-3.mp4 /sdcard/live-rec-4.mp4 /sdcard/live-rec-5.mp4 /sdcard/live-rec-6.mp4 || true
+            if adb shell "run-as il.sidewalks.reporter cat files/live-e2e-log.txt" > /tmp/live-e2e/live-log.txt 2>/dev/null \
+              && [ -s /tmp/live-e2e/live-log.txt ]; then
+              # Positive proof the marker log was collected; the duplicate
+              # guard may relax only on this sentinel, never on a missing file.
+              touch /tmp/live-e2e/log.collected
+            fi
+            adb shell "run-as il.sidewalks.reporter cat files/live-e2e-case-number.txt" > /tmp/live-e2e/live-e2e-case-number.txt || true
+            adb shell "run-as il.sidewalks.reporter cat files/live-e2e-submission-state.json" > /tmp/live-e2e/live-e2e-submission-state.json || true
+            adb shell "run-as il.sidewalks.reporter cat files/live-e2e-approved.png" > /tmp/live-e2e/approved.png || true
+            adb shell "run-as il.sidewalks.reporter cat files/live-e2e-submitted.png" > /tmp/live-e2e/submitted.png || true
+            adb shell "run-as il.sidewalks.reporter cat files/live-e2e-outcome-unknown.png" > /tmp/live-e2e/outcome-unknown.png || true
+            adb shell "run-as il.sidewalks.reporter rm -f files/live-params.json files/live-e2e-approved.png files/live-e2e-submitted.png files/live-e2e-outcome-unknown.png files/live-e2e-case-number.txt files/live-e2e-submission-state.json" || true
+            adb shell "run-as il.sidewalks.reporter.test rm -f files/live-photo.jpg" || true
+      - name: Encrypt the recording and raw output
+        if: always()
+        env:
+          TRIAL_DATA_KEY: ${{ secrets.TRIAL_DATA_KEY }}
+        run: |
+          set -euo pipefail
+          cd /tmp/live-e2e
+          : > segments.txt
+          for f in seg1.mp4 seg2.mp4 seg3.mp4 seg4.mp4 seg5.mp4 seg6.mp4; do
+            if [ -s "$f" ]; then printf "file '%s'\n" "$PWD/$f" >> segments.txt; fi
+          done
+          if [ -s segments.txt ]; then
+            ffmpeg -hide_banner -loglevel error -f concat -safe 0 -i segments.txt -c copy recording.mp4 || true
+          fi
+          if [ ! -s recording.mp4 ] && [ -s segments.txt ]; then
+            first=$(sed -n "s|^file '\(/.*\)'|\1|p" segments.txt | head -1)
+            cp "$first" recording.mp4
+          fi
+          test -s instrumentation.txt
+          tar czf private-bundle.tgz $(for f in recording.mp4 instrumentation.txt approved.png submitted.png outcome-unknown.png live-e2e-case-number.txt live-e2e-submission-state.json; do if [ -s "$f" ]; then printf '%s ' "$f"; fi; done)
+          test -s private-bundle.tgz
+          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt \
+            -in private-bundle.tgz -out live-e2e-private-bundle.tgz.enc -pass env:TRIAL_DATA_KEY
+          test -s live-e2e-private-bundle.tgz.enc
+          shred -u private-bundle.tgz recording.mp4 seg1.mp4 seg2.mp4 seg3.mp4 seg4.mp4 seg5.mp4 seg6.mp4 approved.png submitted.png outcome-unknown.png live-e2e-case-number.txt live-e2e-submission-state.json instrumentation.txt 2>/dev/null || true
+      - name: Record this run's digest (encrypted, for the duplicate guard)
+        if: always()
+        env:
+          APPROVED_SHA256_INPUT: ${{ inputs.approved_sha256 }}
+          TRIAL_DATA_KEY: ${{ secrets.TRIAL_DATA_KEY }}
+        run: |
+          set -euo pipefail
+          cd /tmp/live-e2e
+          if [ -f staged.ok ] && [ -f log.collected ] \
+            && grep -q 'LIVE_E2E START' live-log.txt \
+            && ! grep -q 'LIVE_E2E SEND_TAPPED' live-log.txt; then
+            # Only a positively collected log that proves the test started but
+            # never tapped send may skip the burn. Anything else - a missing
+            # or empty log (timeout, cancel, dead adb), staging without a
+            # test start - burns the digest, because a case may exist.
+            echo 'collected log proves the send was never tapped; digest stays re-runnable'
+          elif [ -f staged.ok ]; then
+            outcome=aborted_unknown
+            if [ -f log.collected ]; then
+              if grep -q 'LIVE_E2E SEND_TAPPED' live-log.txt; then outcome=aborted_after_send_tap; fi
+              if grep -q 'LIVE_E2E OUTCOME_UNKNOWN' live-log.txt; then outcome=outcome_unknown; fi
+              if grep -q 'LIVE_E2E SUBMITTED case=' live-log.txt; then outcome=submitted; fi
+            fi
+            jq -n --arg d "$APPROVED_SHA256_INPUT" --arg o "$outcome" --arg r "$GITHUB_RUN_ID" --arg a "$GITHUB_RUN_ATTEMPT" --arg t "$(date -u +%FT%TZ)" \
+              '{approvedSha256:$d, outcome:$o, runId:$r, runAttempt:$a, recordedAt:$t}' > run-record.json
+            openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt \
+              -in run-record.json -out live-e2e-run-record.json.enc -pass env:TRIAL_DATA_KEY
+            shred -u run-record.json
+          else
+            echo 'params never staged; no run record needed'
+          fi
+      - name: Upload the encrypted evidence bundle
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v4
+        with:
+          name: live-e2e-private-bundle-encrypted
+          path: /tmp/live-e2e/live-e2e-private-bundle.tgz.enc
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload the encrypted run record
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v4
+        with:
+          name: live-e2e-run-record-encrypted
+          path: /tmp/live-e2e/live-e2e-run-record.json.enc
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Upload the scrubbed marker log
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v4
+        with:
+          name: live-e2e-scrubbed-log
+          path: /tmp/live-e2e/live-log.txt
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Publish scrubbed markers to the run log and summary
+        if: always()
+        run: |
+          cat /tmp/live-e2e/live-log.txt 2>/dev/null || echo 'no scrubbed markers produced'
+          { echo '## Live emulator E2E (scrubbed markers)'; echo; echo '```'; cat /tmp/live-e2e/live-log.txt 2>/dev/null || echo 'none'; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: "Verdict: the run must reach SUBMITTED"
+        run: |
+          if grep -q 'LIVE_E2E OUTCOME_UNKNOWN' /tmp/live-e2e/live-log.txt 2>/dev/null; then
+            echo 'OUTCOME UNKNOWN: the case may already exist at the city. Do NOT re-dispatch and do NOT use Re-run jobs; check 106 first.' >&2
+            exit 1
+          fi
+          if [ -f /tmp/live-e2e/staged.ok ] && [ ! -f /tmp/live-e2e/log.collected ]; then
+            echo 'MARKER LOG NOT COLLECTED after staging: the outcome is unknown and the case may exist. Do NOT re-dispatch and do NOT use Re-run jobs; check 106 first.' >&2
+            exit 1
+          fi
+          test "$(cat /tmp/live-e2e/instrumentation.rc)" = "0"
+          grep -q 'LIVE_E2E SUBMITTED case=' /tmp/live-e2e/live-log.txt
+      - name: Always remove the tunnel and staged plaintext
+        if: always()
+        run: |
+          sudo python3 trial/l2tp.py down || true
+          rm -f /tmp/egress-blocked
+          rm -rf /tmp/trial-state /tmp/trial-result.txt /tmp/live-e2e/prior
+          shred -u /tmp/live-e2e/photo.jpg /tmp/live-e2e/params.json 2>/dev/null || true
+          rm -rf /tmp/live-e2e
