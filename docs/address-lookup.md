@@ -131,3 +131,18 @@ both sides is expected for addresses outside OSM/registry coverage).
   the streets section (the resolver refuses ambiguous names anyway).
 - The in-app attribution lives in
   `app/src/main/assets/i18n/strings.json` (`licenses.*` keys).
+
+## On-device lookup precedence and updates
+
+The first installed candidate wins: app-specific external files directory,
+then noBackupFilesDir, then the bundled development asset. A present but stale
+external copy blocks submission even when a matching copy exists later in the
+list. This is deliberate fail-closed behavior; replace or remove the stale
+first copy rather than bypassing the pin. Missing and mismatched files have
+different UI messages.
+
+The pin covers the whole file byte-for-byte. Any regeneration or reformatting
+requires an app release carrying the new pin and coordinated installation of
+the matching private file. The file itself must not enter this public repo.
+Synthetic E2E uses the test-only in-memory directory seam from #185, not an
+override of the production pin or an installed-file mutation.

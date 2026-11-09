@@ -47,6 +47,7 @@ class SubmissionCoordinator(
         LOCAL_FAILURE,
         /** The private address lookup is not installed on this device. */
         LOOKUP_NOT_INSTALLED,
+        LOOKUP_MISMATCH,
         MUNICIPAL_REVIEW_NEEDED,
         MUNICIPAL_API_FAILURE,
     }

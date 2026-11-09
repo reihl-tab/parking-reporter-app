@@ -464,6 +464,13 @@
       "ru": "Частный файл адресов не установлен на устройстве",
       "am": "የግል አድራሻ ፋይሉ በመሣሪያው ላይ አልተጫነም"
     },
+    "shell.submit.blocked.lookup_mismatch": {
+      "he": "קובץ הכתובות במכשיר מיושן או שונה. התקן את העותק העדכני",
+      "en": "The address file on this device is outdated or modified. Install the current copy",
+      "ar": "ملف العناوين على الجهاز قديم أو معدل. ثبّت النسخة الحالية",
+      "ru": "Файл адресов на устройстве устарел или изменён. Установите актуальную копию",
+      "am": "በመሣሪያው ላይ ያለው የአድራሻ ፋይል ያረጀ ወይም የተቀየረ ነው። ወቅታዊውን ቅጂ ይጫኑ"
+    },
     "shell.submit.draft_not_saved": {
       "he": "הטיוטה לא נשמרה אחרי האישור. שמור ואשר מחדש לפני שליחה.",
       "en": "The draft was not saved after approval. Save and approve again before sending.",

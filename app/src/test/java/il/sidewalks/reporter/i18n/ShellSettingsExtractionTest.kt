@@ -99,6 +99,7 @@ class ShellSettingsExtractionTest {
         "shell.submit.blocked.municipal_api_failure" to "העירייה ענתה: {detail}",
         "shell.submit.blocked.local_failure" to "שגיאה מקומית, לא בוצעה שליחה ({detail})",
         "shell.submit.blocked.lookup_not_installed" to "קובץ הכתובות הפרטי לא מותקן במכשיר",
+        "shell.submit.blocked.lookup_mismatch" to "קובץ הכתובות במכשיר מיושן או שונה. התקן את העותק העדכני",
         "shell.submit.draft_not_saved" to "הטיוטה לא נשמרה אחרי האישור. שמור ואשר מחדש לפני שליחה.",
         "shell.submit.sending" to "שולח לעירייה...",
         "shell.unlock.submit_title" to "שליחת דיווח לעירייה",
@@ -207,6 +208,7 @@ class ShellSettingsExtractionTest {
             Reason.MUNICIPAL_API_FAILURE to "העירייה ענתה: $lri$d$pdi",
             Reason.LOCAL_FAILURE to "שגיאה מקומית, לא בוצעה שליחה ($lri$d$pdi)",
             Reason.LOOKUP_NOT_INSTALLED to "קובץ הכתובות הפרטי לא מותקן במכשיר",
+            Reason.LOOKUP_MISMATCH to "קובץ הכתובות במכשיר מיושן או שונה. התקן את העותק העדכני",
         )
         assertEquals("every reason is pinned", Reason.entries.toSet(), expected.keys)
         for ((reason, text) in expected) assertEquals(reason.name, text, blocked(reason))
