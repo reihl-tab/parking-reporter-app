@@ -8,7 +8,11 @@ Always runs a self-contained schema + determinism check on the candidate
     unique codes, sorted by numeric street code;
   * addresses: [lat, lon, house, street] rows, sorted by
     (street, house, lat, lon), no duplicates.
---sha256 EXPECTED additionally pins the file's exact bytes.
+--sha256 EXPECTED additionally pins the file's exact bytes (this drifts with
+the live street registry). --addresses-sha256 EXPECTED pins the addresses
+section alone (the ODbL Derivative Database), over the same canonical compact
+JSON the builder prints: json.dumps(addresses, ensure_ascii=False,
+separators=(",", ":")).
 
 Optionally, with --reference OLD.json --helper /path/to/parking-report-helper,
 also resolves a golden set of Jerusalem "street house" addresses through the
@@ -16,7 +20,8 @@ pipeline's own resolver with BOTH files and reports every difference in
 street code, house, or ITM coordinate. Exit 1 on any failure.
 
 Usage:
-  python3 validate_lookup.py --candidate NEW.json [--sha256 HEX]
+  python3 validate_lookup.py --candidate NEW.json [--sha256 HEX] \
+      [--addresses-sha256 HEX]
   python3 validate_lookup.py --candidate NEW.json \
       --reference OLD.json --helper /path/to/parking-report-helper
 """
@@ -41,6 +46,12 @@ GOLDEN = [
 ]
 
 STREET_KEYS = ("StreetName", "StreetCode", "CityName", "CityCode")
+
+
+def addresses_section_sha256(addresses):
+    """Same expression as build_address_lookup.addresses_section_sha256."""
+    section = json.dumps(addresses, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(section).hexdigest()
 
 
 def schema_problems(data):
@@ -110,6 +121,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--candidate", required=True)
     parser.add_argument("--sha256", help="expected sha256 of the candidate file")
+    parser.add_argument("--addresses-sha256",
+                        help="expected sha256 of the addresses section (canonical compact JSON)")
     parser.add_argument("--reference", help="optional reference file for golden diff")
     parser.add_argument("--helper", help="helper repo root (required with --reference)")
     args = parser.parse_args()
@@ -124,6 +137,19 @@ def main():
         else:
             print(f"OK   sha256: {digest}")
     data = json.loads(raw.decode("utf-8"))
+    if args.addresses_sha256:
+        expected = args.addresses_sha256.strip().lower()
+        addresses = data.get("addresses") if isinstance(data, dict) else None
+        if not isinstance(addresses, list):
+            print("FAIL addresses sha256: no addresses list")
+            failures += 1
+        else:
+            section_digest = addresses_section_sha256(addresses)
+            if section_digest != expected:
+                print(f"FAIL addresses sha256: {section_digest} != {expected}")
+                failures += 1
+            else:
+                print(f"OK   addresses sha256: {section_digest}")
     problems = schema_problems(data)
     for problem in problems:
         print(f"FAIL schema: {problem}")

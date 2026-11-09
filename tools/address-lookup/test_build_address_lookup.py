@@ -4,12 +4,16 @@
 Run: python3 -m unittest tools/address-lookup/test_build_address_lookup.py
 (or: python3 tools/address-lookup/test_build_address_lookup.py)
 """
+import contextlib
+import hashlib
 import importlib.util
+import io
 import json
 import pathlib
 import sys
 import tempfile
 import unittest
+import urllib.parse
 
 MODULE_PATH = pathlib.Path(__file__).with_name("build_address_lookup.py")
 spec = importlib.util.spec_from_file_location("build_address_lookup", MODULE_PATH)
@@ -32,6 +36,11 @@ REGISTRY_PAGE = {
 }
 
 OVERPASS_PAGE = {
+    "osm3s": {
+        "timestamp_osm_base": "2026-11-08T00:00:00Z",
+        "timestamp_areas_base": "2026-11-08T00:00:00Z",
+        "copyright": "The data included in this document is from www.openstreetmap.org.",
+    },
     "elements": [
         {"type": "node", "lat": 31.78, "lon": 35.21,
          "tags": {"addr:housenumber": "5", "addr:street": "רחוב ב"}},
@@ -51,6 +60,13 @@ def fake_fetch(url, data=None, retries=3):
     if "datastore_search" in url:
         return json.dumps(REGISTRY_PAGE).encode()
     return json.dumps(OVERPASS_PAGE).encode()
+
+
+def fake_fetch_no_osm3s(url, data=None, retries=3):
+    if "datastore_search" in url:
+        return json.dumps(REGISTRY_PAGE).encode()
+    page = {k: v for k, v in OVERPASS_PAGE.items() if k != "osm3s"}
+    return json.dumps(page).encode()
 
 
 class NormalizeTest(unittest.TestCase):
@@ -98,6 +114,99 @@ class BuildTest(unittest.TestCase):
 
     def test_overpass_query_is_date_pinned(self):
         self.assertIn(f'[date:"{builder.OVERPASS_DATE}"]', builder.OVERPASS_QUERY)
+
+    def test_overpass_area_is_built_from_the_dated_relation(self):
+        query = builder.OVERPASS_QUERY
+        lines = query.splitlines()
+        # The [date:] setting is the query's global first statement, so the
+        # relation lookup below runs under it (one query, no second request).
+        self.assertTrue(lines[0].startswith("[out:json]"))
+        self.assertIn(f'[date:"{builder.OVERPASS_DATE}"]', lines[0])
+        self.assertEqual(builder.OVERPASS_RELATION, 1381350)
+        self.assertIn("rel(1381350);", lines)
+        self.assertIn("map_to_area->.jerusalem;", lines)
+        self.assertLess(lines.index("rel(1381350);"),
+                        lines.index("map_to_area->.jerusalem;"))
+        # No hard-coded derived area id any more.
+        self.assertNotIn("area(3601381350)", query)
+        self.assertNotIn("3601381350", query)
+        self.assertEqual(query.count("(area.jerusalem)"), 2)
+
+    def test_query_is_what_is_posted(self):
+        sent = []
+
+        def recording_fetch(url, data=None, retries=3):
+            sent.append((url, data))
+            return fake_fetch(url, data, retries)
+
+        builder.fetch = recording_fetch
+        builder.load_address_points()
+        self.assertEqual(len(sent), 1)
+        url, data = sent[0]
+        self.assertEqual(url, builder.OVERPASS_URL)
+        self.assertEqual(urllib.parse.parse_qs(data.decode())["data"], [builder.OVERPASS_QUERY])
+
+    def test_prints_overpass_timestamps_when_present(self):
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            builder.load_address_points()
+        out = err.getvalue()
+        self.assertIn("overpass timestamp_osm_base: 2026-11-08T00:00:00Z", out)
+        self.assertIn("overpass timestamp_areas_base: 2026-11-08T00:00:00Z", out)
+
+    def test_no_timestamp_line_when_absent(self):
+        builder.fetch = fake_fetch_no_osm3s
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            points = builder.load_address_points()
+        self.assertNotIn("timestamp_osm_base", err.getvalue())
+        self.assertNotIn("timestamp_areas_base", err.getvalue())
+        self.assertEqual(len(points), 2)
+
+    def test_addresses_section_sha256_is_the_documented_expression(self):
+        points = builder.load_address_points()
+        expected = hashlib.sha256(
+            json.dumps(points, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        self.assertEqual(builder.addresses_section_sha256(points), expected)
+
+    def test_main_prints_the_section_sha256(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = pathlib.Path(tmp) / "addresses.json"
+            sys.argv = ["build_address_lookup.py", "--out", str(out)]
+            err = io.StringIO()
+            with contextlib.redirect_stderr(err):
+                builder.main()
+            data = json.loads(out.read_text(encoding="utf-8"))
+        digest = builder.addresses_section_sha256(data["addresses"])
+        self.assertIn(f"sha256(addresses section, compact JSON): {digest}", err.getvalue())
+
+
+class DocsAgreementTest(unittest.TestCase):
+    """docs/address-lookup.md describes the query and checks the code runs."""
+
+    DOCS = MODULE_PATH.parents[2] / "docs" / "address-lookup.md"
+
+    def setUp(self):
+        self.docs = self.DOCS.read_text(encoding="utf-8")
+        self.flat = " ".join(self.docs.split())
+
+    def test_docs_name_the_date_pin_and_the_dated_relation(self):
+        self.assertIn(f'[date:"{builder.OVERPASS_DATE}"]', self.docs)
+        self.assertIn(f"rel({builder.OVERPASS_RELATION}); map_to_area->.jerusalem;", self.docs)
+
+    def test_docs_state_the_boundary_condition_instead_of_exactly(self):
+        self.assertNotIn("exactly reproducible", self.docs)
+        self.assertIn("while the boundary relation 1381350", self.flat)
+
+    def test_docs_document_the_section_hash_check(self):
+        self.assertIn("--addresses-sha256", self.docs)
+        self.assertIn('json.dumps(addresses, ensure_ascii=False, separators=(",", ":"))', self.docs)
+
+    def test_docs_claim_no_release_asset(self):
+        # Section 4.6 names one route; no text may claim a release asset exists.
+        self.assertNotIn("release asset with", self.flat)
+        self.assertIn("the generator route, no release asset.", self.flat)
 
 
 class SchemaSelfTest(unittest.TestCase):
