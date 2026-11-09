@@ -88,6 +88,7 @@ def load_streets():
     """Street name -> municipal street code, from the national registry."""
     streets = {}
     offset = 0
+    total = 0
     while True:
         query = urllib.parse.urlencode({
             "resource_id": STREETS_RESOURCE_ID,
@@ -108,8 +109,9 @@ def load_streets():
                 "CityName": str(row.get("שם_ישוב") or "").strip(),
                 "CityCode": str(row.get("סמל_ישוב") or "").strip(),
             }
+        total = data["result"]["total"]
         offset += len(records)
-        if offset >= data["result"]["total"] or not records:
+        if offset >= total or not records:
             break
     # One street name must map to ONE code, like the pipeline's lookup.
     by_name = {}
@@ -120,8 +122,8 @@ def load_streets():
         for code in ambiguous[name]:
             del streets[code]
     ordered = [streets[code] for code in sorted(streets, key=int)]
-    print(f"streets: {len(ordered)} rows ({len(ambiguous)} ambiguous names dropped)",
-          file=sys.stderr)
+    print(f"streets: {len(ordered)} rows ({len(ambiguous)} ambiguous names dropped, "
+          f"registry total at retrieval: {total})", file=sys.stderr)
     return ordered, by_name
 
 
@@ -169,12 +171,17 @@ def main():
         json.dump(out, fh, ensure_ascii=False, indent=1, sort_keys=True)
         fh.write("\n")
     digest = hashlib.sha256(open(args.out, "rb").read()).hexdigest()
+    # The addresses section alone (the ODbL Derivative Database), hashed over its
+    # canonical compact JSON so recipients can verify it without the whole file.
+    section = json.dumps(addresses, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+    section_digest = hashlib.sha256(section).hexdigest()
     print(f"wrote {args.out}: {len(streets)} streets, {len(addresses)} addresses",
           file=sys.stderr)
     print(f"inputs: overpass date={OVERPASS_DATE} relation=1381350; "
           f"registry resource={STREETS_RESOURCE_ID} locality={JERUSALEM_LOCALITY}",
           file=sys.stderr)
     print(f"sha256: {digest}", file=sys.stderr)
+    print(f"sha256(addresses section, compact JSON): {section_digest}", file=sys.stderr)
 
 
 if __name__ == "__main__":

@@ -48,12 +48,13 @@ ODbL-licensed database) and section 4.4(b):
   screen covers section 4.3's notice requirement for them.
 
 Section 4.6 (making the Derivative Database available): recipients can
-obtain the addresses section either
-
-- as a file published under ODbL 1.0 with each app release that ships
-  it (release asset `addresses.json`), or
-- by running the generator in this repository, which reproduces it
-  byte-identically from the pinned inputs recorded below.
+reproduce the addresses section byte-identically by running the
+generator in this repository with the pinned inputs recorded below; it
+is distributed under ODbL 1.0. (Owner decision 2026-11-09: the
+generator route, no release asset.) Its sha256 over canonical compact
+JSON (`json.dumps(addresses, ensure_ascii=False, separators=(",", ":"))`)
+is `2b45e56d41364df6262adc321424d71a8a0851f6873ff17a55e65ed82665c657`;
+the builder prints it on every run.
 
 The same notice appears on the app's Settings -> Licenses screen.
 
@@ -69,11 +70,19 @@ stderr. Inputs are pinned so a re-run is byte-identical:
 
 - Overpass query: `[date:"2026-11-08T00:00:00Z"]`, relation 1381350
   (`addr:housenumber` + `addr:street` nodes and ways, `out center tags`).
+  The date pin makes the addresses section exactly reproducible.
 - National registry resource `9ad3862c-8391-4b2f-84a4-2d4c68625f4b`,
-  filter סמל_ישוב=3000, retrieved 2026-11-08.
+  filter סמל_ישוב=3000, retrieved 2026-11-08, 4,383 records at
+  retrieval (4,371 kept, 6 ambiguous name pairs dropped). The registry
+  is a live dataset (updated about weekly) and its API has no date pin,
+  so a later re-run may pick up registry changes in the streets section;
+  the addresses section above is the pinned, exactly reproducible part.
 
 Reference build of 2026-11-08: 4,371 streets, 22,524 address points,
-sha256 `bd1d8f5d49549cfdd920a15f6218690630f09f7e48199037b31d96e5c36546cf`.
+whole-file sha256
+`bd1d8f5d49549cfdd920a15f6218690630f09f7e48199037b31d96e5c36546cf`,
+addresses-section sha256 (compact JSON)
+`2b45e56d41364df6262adc321424d71a8a0851f6873ff17a55e65ed82665c657`.
 
 `validate_lookup.py` checks schema, ordering, duplicates and (optionally)
 the exact sha256 without needing any private file. With `--reference` and
