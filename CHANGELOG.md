@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-11-09
+
+### Features
+
+- feat: municipal navy/gold Material 3 theme (#161 item 1) (#199) (77f86f9)
+
 ## [0.17.2] - 2026-11-09
 
 ### Fixes
