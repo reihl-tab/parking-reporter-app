@@ -212,34 +212,6 @@
       "ru": "Отказ в доступе к камере или в проверке подлинности оставляет экран без действия. Открытые данные не сохраняются взамен.",
       "am": "የካሜራ ፈቃድን ወይም ማረጋገጫን መሰረዝ ገጹን ያለ እርምጃ ይተዋል። እንደ አማራጭ ግልጽ መረጃ አይቀመጥም።"
     },
-    "shell.review.missing_gps": {
-      "he": "GPS חסר",
-      "en": "GPS missing",
-      "ar": "لا يوجد GPS",
-      "ru": "Нет GPS",
-      "am": "GPS የለም"
-    },
-    "shell.review.missing_time": {
-      "he": "זמן חסר",
-      "en": "Time missing",
-      "ar": "الوقت مفقود",
-      "ru": "Нет времени съёмки",
-      "am": "ሰዓት የለም"
-    },
-    "shell.review.timezone_needs_confirmation": {
-      "he": "אזור זמן דורש אישור",
-      "en": "Time zone needs confirmation",
-      "ar": "المنطقة الزمنية تحتاج إلى تأكيد",
-      "ru": "Часовой пояс требует подтверждения",
-      "am": "የሰዓት ክልሉ ማረጋገጫ ያስፈልገዋል"
-    },
-    "shell.review.address_needs_confirmation": {
-      "he": "כתובת ומספר בית דורשים אישור",
-      "en": "Address and house number need confirmation",
-      "ar": "العنوان ورقم المنزل يحتاجان إلى تأكيد",
-      "ru": "Адрес и номер дома требуют подтверждения",
-      "am": "አድራሻውና የቤት ቁጥሩ ማረጋገጫ ያስፈልጋቸዋል"
-    },
     "shell.outgoing.title": {
       "he": "תמונה נפרדת לבדיקה",
       "en": "Separate photo for review",
@@ -793,6 +765,496 @@
       "ar": "رجوع",
       "ru": "Назад",
       "am": "ተመለስ"
+    },
+    "review.title": {
+      "he": "בדיקת הדיווח",
+      "en": "Report review",
+      "ar": "مراجعة البلاغ",
+      "ru": "Проверка обращения",
+      "am": "የሪፖርት ግምገማ"
+    },
+    "review.edit.start": {
+      "he": "ערוך",
+      "en": "Edit",
+      "ar": "تعديل",
+      "ru": "Изменить",
+      "am": "አርትዕ"
+    },
+    "review.edit.done": {
+      "he": "סיום עריכה",
+      "en": "Done editing",
+      "ar": "إنهاء التعديل",
+      "ru": "Завершить редактирование",
+      "am": "አርትዖት ጨርስ"
+    },
+    "review.image_description": {
+      "he": "צילום ראיה",
+      "en": "Evidence photo",
+      "ar": "صورة الدليل",
+      "ru": "Фото доказательства",
+      "am": "የማስረጃ ፎቶ"
+    },
+    "review.category_note": {
+      "he": "זיהוי קטגוריה אוטומטי עדיין בפיתוח. בחר קטגוריה לבדיקה.",
+      "en": "Automatic category detection is still in development. Choose a category to review.",
+      "ar": "التعرّف التلقائي على الفئة لا يزال قيد التطوير. اختر فئة للمراجعة.",
+      "ru": "Автоматическое определение категории ещё в разработке. Выберите категорию для проверки.",
+      "am": "ራስ-ሰር የምድብ ለይቶ ማወቅ ገና በመገንባት ላይ ነው። ለግምገማ ምድብ ይምረጡ።"
+    },
+    "review.plate": {
+      "he": "לוחית: {plate}",
+      "en": "Plate: {plate}",
+      "ar": "اللوحة: {plate}",
+      "ru": "Номер: {plate}",
+      "am": "ሰሌዳ: {plate}"
+    },
+    "review.plate_not_confirmed": {
+      "he": "לא אושרה",
+      "en": "not confirmed",
+      "ar": "لم تُؤكَّد",
+      "ru": "не подтверждён",
+      "am": "አልተረጋገጠም"
+    },
+    "review.ocr.analyzing": {
+      "he": "מנתח את הצילום במכשיר...",
+      "en": "Analyzing the photo on the device...",
+      "ar": "جارٍ تحليل الصورة على الجهاز...",
+      "ru": "Анализ фото на устройстве...",
+      "am": "ፎቶውን በመሣሪያው ላይ በመተንተን ላይ..."
+    },
+    "review.ocr.no_plate": {
+      "he": "לא זוהתה לוחית; ניתן לערוך",
+      "en": "No plate detected; you can edit",
+      "ar": "لم يتم التعرّف على لوحة؛ يمكنك التعديل",
+      "ru": "Номер не распознан; можно изменить",
+      "am": "ምንም ሰሌዳ አልተገኘም፤ ማረም ይችላሉ"
+    },
+    "review.ocr.suggestions_found": {
+      "he": "נמצאו הצעות. בדוק כל ספרה בצילום",
+      "en": "Suggestions found. Check every digit against the photo",
+      "ar": "تم العثور على اقتراحات. تحقّق من كل رقم في الصورة",
+      "ru": "Найдены варианты. Сверьте каждую цифру с фото",
+      "am": "ጥቆማዎች ተገኝተዋል። እያንዳንዱን አሃዝ ከፎቶው ጋር ያረጋግጡ"
+    },
+    "review.plate_suggestion": {
+      "he": "הצעה בלבד: {plate}",
+      "en": "Suggestion only: {plate}",
+      "ar": "اقتراح فقط: {plate}",
+      "ru": "Только вариант: {plate}",
+      "am": "ጥቆማ ብቻ: {plate}"
+    },
+    "review.address": {
+      "he": "כתובת: {address}",
+      "en": "Address: {address}",
+      "ar": "العنوان: {address}",
+      "ru": "Адрес: {address}",
+      "am": "አድራሻ: {address}"
+    },
+    "review.address_missing": {
+      "he": "נדרשת השלמה בעריכה",
+      "en": "needs completing in edit mode",
+      "ar": "يجب إكماله في وضع التعديل",
+      "ru": "нужно заполнить при редактировании",
+      "am": "በአርትዖት መሟላት አለበት"
+    },
+    "review.time": {
+      "he": "זמן: {time}",
+      "en": "Time: {time}",
+      "ar": "الوقت: {time}",
+      "ru": "Время: {time}",
+      "am": "ሰዓት: {time}"
+    },
+    "review.text_missing": {
+      "he": "תיאור הדיווח נדרש בעריכה",
+      "en": "The report description is needed in edit mode",
+      "ar": "وصف البلاغ مطلوب في وضع التعديل",
+      "ru": "Описание обращения нужно заполнить при редактировании",
+      "am": "የሪፖርቱ መግለጫ በአርትዖት ያስፈልጋል"
+    },
+    "review.unresolved": {
+      "he": "דרוש בירור: {items}",
+      "en": "Needs checking: {items}",
+      "ar": "يحتاج إلى توضيح: {items}",
+      "ru": "Требует уточнения: {items}",
+      "am": "ማጣራት ያስፈልጋል: {items}"
+    },
+    "review.edit.original_time_title": {
+      "he": "זמן הראיה המקורי",
+      "en": "Original evidence time",
+      "ar": "وقت الدليل الأصلي",
+      "ru": "Исходное время доказательства",
+      "am": "የማስረጃው የመጀመሪያ ሰዓት"
+    },
+    "review.edit.gps": {
+      "he": "GPS: {status}",
+      "en": "GPS: {status}",
+      "ar": "GPS: {status}",
+      "ru": "GPS: {status}",
+      "am": "GPS: {status}"
+    },
+    "review.edit.gps_missing": {
+      "he": "חסר",
+      "en": "missing",
+      "ar": "مفقود",
+      "ru": "нет",
+      "am": "የለም"
+    },
+    "review.edit.gps_read": {
+      "he": "נקרא מהראיה",
+      "en": "read from the evidence",
+      "ar": "مقروء من الدليل",
+      "ru": "прочитан из доказательства",
+      "am": "ከማስረጃው ተነቧል"
+    },
+    "review.edit.privacy_note": {
+      "he": "התמונות והלוחיות מעובדות במכשיר ואינן נשלחות ל-Google. ML Kit שולח ל-Google נתוני שימוש וביצועים ועשוי לפנות לשרתיה לעדכונים. תוצאה היא הצעה בלבד.",
+      "en": "Photos and plates are processed on the device and are not sent to Google. ML Kit sends usage and performance data to Google and may contact its servers for updates. A result is a suggestion only.",
+      "ar": "تُعالَج الصور واللوحات على الجهاز ولا تُرسل إلى Google. يرسل ML Kit بيانات الاستخدام والأداء إلى Google وقد يتصل بخوادمها للحصول على التحديثات. النتيجة اقتراح فقط.",
+      "ru": "Фото и номера обрабатываются на устройстве и не отправляются в Google. ML Kit отправляет в Google данные об использовании и производительности и может обращаться к её серверам за обновлениями. Результат — только вариант.",
+      "am": "ፎቶዎቹና ሰሌዳዎቹ በመሣሪያው ላይ ይሠራሉ፤ ወደ Google አይላኩም። ML Kit የአጠቃቀምና የአፈጻጸም መረጃ ወደ Google ይልካል፤ ለዝማኔዎችም አገልጋዮቹን ሊያገኝ ይችላል። ውጤቱ ጥቆማ ብቻ ነው።"
+    },
+    "review.edit.use_mlkit": {
+      "he": "זיהוי עם Google ML Kit במקום Tesseract",
+      "en": "Recognize with Google ML Kit instead of Tesseract",
+      "ar": "التعرّف باستخدام Google ML Kit بدلًا من Tesseract",
+      "ru": "Распознавать через Google ML Kit вместо Tesseract",
+      "am": "ከTesseract ይልቅ በGoogle ML Kit ለይ"
+    },
+    "review.edit.recognizing": {
+      "he": "מזהה במכשיר...",
+      "en": "Recognizing on the device...",
+      "ar": "جارٍ التعرّف على الجهاز...",
+      "ru": "Распознавание на устройстве...",
+      "am": "በመሣሪያው ላይ በመለየት ላይ..."
+    },
+    "review.edit.suggest_plate": {
+      "he": "הצע לוחית מתוך הצילום",
+      "en": "Suggest a plate from the photo",
+      "ar": "اقترح لوحة من الصورة",
+      "ru": "Предложить номер по фото",
+      "am": "ከፎቶው ሰሌዳ ጠቁም"
+    },
+    "review.edit.plate_field": {
+      "he": "לוחית ללא מקפים",
+      "en": "Plate without dashes",
+      "ar": "اللوحة بدون شرطات",
+      "ru": "Номер без дефисов",
+      "am": "ሰሌዳ ያለ ሰረዝ"
+    },
+    "review.edit.address_field": {
+      "he": "רחוב ומספר בית שאישרת",
+      "en": "Street and house number you confirmed",
+      "ar": "الشارع ورقم المنزل اللذان أكدتهما",
+      "ru": "Улица и номер дома, которые вы подтвердили",
+      "am": "ያረጋገጡት መንገድና የቤት ቁጥር"
+    },
+    "review.edit.geocode_note": {
+      "he": "חיפוש כתובת שולח קואורדינטות בלבד לספק המיקום של המכשיר. מספרי בית הם הצעות בלבד.",
+      "en": "An address search sends only coordinates to the device's location provider. House numbers are suggestions only.",
+      "ar": "يرسل البحث عن العنوان الإحداثيات فقط إلى مزوّد الموقع في الجهاز. أرقام المنازل اقتراحات فقط.",
+      "ru": "Поиск адреса передаёт поставщику геоданных устройства только координаты. Номера домов — только варианты.",
+      "am": "የአድራሻ ፍለጋ መጋጠሚያዎችን ብቻ ለመሣሪያው የአካባቢ አቅራቢ ይልካል። የቤት ቁጥሮች ጥቆማዎች ብቻ ናቸው።"
+    },
+    "review.edit.geocode_button": {
+      "he": "חפש הצעות כתובת לפי המיקום",
+      "en": "Find address suggestions from the location",
+      "ar": "ابحث عن اقتراحات عناوين حسب الموقع",
+      "ru": "Найти варианты адреса по местоположению",
+      "am": "በአካባቢው መሠረት የአድራሻ ጥቆማዎችን ፈልግ"
+    },
+    "review.geocode.no_suggestions": {
+      "he": "אין הצעות, הזן כתובת שבדקת",
+      "en": "No suggestions; enter an address you checked",
+      "ar": "لا توجد اقتراحات؛ أدخل عنوانًا تحققت منه",
+      "ru": "Вариантов нет; введите проверенный вами адрес",
+      "am": "ምንም ጥቆማ የለም፤ ያረጋገጡትን አድራሻ ያስገቡ"
+    },
+    "review.geocode.check_house_number": {
+      "he": "בדוק ואשר את מספר הבית בעצמך",
+      "en": "Check and confirm the house number yourself",
+      "ar": "تحقّق من رقم المنزل وأكّده بنفسك",
+      "ru": "Проверьте и подтвердите номер дома сами",
+      "am": "የቤት ቁጥሩን ራስዎ ያረጋግጡ"
+    },
+    "review.address_suggestion": {
+      "he": "הצעה בלבד: {address}",
+      "en": "Suggestion only: {address}",
+      "ar": "اقتراح فقط: {address}",
+      "ru": "Только вариант: {address}",
+      "am": "ጥቆማ ብቻ: {address}"
+    },
+    "review.edit.text_field": {
+      "he": "הטקסט המדויק לבדיקה",
+      "en": "The exact text to review",
+      "ar": "النص الدقيق للمراجعة",
+      "ru": "Точный текст для проверки",
+      "am": "ለግምገማ ትክክለኛው ጽሑፍ"
+    },
+    "review.edit.confirm_note": {
+      "he": "מלא ואשר זמן עם אזור זמן וקואורדינטות ידועות לך. אין לנחש מידע חסר. הערכים המקוריים נשמרים בנפרד.",
+      "en": "Fill in and confirm a time with a time zone and coordinates you know. Do not guess missing information. The original values are kept separately.",
+      "ar": "املأ وأكّد وقتًا مع منطقة زمنية وإحداثيات تعرفها. لا تخمّن المعلومات الناقصة. تُحفظ القيم الأصلية بشكل منفصل.",
+      "ru": "Заполните и подтвердите время с часовым поясом и известные вам координаты. Не угадывайте недостающие данные. Исходные значения хранятся отдельно.",
+      "am": "የሚያውቁትን ሰዓት ከሰዓት ክልል ጋርና መጋጠሚያዎችን ይሙሉና ያረጋግጡ። የጎደለ መረጃን አይገምቱ። የመጀመሪያዎቹ እሴቶች ለብቻ ይቀመጣሉ።"
+    },
+    "review.edit.time_field": {
+      "he": "זמן מאושר עם אזור זמן (ISO)",
+      "en": "Confirmed time with time zone (ISO)",
+      "ar": "الوقت المؤكد مع المنطقة الزمنية (ISO)",
+      "ru": "Подтверждённое время с часовым поясом (ISO)",
+      "am": "የተረጋገጠ ሰዓት ከሰዓት ክልል ጋር (ISO)"
+    },
+    "review.edit.latitude_field": {
+      "he": "קו רוחב",
+      "en": "Latitude",
+      "ar": "خط العرض",
+      "ru": "Широта",
+      "am": "ኬክሮስ"
+    },
+    "review.edit.longitude_field": {
+      "he": "קו אורך",
+      "en": "Longitude",
+      "ar": "خط الطول",
+      "ru": "Долгота",
+      "am": "ኬንትሮስ"
+    },
+    "review.edit.confirm_button": {
+      "he": "אשר זמן, מיקום וכתובת שבדקת",
+      "en": "Confirm the time, location and address you checked",
+      "ar": "أكّد الوقت والموقع والعنوان الذي تحققت منه",
+      "ru": "Подтвердить проверенные время, место и адрес",
+      "am": "ያረጋገጡትን ሰዓት፣ ቦታና አድራሻ አረጋግጥ"
+    },
+    "review.approval_note": {
+      "he": "כל שינוי מבטל אישור. האישור כאן אינו שולח לעירייה או לרשת חברתית.",
+      "en": "Any change cancels the approval. Approving here does not send anything to the municipality or a social network.",
+      "ar": "أي تغيير يلغي الموافقة. الموافقة هنا لا ترسل شيئًا إلى البلدية أو إلى شبكة اجتماعية.",
+      "ru": "Любое изменение отменяет одобрение. Одобрение здесь ничего не отправляет ни в муниципалитет, ни в соцсеть.",
+      "am": "ማንኛውም ለውጥ ማጽደቁን ይሰርዛል። እዚህ ማጽደቅ ወደ ማዘጋጃ ቤቱ ወይም ወደ ማኅበራዊ አውታረ መረብ ምንም አይልክም።"
+    },
+    "review.approve_button": {
+      "he": "אשר את התוכן לבדיקה",
+      "en": "Approve the content for review",
+      "ar": "وافق على المحتوى للمراجعة",
+      "ru": "Одобрить содержание для проверки",
+      "am": "ይዘቱን ለግምገማ አጽድቅ"
+    },
+    "review.approved": {
+      "he": "התוכן אושר מקומית, לא נשלח",
+      "en": "Content approved on this device, not sent",
+      "ar": "تمت الموافقة على المحتوى على الجهاز، لم يُرسل",
+      "ru": "Содержание одобрено на устройстве, не отправлено",
+      "am": "ይዘቱ በመሣሪያው ላይ ጸድቋል፣ አልተላከም"
+    },
+    "review.not_approved": {
+      "he": "התוכן לא אושר",
+      "en": "Content not approved",
+      "ar": "لم تتم الموافقة على المحتوى",
+      "ru": "Содержание не одобрено",
+      "am": "ይዘቱ አልጸደቀም"
+    },
+    "review.save_draft": {
+      "he": "שמור טיוטה",
+      "en": "Save draft",
+      "ar": "حفظ المسودة",
+      "ru": "Сохранить черновик",
+      "am": "ረቂቅ አስቀምጥ"
+    },
+    "review.outgoing_preview": {
+      "he": "בדוק תמונה נפרדת ללא נתוני צילום",
+      "en": "Check a separate photo without capture data",
+      "ar": "تحقّق من صورة منفصلة بدون بيانات التصوير",
+      "ru": "Проверить отдельное фото без данных съёмки",
+      "am": "ያለ ቀረጻ መረጃ የተለየ ፎቶ ይመልከቱ"
+    },
+    "review.submit.button": {
+      "he": "שלח לעירייה",
+      "en": "Send to the municipality",
+      "ar": "إرسال إلى البلدية",
+      "ru": "Отправить в муниципалитет",
+      "am": "ወደ ማዘጋጃ ቤቱ ላክ"
+    },
+    "review.submit.sending": {
+      "he": "שולח לעירייה...",
+      "en": "Sending to the municipality...",
+      "ar": "جارٍ الإرسال إلى البلدية...",
+      "ru": "Отправка в муниципалитет...",
+      "am": "ወደ ማዘጋጃ ቤቱ በመላክ ላይ..."
+    },
+    "review.submit.disabled_button": {
+      "he": "שלח",
+      "en": "Send",
+      "ar": "إرسال",
+      "ru": "Отправить",
+      "am": "ላክ"
+    },
+    "review.submit.unavailable": {
+      "he": "שליחה אינה זמינה בגרסת הבדיקה",
+      "en": "Sending is not available in the test build",
+      "ar": "الإرسال غير متاح في نسخة الاختبار",
+      "ru": "Отправка недоступна в тестовой версии",
+      "am": "መላክ በሙከራ ስሪቱ ውስጥ አይገኝም"
+    },
+    "review.back": {
+      "he": "חזור",
+      "en": "Back",
+      "ar": "رجوع",
+      "ru": "Назад",
+      "am": "ተመለስ"
+    },
+    "review.warning.missing_gps": {
+      "he": "GPS חסר",
+      "en": "GPS missing",
+      "ar": "لا يوجد GPS",
+      "ru": "Нет GPS",
+      "am": "GPS የለም"
+    },
+    "review.warning.missing_time": {
+      "he": "זמן חסר",
+      "en": "Time missing",
+      "ar": "الوقت مفقود",
+      "ru": "Нет времени съёмки",
+      "am": "ሰዓት የለም"
+    },
+    "review.warning.timezone_needs_confirmation": {
+      "he": "אזור זמן דורש אישור",
+      "en": "Time zone needs confirmation",
+      "ar": "المنطقة الزمنية تحتاج إلى تأكيد",
+      "ru": "Часовой пояс требует подтверждения",
+      "am": "የሰዓት ክልሉ ማረጋገጫ ያስፈልገዋል"
+    },
+    "review.warning.address_needs_confirmation": {
+      "he": "כתובת ומספר בית דורשים אישור",
+      "en": "Address and house number need confirmation",
+      "ar": "العنوان ورقم المنزل يحتاجان إلى تأكيد",
+      "ru": "Адрес и номер дома требуют подтверждения",
+      "am": "አድራሻውና የቤት ቁጥሩ ማረጋገጫ ያስፈልጋቸዋል"
+    },
+    "review.warning.suggested_address_needs_confirmation": {
+      "he": "כתובת דורשת אישור",
+      "en": "Address needs confirmation",
+      "ar": "العنوان يحتاج إلى تأكيد",
+      "ru": "Адрес требует подтверждения",
+      "am": "አድራሻው ማረጋገጫ ያስፈልገዋል"
+    },
+    "review.warning.time_needs_confirmation": {
+      "he": "זמן דורש אישור",
+      "en": "Time needs confirmation",
+      "ar": "الوقت يحتاج إلى تأكيد",
+      "ru": "Время требует подтверждения",
+      "am": "ሰዓቱ ማረጋገጫ ያስፈልገዋል"
+    },
+    "review.warning.location_needs_confirmation": {
+      "he": "מיקום דורש אישור",
+      "en": "Location needs confirmation",
+      "ar": "الموقع يحتاج إلى تأكيد",
+      "ru": "Местоположение требует подтверждения",
+      "am": "ቦታው ማረጋገጫ ያስፈልገዋል"
+    },
+    "capture.title": {
+      "he": "צילום ראיה מקורית",
+      "en": "Original evidence photo",
+      "ar": "تصوير الدليل الأصلي",
+      "ru": "Съёмка исходного доказательства",
+      "am": "የመጀመሪያ ማስረጃ ፎቶ"
+    },
+    "capture.camera_unavailable": {
+      "he": "המצלמה אינה זמינה",
+      "en": "The camera is not available",
+      "ar": "الكاميرا غير متاحة",
+      "ru": "Камера недоступна",
+      "am": "ካሜራው አይገኝም"
+    },
+    "capture.failed": {
+      "he": "הצילום נכשל, לא נשמרה ראיה",
+      "en": "The photo failed; no evidence was saved",
+      "ar": "فشل التصوير، لم يُحفظ أي دليل",
+      "ru": "Съёмка не удалась, доказательство не сохранено",
+      "am": "ፎቶ ማንሳቱ አልተሳካም፤ ምንም ማስረጃ አልተቀመጠም"
+    },
+    "capture.saving": {
+      "he": "שומר...",
+      "en": "Saving...",
+      "ar": "جارٍ الحفظ...",
+      "ru": "Сохранение...",
+      "am": "በማስቀመጥ ላይ..."
+    },
+    "capture.shutter": {
+      "he": "צלם",
+      "en": "Take photo",
+      "ar": "التقط",
+      "ru": "Снять",
+      "am": "አንሳ"
+    },
+    "capture.back": {
+      "he": "חזור",
+      "en": "Back",
+      "ar": "رجوع",
+      "ru": "Назад",
+      "am": "ተመለስ"
+    },
+    "reports.title": {
+      "he": "הדיווחים שלי",
+      "en": "My reports",
+      "ar": "بلاغاتي",
+      "ru": "Мои обращения",
+      "am": "የእኔ ሪፖርቶች"
+    },
+    "reports.pending.title": {
+      "he": "טיוטות שלא אושרו",
+      "en": "Unapproved drafts",
+      "ar": "مسودات لم تتم الموافقة عليها",
+      "ru": "Неодобренные черновики",
+      "am": "ያልጸደቁ ረቂቆች"
+    },
+    "reports.pending.empty": {
+      "he": "אין טיוטות ממתינות",
+      "en": "No pending drafts",
+      "ar": "لا توجد مسودات معلّقة",
+      "ru": "Нет ожидающих черновиков",
+      "am": "በመጠባበቅ ላይ ያሉ ረቂቆች የሉም"
+    },
+    "reports.pending.open": {
+      "he": "פתח טיוטה {id}",
+      "en": "Open draft {id}",
+      "ar": "فتح المسودة {id}",
+      "ru": "Открыть черновик {id}",
+      "am": "ረቂቅ {id} ክፈት"
+    },
+    "reports.approved.title": {
+      "he": "אושרו וממתינים לשליחה",
+      "en": "Approved and waiting to be sent",
+      "ar": "تمت الموافقة عليها وبانتظار الإرسال",
+      "ru": "Одобрены и ждут отправки",
+      "am": "ጸድቀው ለመላክ በመጠባበቅ ላይ"
+    },
+    "reports.approved.empty": {
+      "he": "אין דיווחים שאושרו וממתינים לשליחה",
+      "en": "No approved reports waiting to be sent",
+      "ar": "لا توجد بلاغات معتمدة بانتظار الإرسال",
+      "ru": "Нет одобренных обращений, ожидающих отправки",
+      "am": "ጸድቀው ለመላክ የሚጠብቁ ሪፖርቶች የሉም"
+    },
+    "reports.approved.open": {
+      "he": "פתח דיווח {id}",
+      "en": "Open report {id}",
+      "ar": "فتح البلاغ {id}",
+      "ru": "Открыть обращение {id}",
+      "am": "ሪፖርት {id} ክፈት"
+    },
+    "reports.history.title": {
+      "he": "היסטוריית דיווחים",
+      "en": "Report history",
+      "ar": "سجل البلاغات",
+      "ru": "История обращений",
+      "am": "የሪፖርቶች ታሪክ"
+    },
+    "reports.history.empty": {
+      "he": "אין דיווחים שנשלחו עדיין. שליחה חיה תופעל רק באישור נפרד, וסטטוס יגיע מדואר העירייה בלבד.",
+      "en": "No reports have been sent yet. Live sending is turned on only with a separate approval, and status comes only from the municipality's email.",
+      "ar": "لم تُرسل أي بلاغات بعد. لن يُفعَّل الإرسال المباشر إلا بموافقة منفصلة، وتأتي الحالة من بريد البلدية فقط.",
+      "ru": "Отправленных обращений пока нет. Отправка включается только по отдельному разрешению, а статус приходит только из почты муниципалитета.",
+      "am": "እስካሁን የተላኩ ሪፖርቶች የሉም። ቀጥታ መላክ የሚበራው በተለየ ፈቃድ ብቻ ነው፤ ሁኔታውም የሚመጣው ከማዘጋጃ ቤቱ ኢሜይል ብቻ ነው።"
     }
   }
 }

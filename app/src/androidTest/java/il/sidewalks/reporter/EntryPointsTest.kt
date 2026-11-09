@@ -14,6 +14,7 @@ import il.sidewalks.reporter.ui.AppShell
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
@@ -21,6 +22,12 @@ import java.io.File
 /** Instrumented coverage for the phase-1 entry points (issue #149). */
 class EntryPointsTest {
     @get:Rule val compose = createComposeRule()
+
+    // The share test looks for the Hebrew review title; the review screen follows the UI
+    // language since #115 PR-2b, so pin he through the real "ui-prefs" store (as M1ShellTest).
+    @Before fun pinHebrewUiLanguage() {
+        il.sidewalks.reporter.i18n.UiPrefsLanguageStore.of(InstrumentationRegistry.getInstrumentation().targetContext).set("he")
+    }
 
     /** The share test reserves a real ledger row; leave no draft behind. */
     private fun cleanLedgerAndOriginals() {
