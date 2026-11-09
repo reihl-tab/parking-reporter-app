@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.14.4] - 2026-11-09
+
+### Other changes
+
+- docs: name the manual city read-only check in CONTRIBUTING (#143) (c651383)
+
 ## [0.14.3] - 2026-11-09
 
 ### Other changes

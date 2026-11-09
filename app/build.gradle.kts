@@ -11,8 +11,8 @@ android {
         minSdk = 26
         targetSdk = 37
         if (providers.gradleProperty("previewArm64").isPresent) { ndk { abiFilters += "arm64-v8a" } }
-        versionCode = 65
-        versionName = "0.14.3"
+        versionCode = 66
+        versionName = "0.14.4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     buildFeatures {
