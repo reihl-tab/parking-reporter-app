@@ -208,11 +208,8 @@ fun AppShell(
                 if (!usePhotoLocation && (evidence.latitude != null || evidence.longitude != null)) {
                     evidence = evidence.copy(latitude = null, longitude = null)
                 }
-                val missing = buildSet {
-                    if (evidence.latitude == null) add(strings.t("shell.review.missing_gps"))
-                    if (evidence.capturedAtIso == null) add(strings.t("shell.review.missing_time")) else add(strings.t("shell.review.timezone_needs_confirmation"))
-                    add(strings.t("shell.review.address_needs_confirmation"))
-                }
+                // Stable codes, translated when the review screen shows them (issue #115 PR-2b).
+                val missing = initialReviewWarnings(evidence)
                 try {
                     withContext(Dispatchers.IO) {
                         database.reports().reserve(ReportRecord(evidence.stableId, evidence.originalSha256,

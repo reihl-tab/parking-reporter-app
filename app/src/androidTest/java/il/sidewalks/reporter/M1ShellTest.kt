@@ -254,9 +254,10 @@ class M1ShellTest {
         )
         var opened: String? = null
         compose.setContent { MaterialTheme { il.sidewalks.reporter.ui.ReportsScreen(records, { opened = it.stableId }) } }
-        compose.onNodeWithText("פתח טיוטה aaaabbbb").performClick()
+        // The id is a catalog value now, isolated LRI..PDI in Hebrew (#115 PR-2b).
+        compose.onNodeWithText("פתח טיוטה \u2066aaaabbbb\u2069").performClick()
         compose.runOnIdle { assertEquals("aaaabbbb", opened) }
-        compose.onNodeWithText("פתח דיווח ccccdddd").assertExists()
+        compose.onNodeWithText("פתח דיווח \u2066ccccdddd\u2069").assertExists()
     }
     @Test fun galleryImportPreservesBytesAndExifMetadata() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext

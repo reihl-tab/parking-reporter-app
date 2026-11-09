@@ -27,17 +27,15 @@ class HardcodedUiStringLintTest {
         /**
          * Sources whose UI literals are not extracted yet. PR-2 of #115 extracts them
          * and empties this set; it must never grow. PR-2a extracted AppShell.kt and
-         * SettingsScreen.kt; PR-2b and PR-2c take the rest.
+         * SettingsScreen.kt, PR-2b ReviewScreen.kt, CaptureScreen.kt and ReportsScreen.kt;
+         * PR-2c takes the rest.
          */
         val PENDING = setOf(
-            "ReviewScreen.kt",
-            "CaptureScreen.kt",
-            "ReportsScreen.kt",
             "ReportCategory.kt",
             "HebrewPresentation.kt",
         )
 
-        private const val MAX_PENDING = 5
+        private const val MAX_PENDING = 2
     }
 
     private fun mainSources(): List<File> {
@@ -68,10 +66,7 @@ class HardcodedUiStringLintTest {
     fun pendingListIsExactAndDoesNotGrow() {
         assertTrue("PENDING may only shrink (PR-2 empties it)", PENDING.size <= MAX_PENDING)
         assertEquals(
-            setOf(
-                "ReviewScreen.kt", "CaptureScreen.kt",
-                "ReportsScreen.kt", "ReportCategory.kt", "HebrewPresentation.kt",
-            ),
+            setOf("ReportCategory.kt", "HebrewPresentation.kt"),
             PENDING,
         )
     }

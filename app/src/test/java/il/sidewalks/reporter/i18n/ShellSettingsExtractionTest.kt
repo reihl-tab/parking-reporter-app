@@ -36,11 +36,9 @@ class ShellSettingsExtractionTest {
         "shell.home.open_draft" to "פתח טיוטה {id}",
         "shell.home.continue_review" to "המשך בדיקת טיוטה",
         "shell.home.login_unavailable" to "התחברות לשירות הדיווח עדיין אינה זמינה. פרטי גישה עירוניים אינם חלק מהאפליקציה.",
+        // The four review questions AppShell adds to a new draft moved to review.warning.*
+        // in PR-2b (stored as codes, translated when shown): ReviewCaptureReportsExtractionTest.
         "shell.home.permission_note" to "ביטול הרשאת מצלמה או אימות משאיר את המסך ללא פעולה. אין שמירת פרטים גלויים כחלופה.",
-        "shell.review.missing_gps" to "GPS חסר",
-        "shell.review.missing_time" to "זמן חסר",
-        "shell.review.timezone_needs_confirmation" to "אזור זמן דורש אישור",
-        "shell.review.address_needs_confirmation" to "כתובת ומספר בית דורשים אישור",
         "shell.outgoing.title" to "תמונה נפרדת לבדיקה",
         "shell.outgoing.image_description" to "התמונה המדויקת המיועדת להעברה בעתיד",
         "shell.outgoing.explanation" to "המקור לא השתנה. נתוני EXIF הוסרו מהעותק. בדוק שהלוחית והעבירה קריאות; אל תאשר תמונה שאיבדה ראיה.",
