@@ -15,6 +15,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.activity.ComponentActivity
 import il.sidewalks.reporter.ui.AppShell
+import il.sidewalks.reporter.ui.theme.AppTheme
+import il.sidewalks.reporter.ui.theme.NavyStatusBar
 import il.sidewalks.reporter.security.SecureSettings
 import il.sidewalks.reporter.security.ReporterSettings
 import androidx.activity.compose.setContent
@@ -75,7 +77,7 @@ class MainActivity : ComponentActivity() {
         // the request has already routed (its draft is reserved in the ledger)
         // and re-firing it would steal the screen mid-flow.
         if (savedInstanceState == null) handleEntryIntent(intent)
-        setContent { MaterialTheme {
+        setContent { AppTheme { NavyStatusBar {
             AppShell(
                 authenticate = ::authenticate,
                 requestCamera = ::camera,
@@ -83,6 +85,6 @@ class MainActivity : ComponentActivity() {
                 saveSettings = { settings -> SecureSettings(this).save(settings) },
                 entry = entrySignal,
             )
-        } }
+        } } }
     }
 }

@@ -1,7 +1,6 @@
 package il.sidewalks.reporter
 
 import android.graphics.Bitmap
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.test.*
@@ -16,6 +15,7 @@ import il.sidewalks.reporter.security.ReporterSettings
 import il.sidewalks.reporter.security.SecureSettings
 import il.sidewalks.reporter.ui.ReviewScreen
 import il.sidewalks.reporter.ui.SettingsScreen
+import il.sidewalks.reporter.ui.theme.AppTheme
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Before
@@ -41,7 +41,7 @@ class M1ShellTest {
     }
     @Test fun reviewApprovalThenEditClears() {
         var saved: ReviewDraft? = null
-        compose.setContent { MaterialTheme { ReviewScreen(draft(), null, { saved = it }, onBack = {}) } }
+        compose.setContent { AppTheme { ReviewScreen(draft(), null, { saved = it }, onBack = {}) } }
         screenshot("m1-review-synthetic.png")
         compose.onNodeWithText("אשר את התוכן לבדיקה").performScrollTo().performClick()
         compose.runOnIdle { assertTrue(saved?.isApproved() == true) }
@@ -58,7 +58,7 @@ class M1ShellTest {
             typeface = android.graphics.Typeface.create("monospace", android.graphics.Typeface.BOLD)
         })
         var saved: ReviewDraft? = null
-        compose.setContent { MaterialTheme { ReviewScreen(draft().approve(), bitmap.asImageBitmap(), { saved = it }, {}) } }
+        compose.setContent { AppTheme { ReviewScreen(draft().approve(), bitmap.asImageBitmap(), { saved = it }, {}) } }
         compose.onNodeWithText("ערוך").performScrollTo().performClick()
         compose.onNodeWithText("הצע לוחית מתוך הצילום").performScrollTo().performClick()
         compose.waitUntil(30_000) { compose.onAllNodesWithText("הצעה בלבד: \u206612345678\u2069").fetchSemanticsNodes().isNotEmpty() }
@@ -72,7 +72,7 @@ class M1ShellTest {
         // stored only inside the encrypted settings. The screenshot is taken before any
         // value is typed, so no credential ever reaches a captured image.
         var saved: ReporterSettings? = null
-        compose.setContent { MaterialTheme { SettingsScreen(null, { value, clear -> saved = value; clear() }, {}) } }
+        compose.setContent { AppTheme { SettingsScreen(null, { value, clear -> saved = value; clear() }, {}) } }
         screenshot("m1-settings-synthetic.png")
         compose.onNodeWithText("שם פרטי").performTextInput("בדיקה")
         compose.onNodeWithText("שם משפחה").performTextInput("מדווח")
@@ -123,7 +123,7 @@ class M1ShellTest {
         assertFalse(file.exists())
     }
     @Test fun rtlReviewUsesHebrewCategoryAndReadableDate() {
-        compose.setContent { MaterialTheme { ReviewScreen(draft(), null, {}, {}) } }
+        compose.setContent { AppTheme { ReviewScreen(draft(), null, {}, {}) } }
         compose.onNodeWithText("חניה על המדרכה ▾").assertExists()
         compose.onNodeWithText("sidewalk_parking").assertDoesNotExist()
         compose.onNodeWithText("זמן: \u206601/01/2026 12:00 (UTC+00:00)\u2069").assertExists()
@@ -163,7 +163,7 @@ class M1ShellTest {
         file.delete()
     }
     @Test fun debugOnlyDemoHiddenFromHomeAndRunsFromSettings() {
-        compose.setContent { MaterialTheme {
+        compose.setContent { AppTheme {
             il.sidewalks.reporter.ui.AppShell(authenticate = { _, _, action -> action() }, requestCamera = {}, readSettings = { null }, saveSettings = {})
         } }
         compose.onNodeWithText("טיוטות וכלי בדיקה").assertDoesNotExist()
@@ -185,7 +185,7 @@ class M1ShellTest {
         canvas.drawRect(325f, 120f, 350f, 290f, android.graphics.Paint().apply { color = android.graphics.Color.DKGRAY })
         canvas.drawRect(230f, 20f, 455f, 125f, android.graphics.Paint().apply { color = android.graphics.Color.WHITE })
         canvas.drawText("SYNTHETIC SIGN", 248f, 75f, android.graphics.Paint().apply { color = android.graphics.Color.BLACK; textSize = 22f })
-        compose.setContent { MaterialTheme { ReviewScreen(draft().approve(), bitmap.asImageBitmap(), { saved = it }, {}) } }
+        compose.setContent { AppTheme { ReviewScreen(draft().approve(), bitmap.asImageBitmap(), { saved = it }, {}) } }
         compose.onNodeWithText("חניה על המדרכה ▾").performClick()
         compose.onNodeWithText("תמרור שבור").performClick()
         compose.onNodeWithText("לוחית:", substring = true).assertDoesNotExist()
@@ -200,7 +200,7 @@ class M1ShellTest {
         compose.onNodeWithText("לוחית ללא מקפים").assertDoesNotExist()
     }
     @Test fun photoFirstHomeScreenshot() {
-        compose.setContent { MaterialTheme {
+        compose.setContent { AppTheme {
             il.sidewalks.reporter.ui.AppShell(authenticate = { _, _, action -> action() }, requestCamera = {}, readSettings = { null }, saveSettings = {})
         } }
         compose.onNodeWithText("צלם תמונה").assertExists()
@@ -225,7 +225,7 @@ class M1ShellTest {
 
     @Test fun settingsSaveDisabledWhenAllBlankAndAfterSave() {
         var saved: ReporterSettings? = null
-        compose.setContent { MaterialTheme { SettingsScreen(null, { s, done -> saved = s; done() }, {}) } }
+        compose.setContent { AppTheme { SettingsScreen(null, { s, done -> saved = s; done() }, {}) } }
         compose.onNodeWithText("אמת זהות ושמור מוצפן").assertIsNotEnabled()
         compose.onNodeWithText("שם פרטי").performTextInput("בדיקה")
         compose.onNodeWithText("אמת זהות ושמור מוצפן").performScrollTo().assertIsEnabled().performClick()
@@ -233,7 +233,7 @@ class M1ShellTest {
         compose.onNodeWithText("אמת זהות ושמור מוצפן").performScrollTo().assertIsNotEnabled()
     }
     @Test fun homeShowsTwoCaptureButtonsAndReportsNav() {
-        compose.setContent { MaterialTheme {
+        compose.setContent { AppTheme {
             il.sidewalks.reporter.ui.AppShell(authenticate = { _, _, action -> action() }, requestCamera = {}, readSettings = { null }, saveSettings = {})
         } }
         compose.onNodeWithText("צלם תמונה").assertExists()
@@ -253,7 +253,7 @@ class M1ShellTest {
             ReportRecord("ccccdddd", "b".repeat(64), "originals/c.jpg", 0, "{}", "digest"),
         )
         var opened: String? = null
-        compose.setContent { MaterialTheme { il.sidewalks.reporter.ui.ReportsScreen(records, { opened = it.stableId }) } }
+        compose.setContent { AppTheme { il.sidewalks.reporter.ui.ReportsScreen(records, { opened = it.stableId }) } }
         // The id is a catalog value now, isolated LRI..PDI in Hebrew (#115 PR-2b).
         compose.onNodeWithText("פתח טיוטה \u2066aaaabbbb\u2069").performClick()
         compose.runOnIdle { assertEquals("aaaabbbb", opened) }
