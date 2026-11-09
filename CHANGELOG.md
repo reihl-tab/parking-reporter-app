@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.14.3] - 2026-11-09
+
+### Other changes
+
+- docs/builder: ODbL s4.6 = generator route only (owner 2026-11-09) (#167) (9008bb5)
+
 ## [0.14.2] - 2026-11-08
 
 ### Other changes
