@@ -42,6 +42,7 @@ jobs:
           J106_APP_USERNAME: ${{ secrets.J106_APP_USERNAME }}
           J106_APP_PASSWORD: ${{ secrets.J106_APP_PASSWORD }}
           TRIAL_STATE_DIR: /tmp/trial-state
+          TRIAL_RESULT_PATH: /tmp/trial-result.txt
           EGRESS_MARKER_PATH: /tmp/egress-blocked
         run: |
           sh gradlew --no-daemon testDebugUnitTest --tests 'il.sidewalks.reporter.municipal.EngineLiveTrialTest'
@@ -75,14 +76,24 @@ jobs:
           J106_APP_USERNAME: ${{ secrets.J106_APP_USERNAME }}
           J106_APP_PASSWORD: ${{ secrets.J106_APP_PASSWORD }}
           TRIAL_STATE_DIR: /tmp/trial-state
+          TRIAL_RESULT_PATH: /tmp/trial-result.txt
         run: |
           sh gradlew --no-daemon testDebugUnitTest --tests 'il.sidewalks.reporter.municipal.EngineLiveTrialTest'
+      - name: Show trial result markers
+        if: always()
+        run: cat /tmp/trial-result.txt 2>/dev/null || echo 'no TRIAL_RESULT markers produced'
+      - name: "Verdict: login-only must reach LOGIN_OK"
+        run: |
+          # A failed login without an egress marker used to end green
+          # (direct step is continue-on-error for the fallback path).
+          grep -q 'TRIAL_RESULT LOGIN_OK' /tmp/trial-result.txt 2>/dev/null || { echo 'login-only trial did not reach LOGIN_OK'; exit 1; }
       - name: Always remove tunnel and trial plaintext
         if: always()
         run: |
           sudo python3 trial/l2tp.py down || true
           rm -f /tmp/egress-blocked
           rm -rf /tmp/trial-state
+          rm -f /tmp/trial-result.txt
 
   # Real submit: a single attempt on direct egress, no fallback, gated by the
   # m0-trial-submit environment whose required reviewer is the owner (his
@@ -140,10 +151,15 @@ jobs:
           TRIAL_STREET_LOOKUP_JSON: ${{ secrets.TRIAL_STREET_LOOKUP_JSON }}
           TRIAL_PHOTO_PATH: /tmp/trial-original.jpg
           TRIAL_STATE_DIR: /tmp/trial-state
+          TRIAL_RESULT_PATH: /tmp/trial-result.txt
         run: |
           sh gradlew --no-daemon testDebugUnitTest --tests 'il.sidewalks.reporter.municipal.EngineLiveTrialTest'
+      - name: Show trial result markers
+        if: always()
+        run: cat /tmp/trial-result.txt 2>/dev/null || echo 'no TRIAL_RESULT markers produced'
       - name: Always remove trial plaintext
         if: always()
         run: |
           rm -f /tmp/trial-original.jpg
           rm -rf /tmp/trial-state
+          rm -f /tmp/trial-result.txt
