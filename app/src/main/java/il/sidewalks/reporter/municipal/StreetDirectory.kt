@@ -56,7 +56,7 @@ class StreetDirectory private constructor(
             }
             code = codes.single()
             resolvedHouse = house?.trim() ?: ""
-            if (!Regex("[0-9]+[\\p{L}\\p{N} /\\-]*").matches(resolvedHouse) || resolvedHouse.length > 16) {
+            if (!HOUSE_NUMBER.matches(resolvedHouse) || resolvedHouse.length > HOUSE_NUMBER_MAX_LENGTH) {
                 throw MunicipalInputException("Invalid house number.")
             }
             val housePoints = points.filter { it.code == code && normalize(it.house) == normalize(resolvedHouse) }

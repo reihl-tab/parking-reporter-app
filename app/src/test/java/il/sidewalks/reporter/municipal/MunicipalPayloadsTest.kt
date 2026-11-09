@@ -158,6 +158,14 @@ class MunicipalPayloadsTest {
         assertThrows(MunicipalInputException::class.java) {
             MunicipalPayloads.buildReport(reportFields.copy(houseNumber = "/3"))
         }
+        // Hebrew-letter house numbers pass (parity with the helper's Unicode \w),
+        // but the number must still lead with ASCII digits: Hebrew-first is refused.
+        val hebrew = MunicipalPayloads.buildReport(reportFields.copy(houseNumber = "12א"))
+        assertEquals("הפלמח 12א", hebrew["CaseAddressText"])
+        assertEquals("12א", hebrew["CaseHouseNumber"])
+        assertThrows(MunicipalInputException::class.java) {
+            MunicipalPayloads.buildReport(reportFields.copy(houseNumber = "א12"))
+        }
         val report = MunicipalPayloads.buildReport(reportFields)
         assertEquals("הפלמח 900", report["CaseAddressText"])
         assertEquals(1, report["Language"])

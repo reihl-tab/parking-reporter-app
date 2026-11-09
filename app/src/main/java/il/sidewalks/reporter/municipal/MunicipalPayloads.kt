@@ -151,7 +151,10 @@ object MunicipalPayloads {
         if (!Regex("[0-9]+").matches(fields.streetCode)) {
             throw MunicipalInputException("Municipal street code must be numeric.")
         }
-        if (!Regex("[0-9]+[\\w /\\-]*").matches(fields.houseNumber) || fields.houseNumber.length > 16) {
+        // JVM \w is ASCII-only; the helper's Python \w is Unicode-aware, so
+        // Hebrew house numbers like 12א are valid there. One shared grammar
+        // (HOUSE_NUMBER) keeps lookup, split and payload from drifting (#164).
+        if (!HOUSE_NUMBER.matches(fields.houseNumber) || fields.houseNumber.length > HOUSE_NUMBER_MAX_LENGTH) {
             throw MunicipalInputException("Invalid house number.")
         }
         val report = LinkedHashMap<String, Any?>()
