@@ -1,0 +1,149 @@
+name: M0 engine trial (owner-approved)
+on:
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: 'login-only (diagnostic, no case writes) or submit (one approved case)'
+        required: true
+        type: choice
+        options: [login-only, submit]
+      approved_sha256:
+        description: 'sha256 of the exact owner-approved Hebrew text (submit phase only)'
+        required: false
+        default: ''
+permissions:
+  contents: read
+concurrency:
+  group: m0-engine-trial
+  cancel-in-progress: false
+jobs:
+  # Login-only diagnostic: no case writes, no reviewer gate, and least
+  # privilege - this job receives only the three J106 secrets.
+  trial-login:
+    if: github.ref == 'refs/heads/main' && inputs.phase == 'login-only'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - run: sh scripts/prepare_wrapper.sh
+      - name: Engine trial (direct egress, login-only phase)
+        id: direct
+        continue-on-error: true
+        env:
+          J106_LIVE_TRIAL: login-only
+          J106_SUBSCRIPTION_KEY: ${{ secrets.J106_SUBSCRIPTION_KEY }}
+          J106_APP_USERNAME: ${{ secrets.J106_APP_USERNAME }}
+          J106_APP_PASSWORD: ${{ secrets.J106_APP_PASSWORD }}
+          TRIAL_STATE_DIR: /tmp/trial-state
+          EGRESS_MARKER_PATH: /tmp/egress-blocked
+        run: |
+          sh gradlew --no-daemon testDebugUnitTest --tests 'il.sidewalks.reporter.municipal.EngineLiveTrialTest'
+      - name: Bring up owner L2TP fallback (only after proven egress block)
+        id: vpn
+        if: steps.direct.outcome == 'failure'
+        env:
+          VPN_L2TP_SERVER: ${{ secrets.VPN_L2TP_SERVER }}
+          VPN_L2TP_PSK: ${{ secrets.VPN_L2TP_PSK }}
+          VPN_L2TP_USERNAME: ${{ secrets.VPN_L2TP_USERNAME }}
+          VPN_L2TP_PASSWORD: ${{ secrets.VPN_L2TP_PASSWORD }}
+        run: |
+          # The marker is written by the test only when login failed with a
+          # 403 or a connect failure, i.e. no case write was attempted. Any
+          # other failure must not rerun the engine.
+          if [ ! -f /tmp/egress-blocked ]; then
+            echo 'no egress-blocked marker: direct failure was not a proven egress block, no fallback'
+            echo 'ready=0' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          sudo apt-get update -qq > /dev/null 2>&1
+          sudo apt-get install -y strongswan xl2tpd ppp > /dev/null 2>&1
+          sudo --preserve-env=VPN_L2TP_SERVER,VPN_L2TP_PSK,VPN_L2TP_USERNAME,VPN_L2TP_PASSWORD \
+            python3 trial/l2tp.py up-bounded
+          echo 'ready=1' >> "$GITHUB_OUTPUT"
+      - name: Engine trial (retry via owner L2TP, login-only phase)
+        if: steps.vpn.outputs.ready == '1'
+        env:
+          J106_LIVE_TRIAL: login-only
+          J106_SUBSCRIPTION_KEY: ${{ secrets.J106_SUBSCRIPTION_KEY }}
+          J106_APP_USERNAME: ${{ secrets.J106_APP_USERNAME }}
+          J106_APP_PASSWORD: ${{ secrets.J106_APP_PASSWORD }}
+          TRIAL_STATE_DIR: /tmp/trial-state
+        run: |
+          sh gradlew --no-daemon testDebugUnitTest --tests 'il.sidewalks.reporter.municipal.EngineLiveTrialTest'
+      - name: Always remove tunnel and trial plaintext
+        if: always()
+        run: |
+          sudo python3 trial/l2tp.py down || true
+          rm -f /tmp/egress-blocked
+          rm -rf /tmp/trial-state
+
+  # Real submit: a single attempt on direct egress, no fallback, gated by the
+  # m0-trial-submit environment whose required reviewer is the owner (his
+  # approval 2026-11-09: the gate applies only before a real submit). The
+  # exact report text still needs his explicit approval in chat first, and
+  # its sha256 is bound here via the dispatch input.
+  trial-submit:
+    if: github.ref == 'refs/heads/main' && inputs.phase == 'submit'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: m0-trial-submit
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - run: sh scripts/prepare_wrapper.sh
+      - name: Validate dispatch input before any network
+        env:
+          APPROVED_SHA256_INPUT: ${{ inputs.approved_sha256 }}
+        run: |
+          # Fail fast on a malformed hash so a typo never reaches the engine.
+          # The dispatch value reaches the shell only as a quoted env var,
+          # never through workflow-expression interpolation.
+          printf '%s' "$APPROVED_SHA256_INPUT" | grep -qxE '[0-9a-f]{64}'
+      - name: Decrypt trial photo
+        env:
+          TRIAL_DATA_KEY: ${{ secrets.TRIAL_DATA_KEY }}
+        run: |
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
+            -in trial/trial-photo.jpg.enc -out /tmp/trial-original.jpg -pass env:TRIAL_DATA_KEY
+          test -s /tmp/trial-original.jpg
+      - name: Engine trial (single attempt, submit phase)
+        env:
+          J106_LIVE_TRIAL: submit
+          J106_SUBSCRIPTION_KEY: ${{ secrets.J106_SUBSCRIPTION_KEY }}
+          J106_APP_USERNAME: ${{ secrets.J106_APP_USERNAME }}
+          J106_APP_PASSWORD: ${{ secrets.J106_APP_PASSWORD }}
+          REPORTER_FIRST_NAME: ${{ secrets.REPORTER_FIRST_NAME }}
+          REPORTER_LAST_NAME: ${{ secrets.REPORTER_LAST_NAME }}
+          REPORTER_PHONE: ${{ secrets.REPORTER_PHONE }}
+          REPORTER_ID_NUMBER: ${{ secrets.REPORTER_ID_NUMBER }}
+          REPORTER_EMAIL: ${{ secrets.REPORTER_EMAIL }}
+          TRIAL_APPROVED_TEXT: ${{ secrets.TRIAL_APPROVED_TEXT }}
+          TRIAL_APPROVED_SHA256: ${{ inputs.approved_sha256 }}
+          TRIAL_PLATE: ${{ secrets.TRIAL_PLATE }}
+          TRIAL_ADDRESS: ${{ secrets.TRIAL_ADDRESS }}
+          TRIAL_LAT: ${{ secrets.TRIAL_LAT }}
+          TRIAL_LON: ${{ secrets.TRIAL_LON }}
+          TRIAL_CAPTURED_AT: ${{ secrets.TRIAL_CAPTURED_AT }}
+          TRIAL_STREET_LOOKUP_JSON: ${{ secrets.TRIAL_STREET_LOOKUP_JSON }}
+          TRIAL_PHOTO_PATH: /tmp/trial-original.jpg
+          TRIAL_STATE_DIR: /tmp/trial-state
+        run: |
+          sh gradlew --no-daemon testDebugUnitTest --tests 'il.sidewalks.reporter.municipal.EngineLiveTrialTest'
+      - name: Always remove trial plaintext
+        if: always()
+        run: |
+          rm -f /tmp/trial-original.jpg
+          rm -rf /tmp/trial-state

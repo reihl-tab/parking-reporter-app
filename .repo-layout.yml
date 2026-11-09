@@ -72,6 +72,14 @@
       "allow": [
         "*.py"
       ]
+    },
+    "trial": {
+      "allow": [
+        "*.md",
+        "*.py",
+        "*.enc"
+      ],
+      "comment": "Temporary M0 engine trial assets; removed after the trial concludes."
     }
   }
 }
