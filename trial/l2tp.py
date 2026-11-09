@@ -22,6 +22,17 @@ def stage(name: str) -> None:
     STAGE=name
 
 ROOT=Path('/run/parking-l2tp')
+# A CI tunnel is an internet exit, never permission to reach home/LAN hosts.
+PRIVATE_NETWORKS = ('0.0.0.0/8', '10.0.0.0/8', '100.64.0.0/10',
+                    '127.0.0.0/8', '169.254.0.0/16', '172.16.0.0/12',
+                    '192.168.0.0/16', '224.0.0.0/4', '240.0.0.0/4')
+
+def isolate_private_networks() -> None:
+    run('iptables', '-N', 'PARK106LAN')
+    for network in PRIVATE_NETWORKS:
+        run('iptables', '-A', 'PARK106LAN', '-d', network, '-j', 'REJECT')
+    run('iptables', '-I', 'OUTPUT', '1', '-o', 'ppp42', '-j', 'PARK106LAN')
+
 
 class TunnelError(Exception):
     """Only constant, non-private diagnostics may reach Actions logs."""
@@ -198,6 +209,10 @@ def down() -> None:
                     (binary,'-F','PARK106'),(binary,'-X','PARK106')]:
             try:run(*cmd,check=False)
             except Exception:pass
+    for cmd in [('iptables', '-D', 'OUTPUT', '-o', 'ppp42', '-j', 'PARK106LAN'),
+                ('iptables', '-F', 'PARK106LAN'), ('iptables', '-X', 'PARK106LAN')]:
+        try:run(*cmd,check=False)
+        except Exception:pass
     if ROOT.exists():
         try:
             state=json.loads((ROOT/'state.json').read_text())
@@ -243,6 +258,8 @@ def up(env: Mapping[str,str]) -> None:
         if binary=='iptables':run(binary,'-A','PARK106','-o','ppp42','-j','RETURN')
         run(binary,'-A','PARK106','-j','REJECT')
         run(binary,'-I','OUTPUT','1','-p','tcp','--dport','443','-j','PARK106')
+    stage('isolate_private_networks')
+    isolate_private_networks()
     stage('ipsec_daemon_start')
     run('ipsec','restart')
     stage('ipsec_wait_ready')
@@ -270,8 +287,14 @@ def up(env: Mapping[str,str]) -> None:
     run('ip','route','add','128.0.0.0/1','dev','ppp42')
     # Resolve and verify routes without sending an HTTP/Login/report request.
     stage('verify_municipal_routes_without_request')
+    verify_municipal_routes()
+
+def verify_municipal_routes() -> None:
     targets=socket.getaddrinfo('api.jerusalem.muni.il',443,socket.AF_INET,socket.SOCK_STREAM)
+    if not targets:raise TunnelError('Municipal DNS returned no IPv4')
     for target in {a[4][0] for a in targets}:
+        if not ipaddress.IPv4Address(target).is_global:
+            raise TunnelError('Municipal DNS did not resolve to public IPv4')
         check=json.loads(run('ip','-json','route','get',target))[0]
         if check.get('dev')!='ppp42':raise TunnelError('Municipal route did not select VPN')
 

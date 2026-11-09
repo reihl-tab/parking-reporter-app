@@ -95,13 +95,13 @@ jobs:
           rm -rf /tmp/trial-state
           rm -f /tmp/trial-result.txt
 
-  # Real submit: a single attempt on direct egress, no fallback, gated by the
+  # Real submit: VPN-first, a single municipal attempt, no fallback, gated by the
   # m0-trial-submit environment whose required reviewer is the owner (his
   # approval 2026-11-09: the gate applies only before a real submit). The
   # exact report text still needs his explicit approval in chat first, and
   # its sha256 is bound here via the dispatch input.
   trial-submit:
-    if: github.ref == 'refs/heads/main' && inputs.phase == 'submit'
+    if: github.repository == 'reihlinstinct/parking-reporter-app' && github.event_name == 'workflow_dispatch' && github.run_attempt == 1 && github.ref == 'refs/heads/main' && inputs.phase == 'submit'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     environment: m0-trial-submit
@@ -143,6 +143,23 @@ jobs:
           TRIAL_DATA_KEY: ${{ secrets.TRIAL_DATA_KEY }}
           TRIAL_APPROVED_SHA256: ${{ inputs.approved_sha256 }}
         run: bash scripts/trial_submit_preflight.sh
+      - name: Bring up owner VPN before any municipal call
+        env:
+          VPN_L2TP_SERVER: ${{ secrets.VPN_L2TP_SERVER }}
+          VPN_L2TP_PSK: ${{ secrets.VPN_L2TP_PSK }}
+          VPN_L2TP_USERNAME: ${{ secrets.VPN_L2TP_USERNAME }}
+          VPN_L2TP_PASSWORD: ${{ secrets.VPN_L2TP_PASSWORD }}
+        run: |
+          # No secret values or daemon output in public logs. Fail closed.
+          for name in VPN_L2TP_SERVER VPN_L2TP_PSK VPN_L2TP_USERNAME VPN_L2TP_PASSWORD; do
+            test -n "${!name//[[:space:]]/}" || { echo 'TRIAL_RESULT VPN_INPUT_MISSING'; exit 1; }
+          done
+          sudo apt-get update -qq > /dev/null 2>&1
+          sudo apt-get install -y strongswan xl2tpd ppp > /dev/null 2>&1
+          # One tunnel attempt. up validates all municipal IPv4 routes and
+          # installs HTTPS kill-switch + PPP private-network isolation.
+          sudo --preserve-env=VPN_L2TP_SERVER,VPN_L2TP_PSK,VPN_L2TP_USERNAME,VPN_L2TP_PASSWORD \
+            python3 trial/l2tp.py up
       - name: Decrypt trial photo
         env:
           TRIAL_DATA_KEY: ${{ secrets.TRIAL_DATA_KEY }}
@@ -178,9 +195,10 @@ jobs:
       - name: Show trial result markers
         if: always()
         run: cat /tmp/trial-result.txt 2>/dev/null || echo 'no TRIAL_RESULT markers produced'
-      - name: Always remove trial plaintext
+      - name: Always remove tunnel and trial plaintext
         if: always()
         run: |
+          sudo python3 trial/l2tp.py down
           rm -f /tmp/trial-original.jpg
           rm -rf /tmp/trial-state
           rm -f /tmp/trial-result.txt
