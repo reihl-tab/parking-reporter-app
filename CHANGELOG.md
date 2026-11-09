@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.17.2] - 2026-11-09
+
+### Fixes
+
+- fix: establish isolated owner VPN before one approved submit (#198) (1fccf5e)
+
 ## [0.17.1] - 2026-11-09
 
 ### Fixes
