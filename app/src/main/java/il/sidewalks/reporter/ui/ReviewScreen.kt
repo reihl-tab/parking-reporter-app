@@ -66,10 +66,10 @@ fun ReviewScreen(initial: ReviewDraft, image: ImageBitmap?, onSave: (ReviewDraft
         }
         image?.let { Image(it, s.t("review.image_description"), modifier = Modifier.fillMaxWidth().height(220.dp)) }
         Box {
-            TextButton(onClick = { categoryMenu = true }) { Text("${HebrewPresentation.category(draft.subject)} ▾") }
+            TextButton(onClick = { categoryMenu = true }) { Text("${HebrewPresentation.category(s, draft.subject)} ▾") }
             DropdownMenu(expanded = categoryMenu, onDismissRequest = { categoryMenu = false }) {
                 il.sidewalks.reporter.core.ReportCategory.entries.forEach { category ->
-                    DropdownMenuItem(text = { Text(category.hebrew) }, onClick = {
+                    DropdownMenuItem(text = { Text(s.t(category.labelKey)) }, onClick = {
                         draft = draft.edit(subject = category.code); if (!category.needsPlate) plates = emptyList(); categoryMenu = false
                     })
                 }
@@ -90,7 +90,7 @@ fun ReviewScreen(initial: ReviewDraft, image: ImageBitmap?, onSave: (ReviewDraft
         }
         if (editing) {
         Text(s.t("review.edit.original_time_title"))
-        Text("\u2066${HebrewPresentation.evidenceTime(draft.evidence.capturedAtIso)}\u2069", modifier = Modifier.fillMaxWidth(), style = TextStyle(textDirection = TextDirection.Ltr))
+        Text("\u2066${HebrewPresentation.evidenceTime(s, draft.evidence.capturedAtIso)}\u2069", modifier = Modifier.fillMaxWidth(), style = TextStyle(textDirection = TextDirection.Ltr))
         Text(reviewGpsText(s, hasGps = draft.evidence.latitude != null))
         Text(s.t("review.edit.privacy_note"))
         if (il.sidewalks.reporter.core.ReportCategory.from(draft.subject)?.needsPlate != false) {

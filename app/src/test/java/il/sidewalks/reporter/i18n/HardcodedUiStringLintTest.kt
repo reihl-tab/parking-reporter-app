@@ -25,17 +25,16 @@ class HardcodedUiStringLintTest {
         )
 
         /**
-         * Sources whose UI literals are not extracted yet. PR-2 of #115 extracts them
-         * and empties this set; it must never grow. PR-2a extracted AppShell.kt and
-         * SettingsScreen.kt, PR-2b ReviewScreen.kt, CaptureScreen.kt and ReportsScreen.kt;
-         * PR-2c takes the rest.
+         * Sources whose UI literals are not extracted yet. PR-2 of #115 extracted them
+         * and emptied this set; it must never grow again. PR-2a extracted AppShell.kt and
+         * SettingsScreen.kt, PR-2b ReviewScreen.kt, CaptureScreen.kt and ReportsScreen.kt,
+         * PR-2c ReportCategory.kt and HebrewPresentation.kt (MainActivity.kt had none left).
+         * No file keeps Hebrew for the municipal report: the report text is the approved
+         * text the user typed (data, not a literal), and categories send a numeric code.
          */
-        val PENDING = setOf(
-            "ReportCategory.kt",
-            "HebrewPresentation.kt",
-        )
+        val PENDING = emptySet<String>()
 
-        private const val MAX_PENDING = 2
+        private const val MAX_PENDING = 0
     }
 
     private fun mainSources(): List<File> {
@@ -64,11 +63,8 @@ class HardcodedUiStringLintTest {
 
     @Test
     fun pendingListIsExactAndDoesNotGrow() {
-        assertTrue("PENDING may only shrink (PR-2 empties it)", PENDING.size <= MAX_PENDING)
-        assertEquals(
-            setOf("ReportCategory.kt", "HebrewPresentation.kt"),
-            PENDING,
-        )
+        assertTrue("PENDING may not grow again (PR-2 emptied it)", PENDING.size <= MAX_PENDING)
+        assertEquals(emptySet<String>(), PENDING)
     }
 
     @Test
