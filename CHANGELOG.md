@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-11-09
+
+### Features
+
+- feat(i18n): category, evidence-time and main-activity extraction (PR-2c of #115) (#176) (3f0d067)
+
 ## [0.15.0] - 2026-11-09
 
 ### Features
