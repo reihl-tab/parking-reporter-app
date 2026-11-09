@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.16.2] - 2026-11-09
+
+### Other changes
+
+- test: split ShellSettingsExtractionTest key-set check into two readable assertions (#178) (224c83c)
+
 ## [0.16.1] - 2026-11-09
 
 ### Other changes
