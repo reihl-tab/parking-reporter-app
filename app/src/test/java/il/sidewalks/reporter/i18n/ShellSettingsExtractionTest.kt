@@ -155,13 +155,28 @@ class ShellSettingsExtractionTest {
     @Test
     fun everyKeyTheTwoScreensUseExistsAndEveryScreenKeyIsUsed() {
         val used = keysUsedIn("AppShell.kt") + keysUsedIn("SettingsScreen.kt")
+        val screenKeys = catalog.keys.filter { it.startsWith("shell.") || it.startsWith("settings.") }.toSet()
+        // The exact set equality between the catalog's shell./settings. keys and the keys this
+        // test lists, split into its two directions and checked first, so a mismatch names the
+        // offending keys, sorted, one per line (the one long set diff hid #175's six keys).
+        val listedKeys = extracted.keys + submitExtracted.keys + pickerKeys + "shell.outgoing.size_summary"
+        val notListed = (screenKeys - listedKeys).sorted()
+        assertTrue(
+            "catalog keys not used by any screen, or used but not listed in this test " +
+                "(extracted, submitExtracted, pickerKeys):\n" + notListed.joinToString("\n"),
+            notListed.isEmpty(),
+        )
+        val missingFromCatalog = (listedKeys - screenKeys).sorted()
+        assertTrue(
+            "keys used by a screen (as listed in this test) but missing from the catalog:\n" +
+                missingFromCatalog.joinToString("\n"),
+            missingFromCatalog.isEmpty(),
+        )
         for (key in used) assertTrue("$key is used but missing from strings.json", catalog.rawEntry(key) != null)
         // SettingsScreen also links to the Licenses screen using that screen's own
         // title key (#163); it is not one of the two screens' shell./settings. keys.
         val ownUsed = used - "licenses.screen.title"
-        val screenKeys = catalog.keys.filter { it.startsWith("shell.") || it.startsWith("settings.") }.toSet()
         assertEquals("shell./settings. keys in the catalog vs the keys the two screens use", screenKeys, ownUsed)
-        assertEquals(extracted.keys + submitExtracted.keys + pickerKeys + "shell.outgoing.size_summary", screenKeys)
     }
 
     /**
