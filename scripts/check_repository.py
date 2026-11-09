@@ -48,7 +48,11 @@ def check() -> list[str]:
     release_workflow = ROOT / ".github" / "workflows" / "release.yml"
     if release_workflow.is_file():
         workflow_text = release_workflow.read_text(encoding="utf-8")
-        if 'git push origin "v${NEW_VERSION}"' not in workflow_text or "--follow-tags" in workflow_text:
+        # Any explicit push of the tag by name satisfies this (origin or an
+        # authenticated URL remote); --follow-tags never does, since it skips
+        # lightweight tags.
+        explicit_tag_push = re.search(r'git push\s+\S+\s+"v\$\{NEW_VERSION\}"', workflow_text)
+        if not explicit_tag_push or "--follow-tags" in workflow_text:
             errors.append("release.yml must push the release tag explicitly; --follow-tags skips lightweight tags")
     readme = (ROOT / "README.md").read_text(encoding="utf-8") if (ROOT / "README.md").exists() else ""
     for milestone in range(7):

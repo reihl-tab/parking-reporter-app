@@ -24,10 +24,10 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-          # The release commit is pushed to protected main by the repo owner
-          # (admin bypass: "Do not allow bypassing the above settings" is off),
-          # so checkout must carry the owner PAT, not the github-actions token.
-          token: ${{ secrets.RELEASE_PAT || github.token }}
+          # The owner PAT is needed only for the two pushes below, so checkout
+          # stores no credential at all; the push URLs carry it explicitly and
+          # it never lands in .git/config.
+          persist-credentials: false
       - name: Prepare release
         id: prepare
         env:
@@ -37,6 +37,7 @@ jobs:
         if: steps.prepare.outputs.released == 'true'
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PAT || github.token }}
+          RELEASE_PAT: ${{ secrets.RELEASE_PAT }}
           NEW_VERSION: ${{ steps.prepare.outputs.new_version }}
           NOTES: ${{ steps.prepare.outputs.notes_path }}
         run: |
@@ -48,11 +49,17 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add CHANGELOG.md app/build.gradle.kts
           git commit -m "chore(release): v${NEW_VERSION}"
-          git fetch origin main
-          git rebase origin/main
+          # Documented bypass: the release commit lands on protected main through
+          # the owner's admin push path ("Do not allow bypassing the above
+          # settings" is intentionally off on the rule), so it does not pass the 8
+          # required PR checks first. The PAT push still triggers the normal push
+          # workflows on the release commit, so main's head is validated after it
+          # lands; the token appears only in these three URLs, never in .git/config.
+          git fetch "https://x-access-token:${RELEASE_PAT}@github.com/${GITHUB_REPOSITORY}.git" main
+          git rebase FETCH_HEAD
           git tag "v${NEW_VERSION}"
-          git push origin main
-          git push origin "v${NEW_VERSION}"
+          git push "https://x-access-token:${RELEASE_PAT}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
+          git push "https://x-access-token:${RELEASE_PAT}@github.com/${GITHUB_REPOSITORY}.git" "v${NEW_VERSION}"
           gh release create "v${NEW_VERSION}" --title "v${NEW_VERSION}" --notes-file "$NOTES"
 
   summary:
