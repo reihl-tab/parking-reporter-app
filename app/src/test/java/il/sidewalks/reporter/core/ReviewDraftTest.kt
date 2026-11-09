@@ -69,7 +69,7 @@ class ReviewDraftTest {
         assertNull(decoded.approvedDigest)
     }
     @Test fun categoriesDriveRequiredPlateAndClearStaleVehicleData() {
-        for (code in listOf("broken_sign", "faded_crosswalk")) {
+        for (code in listOf("broken_sign", "faded_crosswalk", "bollard_request")) {
             val changed = draft().approve().edit(subject = code)
             assertEquals("", changed.plate)
             assertEquals("", changed.exactHebrewText)

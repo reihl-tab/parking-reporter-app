@@ -6,6 +6,10 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+### Added
+
+- Add a plate-free bollard request category using the established municipal subject 1280, with labels in all five languages.
+
 ## [0.16.6] - 2026-11-09
 
 ### Other changes

@@ -68,6 +68,19 @@ class MunicipalSubjectsTest {
     }
 
     @Test
+    fun bollardUsesEstablishedSpecificSubjectWithExplicitCatalogContext() {
+        val catalog = loadCatalog()
+        val category = ReportCategory.BOLLARD_REQUEST
+        assertEquals("1280", category.municipalSubjectCode)
+        val subject = catalog.byCode(category.municipalSubjectCode).single()
+        assertEquals("עמוד מחסום ברזל נוטה ליפול / נפל", subject.name)
+        assertEquals(listOf("גדרות, מעקות, עמודים", subject.name), subject.path)
+        // Historical installation requests used this specific bollard channel.
+        // The description states installation, not a claim that a post fell.
+        assertNotEquals("5164", category.municipalSubjectCode)
+    }
+
+    @Test
     fun repeatedSubjectCodesKeepEveryPath() {
         val catalog = loadCatalog()
         // 5164 אחר appears under many roots in the captured catalog.

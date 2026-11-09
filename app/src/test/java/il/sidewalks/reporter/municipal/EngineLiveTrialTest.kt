@@ -2,6 +2,7 @@ package il.sidewalks.reporter.municipal
 
 import il.sidewalks.reporter.core.Evidence
 import il.sidewalks.reporter.core.ReviewDraft
+import il.sidewalks.reporter.core.ReportCategory
 import il.sidewalks.reporter.security.ReporterSettings
 import java.io.File
 import java.security.MessageDigest
@@ -102,11 +103,13 @@ class EngineLiveTrialTest {
                 latitude = env("TRIAL_LAT").toDouble(),
                 longitude = env("TRIAL_LON").toDouble(),
             )
+            val category = ReportCategory.from(env("TRIAL_SUBJECT"))
+                ?: throw IllegalStateException("unsupported trial subject")
             val draft = ReviewDraft(
                 evidence = evidence,
-                plate = env("TRIAL_PLATE"),
+                plate = System.getenv("TRIAL_PLATE").orEmpty(),
                 address = env("TRIAL_ADDRESS"),
-                subject = "sidewalk_parking",
+                subject = category.code,
                 exactHebrewText = text,
                 unresolved = emptySet(),
             ).approve()

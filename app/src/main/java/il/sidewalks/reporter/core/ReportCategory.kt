@@ -18,7 +18,10 @@ enum class ReportCategory(
 ) {
     SIDEWALK_PARKING("sidewalk_parking", "category.sidewalk_parking", true, "1145"),
     BROKEN_SIGN("broken_sign", "category.broken_sign", false, "17841"),
-    FADED_CROSSWALK("faded_crosswalk", "category.faded_crosswalk", false, "1137");
+    FADED_CROSSWALK("faded_crosswalk", "category.faded_crosswalk", false, "1137"),
+    // Established bollard channel despite its repair-style catalog label.
+    // The approved description must explicitly request a new installation.
+    BOLLARD_REQUEST("bollard_request", "category.bollard_request", false, "1280");
 
     companion object { fun from(code: String): ReportCategory? = entries.firstOrNull { it.code == code } }
 }

@@ -143,6 +143,7 @@ jobs:
           REPORTER_EMAIL: ${{ secrets.REPORTER_EMAIL }}
           TRIAL_APPROVED_TEXT: ${{ secrets.TRIAL_APPROVED_TEXT }}
           TRIAL_APPROVED_SHA256: ${{ inputs.approved_sha256 }}
+          TRIAL_SUBJECT: ${{ secrets.TRIAL_SUBJECT }}
           TRIAL_PLATE: ${{ secrets.TRIAL_PLATE }}
           TRIAL_ADDRESS: ${{ secrets.TRIAL_ADDRESS }}
           TRIAL_LAT: ${{ secrets.TRIAL_LAT }}

@@ -24,6 +24,12 @@ GitHub Actions. Design:
   deleted in the always-cleanup step). Nothing report-specific is printed;
   outcomes print only a fixed `TRIAL_RESULT` line.
 - The workflow refuses to run from any ref except `main`.
+- `TRIAL_SUBJECT` must name a supported app category (for example
+  `sidewalk_parking` or `bollard_request`). There is no default: a missing or
+  unknown category blocks the run. `TRIAL_PLATE` may be absent only for a
+  plate-free category; normal draft validation still applies.
+- Adding a category does not authorize a filing or bypass the environment
+  approval gate. Every real submit still needs its exact approved text hash.
 
 After the trial concludes, this directory and the workflow are removed and
 the `TRIAL_*` secrets deleted.

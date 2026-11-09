@@ -86,6 +86,7 @@ class MunicipalReportTextStaysHebrewTest {
         ReportCategory.SIDEWALK_PARKING to "1145",
         ReportCategory.BROKEN_SIGN to "17841",
         ReportCategory.FADED_CROSSWALK to "1137",
+        ReportCategory.BOLLARD_REQUEST to "1280",
     )
 
     @Test
