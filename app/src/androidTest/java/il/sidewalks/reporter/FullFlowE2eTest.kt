@@ -1,0 +1,217 @@
+package il.sidewalks.reporter
+
+import android.net.Uri
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTextReplacement
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.room.Room
+import androidx.test.platform.app.InstrumentationRegistry
+import il.sidewalks.reporter.ledger.ReportDatabase
+import il.sidewalks.reporter.municipal.StreetDirectory
+import il.sidewalks.reporter.municipal.MunicipalClient
+import il.sidewalks.reporter.municipal.OkHttpMunicipalClient
+import il.sidewalks.reporter.security.ReporterSettings
+import il.sidewalks.reporter.ui.AppShell
+import java.io.File
+import java.security.MessageDigest
+import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.runBlocking
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import org.json.JSONObject
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
+import org.junit.Before
+import org.junit.Assume.assumeTrue
+import org.junit.Rule
+import org.junit.Test
+
+/**
+ * Full report flow, end to end, on the real AppShell: shared-photo entry,
+ * review, evidence confirmation, approval, send, municipal submission.
+ *
+ * Stub-only: an on-device loopback MockWebServer answers the four municipal
+ * calls with canned responses. No network outside loopback, no credentials,
+ * no private data, and no live mode. The app manifest forbids cleartext;
+ * app/src/debug scopes a loopback-only exception to test builds.
+ * Device-unlock is replaced by a pass-through only in this synthetic test.
+ */
+class FullFlowE2eTest {
+    @get:Rule val compose = createComposeRule()
+
+    @Before fun pinHebrewUiLanguage() {
+        il.sidewalks.reporter.i18n.UiPrefsLanguageStore.of(InstrumentationRegistry.getInstrumentation().targetContext).set("he")
+    }
+
+    private fun screenshot(name: String) {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        File(context.filesDir, name).outputStream().use {
+            compose.onRoot().captureToImage().asAndroidBitmap().compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
+        }
+    }
+
+    private val sharedUri = Uri.parse("content://il.sidewalks.reporter.testshare/shared-entry-synthetic.jpg")
+    private var ownedPhotoHash: String? = null
+
+    /** Never take ownership of a pre-existing row, even one with the test photo. */
+    private fun claimSyntheticPhoto() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val bytes = requireNotNull(context.contentResolver.openInputStream(sharedUri)).use { it.readBytes() }
+        val hash = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
+        val db = Room.databaseBuilder(context, ReportDatabase::class.java, "report-ledger.db").build()
+        try {
+            assumeTrue("Test photo already has a report; leave it untouched", runBlocking { db.reports().findPhoto(hash) } == null)
+            ownedPhotoHash = hash
+        } finally {
+            db.close()
+        }
+    }
+
+    /** Remove only the row and files created from this test's synthetic photo. */
+    private fun cleanOwnedState() {
+        val hash = ownedPhotoHash ?: return
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val db = Room.databaseBuilder(context, ReportDatabase::class.java, "report-ledger.db").build()
+        try {
+            val record = runBlocking { db.reports().findPhoto(hash) } ?: return
+            db.openHelper.writableDatabase.execSQL(
+                "DELETE FROM reports WHERE stableId = ? AND originalSha256 = ?", arrayOf(record.stableId, hash))
+            File(context.noBackupFilesDir, record.originalRelativePath).delete()
+            File(context.noBackupFilesDir, "submissions/${record.stableId}.json").delete()
+        } finally {
+            db.close()
+            ownedPhotoHash = null
+        }
+    }
+
+    /** Synthetic directory injected in memory; never edits an installed file. */
+    private fun syntheticStreetDirectory(): StreetDirectory = StreetDirectory.load(
+        """{"version":1,"streets":[{"StreetCode":"900001","StreetName":"רחוב בדיקה"}],"addresses":[[31.77,35.2137,"1","רחוב בדיקה"]]}""")
+
+    private fun launchFlow(settings: ReporterSettings, factory: ((ReporterSettings) -> MunicipalClient)?) {
+        val uri = sharedUri
+        val signal = mutableStateOf(EntrySignal(1, EntryIntents.Request.SharedPhoto(uri.toString())))
+        compose.setContent {
+            MaterialTheme {
+                AppShell(authenticate = { _, _, action -> action() }, requestCamera = { it() },
+                    readSettings = { settings }, saveSettings = {}, entry = signal,
+                    municipalClientFactory = factory,
+                    streetDirectoryLoader = { syntheticStreetDirectory() })
+            }
+        }
+    }
+
+    /** Shared-photo entry through a locally approved draft. */
+    private fun driveToApproved(text: String) {
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithText("בדיקת הדיווח").fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onNodeWithText("נדרש תיקון קטגוריה ▾").performScrollTo().performClick()
+        compose.onNodeWithText("חניה על המדרכה").performClick()
+        compose.onNodeWithText("ערוך").performScrollTo().performClick()
+        compose.onNodeWithText("לוחית ללא מקפים").performScrollTo().performTextReplacement("12345678")
+        compose.onNodeWithText("רחוב ומספר בית שאישרת").performScrollTo().performTextReplacement("רחוב בדיקה 1")
+        compose.onNodeWithText("הטקסט המדויק לבדיקה").performScrollTo().performTextReplacement(text)
+        compose.onNodeWithText("זמן מאושר עם אזור זמן (ISO)").performScrollTo().performTextReplacement("2026-01-01T12:00:00+02:00")
+        compose.onNodeWithText("קו רוחב").performScrollTo().performTextReplacement("31.77")
+        compose.onNodeWithText("קו אורך").performScrollTo().performTextReplacement("35.2137")
+        compose.onNodeWithText("אשר זמן, מיקום וכתובת שבדקת").performScrollTo().performClick()
+        compose.waitUntil(10_000) {
+            try { compose.onNodeWithText("אשר את התוכן לבדיקה").assertIsEnabled(); true }
+            catch (e: AssertionError) { false }
+        }
+        compose.onNodeWithText("אשר את התוכן לבדיקה").performScrollTo().performClick()
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithText("התוכן אושר מקומית, לא נשלח").fetchSemanticsNodes().isNotEmpty()
+        }
+        screenshot("e2e-review-synthetic.png")
+    }
+
+    private fun tapSendAndAwaitCaseNumber() {
+        // The send gate compares the shown draft to the last SAVED one and
+        // the post-approval save is asynchronous; retry the tap if the gate
+        // answers "not saved" before the save lands.
+        var attempt = 0
+        while (true) {
+            attempt += 1
+            compose.onNodeWithText("שלח לעירייה").performScrollTo().performClick()
+            try {
+                compose.waitUntil(45_000) {
+                    compose.onAllNodesWithText("נשלח לעירייה. מספר קריאה", substring = true)
+                        .fetchSemanticsNodes().isNotEmpty() ||
+                        compose.onAllNodesWithText("הטיוטה לא נשמרה", substring = true)
+                            .fetchSemanticsNodes().isNotEmpty()
+                }
+            } catch (e: androidx.compose.ui.test.ComposeTimeoutException) {
+                fail("no submission outcome shown")
+            }
+            if (compose.onAllNodesWithText("נשלח לעירייה. מספר קריאה", substring = true)
+                .fetchSemanticsNodes().isNotEmpty()) return
+            if (attempt >= 3) fail("draft-not-saved persisted across retries")
+            Thread.sleep(500)
+        }
+    }
+
+    @Test fun fullReportFlowStubbedServer() {
+        claimSyntheticPhoto()
+        val settings = ReporterSettings(
+            firstName = "ישראל", lastName = "ישראלי", phone = "+972501234567",
+            idNumber = "000000018", email = "synthetic@example.com",
+            municipalSubscriptionKey = "synthetic-key",
+            municipalUsername = "synthetic-user",
+            municipalPassword = "synthetic-pass")
+        MockWebServer().use { server ->
+            server.enqueue(MockResponse().setBody("""{"Success":true,"Token":"synthetic-token"}"""))
+            server.enqueue(MockResponse().setBody("""{"Success":true,"ContactIdInCRM":"synthetic-contact-id"}"""))
+            server.enqueue(MockResponse().setBody(
+                """{"Success":true,"CaseIdInCRM":"synthetic-case-id","WebCaseIdInCRM":"synthetic-webcase-id","CaseNumberInCRM":"2000-0000000"}"""))
+            server.enqueue(MockResponse().setBody("""{"Success":true}"""))
+            server.start()
+            try {
+                launchFlow(settings) { s ->
+                    OkHttpMunicipalClient.forTesting(server.url("/"),
+                        s.municipalSubscriptionKey, s.municipalUsername, s.municipalPassword)
+                }
+                val text = "רכב חונה על המדרכה בתרחיש בדיקה סינתטי"
+                driveToApproved(text)
+                tapSendAndAwaitCaseNumber()
+                screenshot("e2e-submitted-synthetic.png")
+
+                val login = requireNotNull(server.takeRequest(5, TimeUnit.SECONDS)) { "Login never reached the stub" }
+                val contact = requireNotNull(server.takeRequest(5, TimeUnit.SECONDS)) { "contact never reached the stub" }
+                val create = requireNotNull(server.takeRequest(5, TimeUnit.SECONDS)) { "CreateCase never reached the stub" }
+                val attach = requireNotNull(server.takeRequest(5, TimeUnit.SECONDS)) { "AddFileToCase never reached the stub" }
+                assertEquals("/Login", login.path)
+                assertEquals("/createupdatecontact", contact.path)
+                assertEquals("/CreateCase", create.path)
+                assertEquals("/AddFileToCase", attach.path)
+                assertEquals("synthetic-user", JSONObject(login.body.readUtf8()).getString("UserName"))
+                val createBody = JSONObject(create.body.readUtf8())
+                assertEquals(text, createBody.getString("CaseDescription"))
+                assertEquals("900001", createBody.getString("CaseStreetCode"))
+                assertEquals("1", createBody.getString("CaseHouseNumber"))
+                assertEquals("1145", createBody.getString("CaseSubjectCode"))
+                assertEquals("000000018", createBody.getJSONObject("contact").getString("ContactIdNumber"))
+                val attachBody = JSONObject(attach.body.readUtf8())
+                val jpeg = java.util.Base64.getDecoder().decode(attachBody.getString("fileContent"))
+                assertTrue("attached file must be the original JPEG",
+                    jpeg.size > 2 && jpeg[0] == 0xFF.toByte() && jpeg[1] == 0xD8.toByte())
+                assertNotNull(attachBody.getString("caseIdInCRM"))
+            } finally {
+                cleanOwnedState()
+            }
+        }
+    }
+
+}
