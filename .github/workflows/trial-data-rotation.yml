@@ -1,0 +1,77 @@
+name: Trial data key rotation (manual)
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type ROTATE to re-encrypt the trial photo under TRIAL_DATA_KEY_NEXT'
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: trial-data-rotation
+  cancel-in-progress: false
+jobs:
+  # Manual rotation only: decrypt the trial blob with the current key and
+  # re-encrypt it under TRIAL_DATA_KEY_NEXT. Plaintext stays in $RUNNER_TEMP
+  # and is removed before upload; keys are never printed (Actions masks secrets).
+  # NOTE: rotation does NOT re-protect old ciphertext in git history: a blob
+  # committed under a leaked old key stays decryptable to anyone holding it.
+  reencrypt:
+    if: github.ref == 'refs/heads/main' && inputs.confirm == 'ROTATE'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - name: Re-encrypt the trial photo under the next key
+        env:
+          TRIAL_DATA_KEY: ${{ secrets.TRIAL_DATA_KEY }}
+          TRIAL_DATA_KEY_NEXT: ${{ secrets.TRIAL_DATA_KEY_NEXT }}
+        run: |
+          set -euo pipefail
+          # Fail closed when either key is missing, empty or unchanged.
+          if [ -z "${TRIAL_DATA_KEY:-}" ]; then
+            echo 'TRIAL_DATA_KEY secret is missing or empty'
+            exit 1
+          fi
+          if [ -z "${TRIAL_DATA_KEY_NEXT:-}" ]; then
+            echo 'TRIAL_DATA_KEY_NEXT secret is missing or empty'
+            exit 1
+          fi
+          if [ "$TRIAL_DATA_KEY" = "$TRIAL_DATA_KEY_NEXT" ]; then
+            echo 'TRIAL_DATA_KEY_NEXT equals the current key; nothing to rotate'
+            exit 1
+          fi
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
+            -in trial/trial-photo.jpg.enc -out "$RUNNER_TEMP/trial-photo.jpg" -pass env:TRIAL_DATA_KEY
+          test -s "$RUNNER_TEMP/trial-photo.jpg"
+          openssl enc -aes-256-cbc -pbkdf2 -iter 200000 \
+            -in "$RUNNER_TEMP/trial-photo.jpg" -out "$RUNNER_TEMP/trial-photo.jpg.enc" -pass env:TRIAL_DATA_KEY_NEXT
+          test -s "$RUNNER_TEMP/trial-photo.jpg.enc"
+          # Round-trip proof: the new blob opens under NEXT only.
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
+            -in "$RUNNER_TEMP/trial-photo.jpg.enc" -out "$RUNNER_TEMP/verify.jpg" -pass env:TRIAL_DATA_KEY_NEXT
+          cmp "$RUNNER_TEMP/trial-photo.jpg" "$RUNNER_TEMP/verify.jpg"
+          # CBC+PKCS#7 padding validates by chance ~1/256 under a wrong key, so a
+          # clean exit code alone cannot prove the old key still opens the new
+          # blob: refuse only when the old-key output matches the plaintext.
+          rm -f "$RUNNER_TEMP/old-key.jpg"
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
+            -in "$RUNNER_TEMP/trial-photo.jpg.enc" -out "$RUNNER_TEMP/old-key.jpg" -pass env:TRIAL_DATA_KEY 2>/dev/null || true
+          if [ -s "$RUNNER_TEMP/old-key.jpg" ] && cmp -s "$RUNNER_TEMP/old-key.jpg" "$RUNNER_TEMP/trial-photo.jpg"; then
+            echo 'new blob still decrypts to the same bytes under the old key; refusing'
+            exit 1
+          fi
+          rm -f "$RUNNER_TEMP/trial-photo.jpg" "$RUNNER_TEMP/verify.jpg" "$RUNNER_TEMP/old-key.jpg"
+      - name: Upload the re-encrypted blob (1-day retention)
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: trial-photo-next-key
+          path: ${{ runner.temp }}/trial-photo.jpg.enc
+          retention-days: 1
+          if-no-files-found: error
+      - name: Cleanup
+        if: always()
+        run: rm -f "$RUNNER_TEMP/trial-photo.jpg" "$RUNNER_TEMP/verify.jpg" "$RUNNER_TEMP/old-key.jpg" "$RUNNER_TEMP/trial-photo.jpg.enc"
