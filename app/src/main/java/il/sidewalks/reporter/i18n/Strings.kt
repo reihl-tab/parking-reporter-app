@@ -22,7 +22,7 @@ import org.json.JSONObject
  * active language -> he -> en -> the key itself (visible).
  *
  * PR-1 added the core. PR-2a wires it in at the AppShell root (see LanguageState.kt) and
- * extracts AppShell and SettingsScreen; PR-2b/2c extract the remaining PENDING sources.
+ * extracts AppShell and SettingsScreen; PR-2b/2c extracted the remaining sources.
  */
 
 /** Text direction of a language, as declared by its `dir` field. */

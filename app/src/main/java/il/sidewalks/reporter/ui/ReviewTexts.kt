@@ -89,7 +89,7 @@ internal fun reviewAddressSuggestionText(strings: Strings, display: String): Str
  * zone, or "missing") keeps an explicit LRI so it still reads left to right.
  */
 internal fun reviewTimeText(strings: Strings, confirmedTime: String?): String {
-    val shown = HebrewPresentation.evidenceTime(confirmedTime)
+    val shown = HebrewPresentation.evidenceTime(strings, confirmedTime)
     val value = if (Bidi.hasStrongRtl(shown)) "${Bidi.LRI}$shown${Bidi.PDI}" else shown
     return strings.t("review.time", mapOf("time" to value))
 }
