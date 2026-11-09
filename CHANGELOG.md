@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.14.5] - 2026-11-09
+
+### Other changes
+
+- M0 diagnostic screen: proper RTL, trimmed copy, bidi isolates (#162) (cacea76)
+
 ## [0.14.4] - 2026-11-09
 
 ### Other changes
