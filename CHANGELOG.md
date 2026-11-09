@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.17.1] - 2026-11-09
+
+### Fixes
+
+- fix: fail closed on missing mandatory trial inputs before decrypt/network (#196) (babcb5e)
+
 ### Fixed
 - Fail closed with constant input-stage markers when a mandatory live-trial secret is missing, before decryption or municipal calls; add test-only constant stage and error-kind markers without logging values.
 
