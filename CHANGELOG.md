@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-11-09
+
+### Features
+
+- feat: plate-free bollard category and explicit trial subject (#189) (f73f86d)
+
 ### Added
 
 - Add a plate-free bollard request category using the established municipal subject 1280, with labels in all five languages.
