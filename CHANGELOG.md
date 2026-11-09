@@ -6,6 +6,22 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-11-09
+
+### Features
+
+- feat(i18n): review, capture and reports screen extraction (PR-2b of #115) (#172) (2e91581)
+
+### Fixes
+
+- fix(ci): push semantic releases with the owner PAT (#174) (bee5f69)
+
+### Other changes
+
+- i18n(licenses): state the boundary condition on the OSM reproducibility claim (#173) (963c0d2)
+- docs/tools: address-lookup follow-ups from the #163/#167 reviews (#170) (9810b0c)
+- test(municipal, import): pin no-retry, the 16 MB cap and the import size boundary (#171) (b7d3bf6)
+
 ## [0.14.5] - 2026-11-09
 
 ### Other changes
