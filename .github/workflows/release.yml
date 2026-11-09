@@ -24,6 +24,10 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          # The release commit is pushed to protected main by the repo owner
+          # (admin bypass: "Do not allow bypassing the above settings" is off),
+          # so checkout must carry the owner PAT, not the github-actions token.
+          token: ${{ secrets.RELEASE_PAT || github.token }}
       - name: Prepare release
         id: prepare
         env:
@@ -32,7 +36,7 @@ jobs:
       - name: Commit, tag and publish release
         if: steps.prepare.outputs.released == 'true'
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.RELEASE_PAT || github.token }}
           NEW_VERSION: ${{ steps.prepare.outputs.new_version }}
           NOTES: ${{ steps.prepare.outputs.notes_path }}
         run: |
