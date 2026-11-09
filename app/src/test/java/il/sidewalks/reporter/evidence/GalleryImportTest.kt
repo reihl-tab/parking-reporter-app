@@ -113,6 +113,18 @@ class GalleryImportTest {
         } catch (_: java.io.IOException) {}
         assertEquals(0, dir.listFiles()?.size ?: 0)
     }
+    @Test fun importBoundaryAcceptsMaxBytesAndRefusesOneMore() {
+        val dir = java.nio.file.Files.createTempDirectory("gallery-import").toFile()
+        val atLimit = GalleryImport.copyToOriginals({ ByteArray(100) { 7 }.inputStream() }, dir, "at.jpg", maxBytes = 100)
+        assertEquals(100, atLimit.readBytes().size)
+        try {
+            GalleryImport.copyToOriginals({ ByteArray(101) { 7 }.inputStream() }, dir, "over.jpg", maxBytes = 100)
+            fail("expected maxBytes + 1 to be refused")
+        } catch (_: java.io.IOException) {}
+        assertFalse(File(dir, "over.jpg").exists())
+        assertFalse(File(dir, "over.jpg.tmp").exists())
+        assertEquals(listOf("at.jpg"), dir.listFiles()!!.map { it.name })
+    }
     @Test fun exactLimitImportSucceeds() {
         val dir = java.nio.file.Files.createTempDirectory("gallery-import").toFile()
         val out = GalleryImport.copyToOriginals({ ByteArray(100) { 7 }.inputStream() }, dir, maxBytes = 100)
