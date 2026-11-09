@@ -6,6 +6,9 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+### Fixed
+- Fail closed with constant input-stage markers when a mandatory live-trial secret is missing, before decryption or municipal calls; add test-only constant stage and error-kind markers without logging values.
+
 ## [0.17.0] - 2026-11-09
 
 ### Features

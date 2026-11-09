@@ -123,6 +123,26 @@ jobs:
           # The dispatch value reaches the shell only as a quoted env var,
           # never through workflow-expression interpolation.
           printf '%s' "$APPROVED_SHA256_INPUT" | grep -qxE '[0-9a-f]{64}'
+      - name: Validate mandatory submit inputs before decrypt or network
+        env:
+          J106_SUBSCRIPTION_KEY: ${{ secrets.J106_SUBSCRIPTION_KEY }}
+          J106_APP_USERNAME: ${{ secrets.J106_APP_USERNAME }}
+          J106_APP_PASSWORD: ${{ secrets.J106_APP_PASSWORD }}
+          REPORTER_FIRST_NAME: ${{ secrets.REPORTER_FIRST_NAME }}
+          REPORTER_LAST_NAME: ${{ secrets.REPORTER_LAST_NAME }}
+          REPORTER_PHONE: ${{ secrets.REPORTER_PHONE }}
+          REPORTER_ID_NUMBER: ${{ secrets.REPORTER_ID_NUMBER }}
+          REPORTER_EMAIL: ${{ secrets.REPORTER_EMAIL }}
+          TRIAL_APPROVED_TEXT: ${{ secrets.TRIAL_APPROVED_TEXT }}
+          TRIAL_SUBJECT: ${{ secrets.TRIAL_SUBJECT }}
+          TRIAL_ADDRESS: ${{ secrets.TRIAL_ADDRESS }}
+          TRIAL_LAT: ${{ secrets.TRIAL_LAT }}
+          TRIAL_LON: ${{ secrets.TRIAL_LON }}
+          TRIAL_CAPTURED_AT: ${{ secrets.TRIAL_CAPTURED_AT }}
+          TRIAL_STREET_LOOKUP_JSON: ${{ secrets.TRIAL_STREET_LOOKUP_JSON }}
+          TRIAL_DATA_KEY: ${{ secrets.TRIAL_DATA_KEY }}
+          TRIAL_APPROVED_SHA256: ${{ inputs.approved_sha256 }}
+        run: bash scripts/trial_submit_preflight.sh
       - name: Decrypt trial photo
         env:
           TRIAL_DATA_KEY: ${{ secrets.TRIAL_DATA_KEY }}

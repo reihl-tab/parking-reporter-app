@@ -137,6 +137,9 @@ class EngineLiveTrialTest {
         }
     }
 
-    private fun municipalClientFrom(s: ReporterSettings): OkHttpMunicipalClient =
-        OkHttpMunicipalClient(s.municipalSubscriptionKey, s.municipalUsername, s.municipalPassword)
+    private fun municipalClientFrom(s: ReporterSettings): MunicipalClient =
+        TrialStageClient(
+            OkHttpMunicipalClient(s.municipalSubscriptionKey, s.municipalUsername, s.municipalPassword),
+            ::report,
+        )
 }
