@@ -7,7 +7,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -67,16 +69,16 @@ fun DiagnosticScreen(runner: DiagnosticRunner, isMobile: () -> Boolean) {
     var running by remember { mutableStateOf(false) }
     var result by remember { mutableStateOf<DiagnosticResult?>(null) }
     val scope = rememberCoroutineScope()
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
     Surface(Modifier.fillMaxSize()) {
         Column(Modifier.systemBarsPadding().padding(20.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("מדרכות פנויות", style = MaterialTheme.typography.headlineMedium)
-            Text("בדיקת התחברות בלבד - M0", style = MaterialTheme.typography.titleLarge)
-            Text("בדיקה זו דורשת פרטי גישה לאפליקציית 106 שניתנו מהעירייה, לא סיסמה אישית. מפתח גישה ל-API = מפתח המנוי בחבילת העירייה; שם משתמש וסיסמה = חשבון האפליקציה שהעירייה סיפקה. אם אין לך אותם, אל תנחש ואל תשלח אותם בצ'אט.")
-            Text("אין יצירת פנייה או העלאת תמונה. כבה Wi-Fi ו-VPN והשתמש בנתונים סלולריים. הפרטים נשמרים בזיכרון רק לבדיקה זו, ולא בקובץ.")
+            Text("בדיקת התחברות בלבד - ⁦M0⁩", style = MaterialTheme.typography.titleLarge)
+            Text("בדיקה מקומית של פרטי הגישה לאפליקציית 106. ללא יצירת פנייה, ללא העלאה.")
             OutlinedTextField(key, { key = it; approved = false }, label = { Text("מפתח מנוי") }, visualTransformation = PasswordVisualTransformation(), enabled = !running, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(username, { username = it; approved = false }, label = { Text("שם משתמש") }, enabled = !running, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(password, { password = it; approved = false }, label = { Text("סיסמה") }, visualTransformation = PasswordVisualTransformation(), enabled = !running, modifier = Modifier.fillMaxWidth())
-            Row { Checkbox(approved, { approved = it }, enabled = !running); Text("מאשר ניסיון התחברות אחד בלבד, ללא דיווח") }
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) { Checkbox(approved, { approved = it }, enabled = !running); Text("מאשר ניסיון התחברות אחד בלבד, ללא דיווח") }
             Button(onClick = {
                 val credentials = LoginCredentials(key, username, password)
                 val mobile = isMobile()
@@ -89,8 +91,9 @@ fun DiagnosticScreen(runner: DiagnosticRunner, isMobile: () -> Boolean) {
             }, enabled = approved && !running && listOf(key, username, password).all { it.isNotBlank() }) {
                 Text(if (running) "בודק..." else "בדוק התחברות בלבד")
             }
-            result?.let { Text("תוצאת בדיקה: ${it.outcome.name}; HTTP: ${it.httpStatus ?: "-"}") }
-            Text("אם האפליקציה נסגרת במהלך הבדיקה, התוצאה אינה ידועה. אין ניסיון חוזר אוטומטי. דווח רק על תווית התוצאה וקוד HTTP, לא על פרטי הכניסה.")
+            result?.let { Text("תוצאת בדיקה: ⁦${it.outcome.name}⁩ ⁦${it.httpStatus ?: "-"}⁩") }
+            Text("אין ניסיון חוזר אוטומטי. דווח רק על התוצאה, לא על הפרטים.")
         }
+    }
     }
 }
