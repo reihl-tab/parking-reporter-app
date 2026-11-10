@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.25.1] - 2026-11-10
+
+### Other changes
+
+- chore: re-encrypt trial photo under rotated TRIAL_DATA_KEY (#246) (920f642)
+
 ## [0.25.0] - 2026-11-10
 
 ### Features
