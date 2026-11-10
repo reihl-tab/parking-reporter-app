@@ -6,6 +6,13 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class ReviewTimeTest {
+    @org.junit.Test fun unchangedOffsetlessEvidencePreservesSecondsAndNanos() {
+        org.junit.Assert.assertEquals("2026-01-01T12:00:47+02:00", ReviewTime.toJerusalemIso("01/01/2026 12:00", "2026-01-01T12:00:47"))
+        org.junit.Assert.assertEquals("2026-07-01T12:00:47.500+03:00", ReviewTime.toJerusalemIso("01/07/2026 12:00", "2026-07-01T12:00:47.5"))
+        org.junit.Assert.assertEquals("2026-01-01T12:01+02:00", ReviewTime.toJerusalemIso("01/01/2026 12:01", "2026-01-01T12:00:47"))
+        org.junit.Assert.assertNull(ReviewTime.toJerusalemIso("25/10/2026 01:30", "2026-10-25T01:30:47.5"))
+        org.junit.Assert.assertEquals("2026-01-01T12:00:47+02:00", ReviewTime.toJerusalemIso("٠١/٠١/٢٠٢٦ ١٢:٠٠", "2026-01-01T12:00:47"))
+    }
     @Test fun displayAndEditUseJerusalemForEveryRecordedOffset() {
         for (original in listOf("2026-01-01T10:00:47.123Z", "2026-01-01T15:30:47.123+05:30", "2026-01-01T12:00:47.123+02:00")) {
             assertEquals("01/01/2026 12:00", ReviewTime.display(original))

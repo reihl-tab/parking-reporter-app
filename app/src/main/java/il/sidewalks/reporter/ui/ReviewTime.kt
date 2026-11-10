@@ -20,9 +20,20 @@ object ReviewTime {
     /** Municipality-local wall clock, explicitly named beside the confirmation button.
      * Missing/ambiguous DST instants refuse instead of silently selecting an offset. */
     fun toJerusalemIso(input: String, previous: String?): String? {
-        if (input == display(previous) && previous?.let { validOffset(it) } == true) return previous
+        val normalized = buildString { input.forEach { char ->
+            val digit = Character.digit(char, 10)
+            append(if (digit >= 0) ('0'.code + digit).toChar() else char)
+        } }
+        if (normalized == display(previous)) {
+            if (previous?.let { validOffset(it) } == true) return previous
+            try {
+                val originalLocal = LocalDateTime.parse(previous)
+                val offsets = ZoneId.of("Asia/Jerusalem").rules.getValidOffsets(originalLocal)
+                return if (offsets.size == 1) originalLocal.atOffset(offsets.single()).toString() else null
+            } catch (_: Exception) { /* Missing/invalid original: validate the edited display below. */ }
+        }
         return try {
-            val local = LocalDateTime.parse(input, format)
+            val local = LocalDateTime.parse(normalized, format)
             val offsets = ZoneId.of("Asia/Jerusalem").rules.getValidOffsets(local)
             if (offsets.size == 1) local.atOffset(offsets.single()).toString() else null
         } catch (_: Exception) { null }
