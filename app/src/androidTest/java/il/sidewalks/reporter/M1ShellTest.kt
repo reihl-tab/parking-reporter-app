@@ -126,7 +126,7 @@ class M1ShellTest {
         compose.setContent { AppTheme { ReviewScreen(draft(), null, {}, {}) } }
         compose.onNodeWithText("חניה על המדרכה ▾").assertExists()
         compose.onNodeWithText("sidewalk_parking").assertDoesNotExist()
-        compose.onNodeWithText("זמן: \u206601/01/2026 12:00 (UTC+00:00)\u2069").assertExists()
+        compose.onNodeWithText("זמן: \u206601/01/2026 12:00\u2069").assertExists()
     }
     @Test fun offlineEncryptedDemoAndDurableDuplicateCheckpoint() {
         assertTrue(il.sidewalks.reporter.intake.SyntheticIntakeDemo.run().contains("הבדיקה הסינתטית הצליחה"))

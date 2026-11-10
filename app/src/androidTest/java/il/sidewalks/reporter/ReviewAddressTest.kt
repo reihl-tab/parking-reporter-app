@@ -29,6 +29,24 @@ class ReviewAddressTest {
         Evidence("address-fixture", "a".repeat(64), "2026-01-01T12:00:00+02:00", 31.77, 35.21),
         "1234567", "", "sidewalk_parking", "תיאור בדיקה בלבד", setOf("address_not_confirmed"))
 
+    @Test fun localTimeFieldKeepsOriginalSecondsAndRemovesOnlyApprovalNote() {
+        val initial = draft().copy(address = "רחוב בדיקה 12", confirmedTime = "2026-01-01T12:00:47+02:00")
+        var saved: ReviewDraft? = null
+        compose.setContent { AppTheme { ReviewScreen(initial, null, { saved = it }, {}, addressLookup = { _, _ -> emptyList() }) } }
+        compose.onNodeWithText("לא עכשיו").performClick()
+        compose.onNodeWithText("זמן: \u206601/01/2026 12:00\u2069").assertExists()
+        compose.onNodeWithText("כל שינוי מבטל אישור", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("ערוך").performScrollTo().performClick()
+        compose.onNodeWithText("זמן צילום מאושר (24 שעות)").performScrollTo()
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        File(context.filesDir, "review-local-time-synthetic.png").outputStream().use {
+            compose.onRoot().captureToImage().asAndroidBitmap().compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
+        }
+        compose.onNodeWithText("אשר זמן, מיקום וכתובת שבדקת").performScrollTo().performClick()
+        compose.onNodeWithText("שמור טיוטה").performScrollTo().performClick()
+        compose.runOnIdle { assertEquals(initial.evidence, saved?.evidence); assertEquals(initial.confirmedTime, saved?.confirmedTime); assertNull(saved?.approvedDigest) }
+    }
+
     @Test fun gpsSuggestsStreetHouseButNeverApprovesOrChangesEvidence() {
         val initial = draft()
         var saved: ReviewDraft? = null

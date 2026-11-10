@@ -71,7 +71,7 @@ class ReviewCaptureReportsExtractionTest {
         "review.address_suggestion" to "הצעה בלבד: {address}",
         "review.edit.text_field" to "הטקסט המדויק לבדיקה",
         "review.edit.confirm_note" to "בדוק את הרחוב ומספר הבית ואשר את זמן הצילום. אין לנחש מידע חסר. מיקום התמונה המקורי נשמר בנפרד.",
-        "review.edit.time_field" to "זמן מאושר עם אזור זמן (ISO)",
+        "review.edit.time_field" to "זמן צילום מאושר (24 שעות)",
         "review.edit.latitude_field" to "קו רוחב",
         "review.edit.longitude_field" to "קו אורך",
         "review.edit.confirm_button" to "אשר זמן, מיקום וכתובת שבדקת",
@@ -200,8 +200,8 @@ class ReviewCaptureReportsExtractionTest {
         // Byte-identical to the old literals: digits and Latin get LRI..PDI, as the old code did by hand.
         assertEquals("לוחית: ${lri}1234567$pdi", reviewPlateText(he, "1234567"))
         assertEquals("הצעה בלבד: ${lri}12345678$pdi", reviewPlateSuggestionText(he, "12345678"))
-        assertEquals("זמן: ${lri}01/01/2026 12:00 (UTC+00:00)$pdi", reviewTimeText(he, "2026-01-01T12:00:00Z"))
-        assertEquals("זמן: ${lri}01/01/2026 12:00 (UTC+02:00)$pdi", reviewTimeText(he, "2026-01-01T12:00:00+02:00"))
+        assertEquals("זמן: ${lri}01/01/2026 12:00$pdi", reviewTimeText(he, "2026-01-01T12:00:00Z"))
+        assertEquals("זמן: ${lri}01/01/2026 12:00$pdi", reviewTimeText(he, "2026-01-01T12:00:00+02:00"))
         assertEquals("פתח טיוטה ${lri}aaaabbbb$pdi", reportsOpenDraftText(he, "aaaabbbb"))
         assertEquals("פתח דיווח ${lri}ccccdddd$pdi", reportsOpenApprovedText(he, "ccccdddd"))
         // Hebrew values get the catalog's FSI..PDI where the old line had LRI..PDI or nothing.
@@ -217,7 +217,7 @@ class ReviewCaptureReportsExtractionTest {
         // LTR languages are not isolated by the catalog.
         assertEquals("Plate: 1234567", reviewPlateText(en, "1234567"))
         assertEquals("Plate: not confirmed", reviewPlateText(en, ""))
-        assertEquals("Time: 01/01/2026 12:00 (UTC+00:00)", reviewTimeText(en, "2026-01-01T12:00:00Z"))
+        assertEquals("Time: 01/01/2026 12:00", reviewTimeText(en, "2026-01-01T12:00:00Z"))
         assertEquals("Open draft aaaabbbb", reportsOpenDraftText(en, "aaaabbbb"))
         assertEquals("GPS: missing", reviewGpsText(en, hasGps = false))
     }
