@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-11-10
+
+### Features
+
+- feat: owner-selected Ai06 adaptive launcher icon (#206) (7bc4e17)
+
 ## [0.19.2] - 2026-11-10
 
 ### Fixes
