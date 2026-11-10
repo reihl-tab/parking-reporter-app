@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.26.1] - 2026-11-10
+
+### Fixes
+
+- fix: prove network isolation before private OCR staging (#242) (ecd436f)
+
 ## [0.26.0] - 2026-11-10
 
 ### Features
