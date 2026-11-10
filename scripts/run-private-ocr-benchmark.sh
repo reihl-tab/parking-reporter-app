@@ -4,6 +4,21 @@ set -euo pipefail
 umask 077
 work=/tmp/ocr-benchmark
 mkdir -p "$work/input" "$work/output"
+# Always encrypt failure diagnostics too, including early isolation refusal.
+finish_private_benchmark() {
+    local rc=$?
+    trap - EXIT
+    set +e
+    tar -C "$work/output" -cf "$work/output.tar" .
+    if ! openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -in "$work/output.tar" -out "$work/results.tar.enc" -pass env:OCR_BENCH_KEY; then
+        rm -f "$work/results.tar.enc"
+        rc=1
+    fi
+    adb shell pm clear il.sidewalks.reporter > /dev/null 2>&1 || true
+    rm -rf "$work/input" "$work/output" "$work/input.enc" "$work/input.tar" "$work/output.tar"
+    exit "$rc"
+}
+trap finish_private_benchmark EXIT
 # URL and key are dedicated OCR_BENCH_* secrets. Never reads any TRIAL_* or J106_* secret.
 curl --fail --silent --show-error --location "$OCR_BENCH_INPUT_URL" -o "$work/input.enc"
 test "$(sha256sum "$work/input.enc" | cut -d' ' -f1)" = "$OCR_BENCH_INPUT_SHA256" || { echo 'input integrity check failed'; exit 1; }
@@ -19,18 +34,8 @@ with tarfile.open('/tmp/ocr-benchmark/input.tar') as archive:
 PY
 adb install -r app/build/outputs/apk/debug/app-debug.apk > "$work/output/install.txt" 2>&1
 adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk >> "$work/output/install.txt" 2>&1
-# Positive control must prove this exact probe works before isolation; TCP-blocked
-# or missing nc is not evidence of offline state. Fail closed on either side.
-if ! adb shell 'echo | toybox nc -w 3 1.1.1.1 443' > "$work/output/online-control.txt" 2>&1; then
-    echo 'network positive control failed - refusing OCR'
-    exit 1
-fi
-adb shell svc wifi disable
-adb shell svc data disable
-if adb shell 'echo | toybox nc -w 3 1.1.1.1 443' > "$work/output/offline-probe.txt" 2>&1; then
-    echo 'network isolation check failed - refusing OCR'
-    exit 1
-fi
+source scripts/ocr-network-isolation.sh
+ocr_network_isolation "$work/output"
 adb shell run-as il.sidewalks.reporter mkdir -p files/ocr-benchmark
 for f in "$work/input"/*; do
     adb shell "run-as il.sidewalks.reporter sh -c 'cat > files/ocr-benchmark/$(basename "$f")'" < "$f"
@@ -52,9 +57,4 @@ assert len(rows)==len(expected) and rows
 text=Path('/tmp/ocr-benchmark/output/instrumentation.txt').read_text()
 assert 'OK (1 test)' in text and 'FAILURES' not in text
 PY
-# Encrypt EVERYTHING collected before upload, including failures/logcat. No screenshots.
-tar -C "$work/output" -cf "$work/output.tar" .
-openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -in "$work/output.tar" -out "$work/results.tar.enc" -pass env:OCR_BENCH_KEY
-adb shell pm clear il.sidewalks.reporter > /dev/null 2>&1 || true
-rm -rf "$work/input" "$work/output" "$work/input.tar" "$work/output.tar"
 exit "$rc"
