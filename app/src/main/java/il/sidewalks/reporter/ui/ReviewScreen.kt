@@ -40,6 +40,7 @@ fun ReviewScreen(initial: ReviewDraft, image: ImageBitmap?, onSave: (ReviewDraft
     var geocoding by remember { mutableStateOf(false) }
     var geocodeStatus by remember { mutableStateOf<String?>(null) }
     var draft by remember(initial.evidence.stableId) { mutableStateOf(initial) }
+    LaunchedEffect(initial) { draft = initial }
     var time by remember(initial.evidence.stableId) { mutableStateOf(ReviewTime.display(initial.confirmedTime)) }
     var latitude by remember(initial.evidence.stableId) { mutableStateOf(initial.confirmedLatitude?.toString().orEmpty()) }
     var longitude by remember(initial.evidence.stableId) { mutableStateOf(initial.confirmedLongitude?.toString().orEmpty()) }

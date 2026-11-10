@@ -153,11 +153,22 @@ fun AppShell(
             submitting = true
             submissionNote = strings.t("shell.submit.sending")
             scope.launch {
+                var passportReviewDraft: ReviewDraft? = null
                 val outcome = withContext(Dispatchers.IO) {
                     try {
                         val settings = readSettings()
                             ?: return@withContext SubmissionCoordinator.Outcome.Blocked(
                                 SubmissionCoordinator.Reason.MISSING_CREDENTIALS, "settings unreadable")
+                        if (!il.sidewalks.reporter.municipal.PassportSubmission.hasReviewedDisclosure(shown.exactHebrewText, settings)) {
+                            if (il.sidewalks.reporter.municipal.PassportSubmission.validProfile(settings)) {
+                                val updated = shown.edit(text = il.sidewalks.reporter.municipal.PassportSubmission.reconcileDisclosure(shown.exactHebrewText, settings))
+                                check(database.reports().store(updated.evidence.stableId, revision,
+                                    il.sidewalks.reporter.ledger.DraftCodec.encode(updated), null) == 1)
+                                passportReviewDraft = updated
+                            }
+                            return@withContext SubmissionCoordinator.Outcome.Blocked(
+                                SubmissionCoordinator.Reason.PASSPORT_DISCLOSURE_REQUIRED, "passport disclosure must be saved and approved")
+                        }
                         val directory = streetsDirectory
                             ?: (streetDirectoryLoader?.invoke() ?: loadStreetDirectory(context))
                                 .also { streetsDirectory = it }
@@ -193,6 +204,7 @@ fun AppShell(
                             e.javaClass.simpleName)
                     }
                 }
+                passportReviewDraft?.let { updated -> revision += 1; draft = updated; reload() }
                 submissionNote = municipalOutcomeText(strings, outcome)
                 if (outcome is SubmissionCoordinator.Outcome.Submitted ||
                     outcome is SubmissionCoordinator.Outcome.AlreadySubmitted) {
@@ -534,6 +546,7 @@ internal fun municipalOutcomeText(strings: Strings, outcome: SubmissionCoordinat
     is SubmissionCoordinator.Outcome.AlreadySubmitted ->
         strings.t("shell.submit.already_sent", mapOf("case_number" to (outcome.caseNumber ?: "")))
     is SubmissionCoordinator.Outcome.Blocked -> when (outcome.reason) {
+        SubmissionCoordinator.Reason.PASSPORT_DISCLOSURE_REQUIRED -> strings.t("shell.passport.review_required")
         SubmissionCoordinator.Reason.NOT_APPROVED -> strings.t("shell.submit.blocked.not_approved")
         SubmissionCoordinator.Reason.MISSING_CREDENTIALS ->
             strings.t("shell.submit.blocked.missing_credentials") + missingCredentialsSuffix(strings, outcome.missingFields)

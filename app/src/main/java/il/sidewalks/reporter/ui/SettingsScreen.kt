@@ -39,6 +39,7 @@ internal fun mergeReporterSettings(value: ReporterSettings, stored: ReporterSett
         lastName = value.lastName.ifBlank { stored?.lastName.orEmpty() },
         phone = value.phone.ifBlank { stored?.phone.orEmpty() },
         idNumber = value.idNumber.ifBlank { stored?.idNumber.orEmpty() },
+        passportNumber = value.passportNumber.ifBlank { stored?.passportNumber.orEmpty() },
         email = value.email.ifBlank { stored?.email.orEmpty() })
     if (touchedMunicipal == null) return merged
     return merged.copy(
@@ -63,6 +64,8 @@ fun SettingsScreen(
     var firstName by remember { mutableStateOf(initial?.firstName.orEmpty()) }
     var lastName by remember { mutableStateOf(initial?.lastName.orEmpty()) }
     var id by remember { mutableStateOf(initial?.idNumber.orEmpty()) }
+    var passportMode by remember { mutableStateOf(initial?.passportMode ?: false) }
+    var passport by remember { mutableStateOf(initial?.passportNumber.orEmpty()) }
     var phone by remember { mutableStateOf(initial?.phone.orEmpty()) }
     var email by remember { mutableStateOf(initial?.email.orEmpty()) }
     var subscriptionKey by remember { mutableStateOf(initial?.municipalSubscriptionKey.orEmpty()) }
@@ -87,14 +90,20 @@ fun SettingsScreen(
         if (!basicSetup) Text(s.t("settings.privacy.description"))
         OutlinedTextField(firstName, { firstName = ReporterInput.nameInput(it); saved = false }, label = { Text(s.t("settings.field.first_name")) }, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(lastName, { lastName = ReporterInput.nameInput(it); saved = false }, label = { Text(s.t("settings.field.last_name")) }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(id, { id = ReporterInput.digits(it); saved = false }, label = { Text(s.t("settings.field.id_number")) }, isError = id.isNotBlank() && !ReporterInput.validId(id), supportingText = { if (id.isNotBlank() && !ReporterInput.validId(id)) Text(s.t("settings.id.invalid")) }, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword, autoCorrectEnabled = false), modifier = Modifier.fillMaxWidth())
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(checked = passportMode, onCheckedChange = { passportMode = it; saved = false })
+            Text(s.t("settings.passport.mode"))
+        }
+        if (passportMode) {
+            OutlinedTextField(passport, { passport = it; saved = false }, label = { Text(s.t("settings.passport.number")) }, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false), modifier = Modifier.fillMaxWidth())
+        } else OutlinedTextField(id, { id = ReporterInput.digits(it); saved = false }, label = { Text(s.t("settings.field.id_number")) }, isError = id.isNotBlank() && !ReporterInput.validId(id), supportingText = { if (id.isNotBlank() && !ReporterInput.validId(id)) Text(s.t("settings.id.invalid")) }, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword, autoCorrectEnabled = false), modifier = Modifier.fillMaxWidth())
         OutlinedTextField(phone, { phone = ReporterInput.phoneInput(it); saved = false },
             label = { Text(s.t("settings.field.phone")) },
-            textStyle = TextStyle(textDirection = TextDirection.Ltr),
+            textStyle = LocalTextStyle.current.copy(textDirection = TextDirection.Ltr),
             isError = phone.isNotBlank() && !ReporterInput.validPhone(phone),
             supportingText = {
                 if (phone.isNotBlank() && !ReporterInput.validPhone(phone)) Text(s.t("settings.phone.invalid"))
-                else if (phone.isNotBlank() && !ReporterInput.isIsraeliMobile(phone)) Text(s.t("settings.phone.israel_only"))
+                else if (phone.isNotBlank() && !il.sidewalks.reporter.municipal.PassportSubmission.isIsraeliPhone(phone)) Text(s.t("settings.phone.international"))
             },
             visualTransformation = if (phoneFocused) VisualTransformation.None else PhoneDisplayTransformation,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, autoCorrectEnabled = false),
@@ -120,12 +129,13 @@ fun SettingsScreen(
         // The fields clear after a save so no credential lingers on screen; a touched-then-
         // blanked credential still enables the button, so clearing works on a blank screen too.
         // stays disabled when every field is blank (and nothing was touched) or right after a save.
-        val anyField = listOf(firstName, lastName, id, phone, email, subscriptionKey, apiUsername, apiPassword).any { it.isNotBlank() }
-        Button(enabled = !saved && (anyField || touchedMunicipal.isNotEmpty()) && (id.isBlank() || ReporterInput.validId(id)) && (phone.isBlank() || ReporterInput.validPhone(phone)) && (email.isBlank() || ReporterInput.validEmail(email)), onClick = { save(ReporterSettings(firstName.trim(), lastName.trim(), ReporterInput.canonicalPhone(phone), id.trim(), email.trim(),
+        val anyField = listOf(firstName, lastName, id, passport, phone, email, subscriptionKey, apiUsername, apiPassword).any { it.isNotBlank() }
+        Button(enabled = !saved && (anyField || touchedMunicipal.isNotEmpty()) && (if (passportMode) il.sidewalks.reporter.municipal.PassportSubmission.validPassport(passport.ifBlank { initial?.passportNumber.orEmpty() }) else id.isBlank() || ReporterInput.validId(id)) && (phone.isBlank() || ReporterInput.validPhone(phone)) && (email.isBlank() || ReporterInput.validEmail(email)), onClick = { save(ReporterSettings(firstName.trim(), lastName.trim(), ReporterInput.canonicalPhone(phone), id.trim(), email.trim(),
+            passportMode = passportMode, passportNumber = passport.trim(),
             municipalSubscriptionKey = subscriptionKey.trim(),
             municipalUsername = apiUsername.trim(),
             municipalPassword = apiPassword.trim()), touchedMunicipal) {
-            firstName = ""; lastName = ""; id = ""; phone = ""; email = ""
+            firstName = ""; lastName = ""; id = ""; passport = ""; phone = ""; email = ""
             subscriptionKey = ""; apiUsername = ""; apiPassword = ""
             touchedMunicipal = setOf(); saved = true
         } }, modifier = Modifier.fillMaxWidth()) { Text(if (basicSetup) s.t("setup.save_continue") else s.t("settings.save.button")) }

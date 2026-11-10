@@ -22,6 +22,9 @@ class HardcodedUiStringLintTest {
             // Municipal protocol payloads (e.g. the city name in the API contact record),
             // never rendered as UI.
             "MunicipalPayloads.kt",
+            // Fixed Hebrew municipal report disclosure, deliberately identical under
+            // every UI language. This is payload text reviewed before sending, not UI.
+            "PassportSubmission.kt",
         )
 
         /**
