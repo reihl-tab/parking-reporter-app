@@ -34,7 +34,6 @@ class ReviewAddressTest {
         val initial = draft().copy(address = "רחוב בדיקה 12", confirmedTime = "2026-01-01T12:00:47+02:00")
         var saved: ReviewDraft? = null
         compose.setContent { AppTheme { ReviewScreen(initial, null, { saved = it }, {}, addressLookup = { _, _ -> emptyList() }) } }
-        compose.onNodeWithText("לא עכשיו").performClick()
         compose.onNodeWithText("זמן: \u206601/01/2026 12:00\u2069").assertExists()
         compose.onNodeWithText("כל שינוי מבטל אישור", substring = true).assertDoesNotExist()
         compose.onNodeWithText("ערוך").performScrollTo().performClick()
@@ -52,7 +51,6 @@ class ReviewAddressTest {
         val initial = draft().copy(address = "רחוב בדיקה 12")
         var saved: ReviewDraft? = null
         compose.setContent { AppTheme { ReviewScreen(initial, null, { saved = it }, {}) } }
-        compose.onNodeWithText("לא עכשיו").performClick()
         compose.onNodeWithText("ערוך").performScrollTo().performClick()
         compose.onNodeWithText("מספר לוחית (ספרות בלבד)").performScrollTo().performTextReplacement("ab123-45-678")
         val context = InstrumentationRegistry.getInstrumentation().targetContext
@@ -107,9 +105,8 @@ class ReviewAddressTest {
             assertEquals(initial.confirmedLongitude, saved?.confirmedLongitude)
             assertNull(saved?.approvedDigest)
         }
-        compose.onNodeWithText("תיקון מיקום מתקדם").performScrollTo().performClick()
-        compose.onNodeWithText("קו רוחב").performScrollTo().assertExists()
-        compose.onNodeWithText("קו אורך").performScrollTo().assertExists()
+        compose.onNodeWithText("קו רוחב").assertDoesNotExist()
+        compose.onNodeWithText("קו אורך").assertDoesNotExist()
     }
 
     @Test fun lookupFailureLeavesManualAddressAndNoInventedNumber() {
@@ -135,16 +132,16 @@ class ReviewAddressTest {
         val initial = draft().copy(evidence = draft().evidence.copy(latitude = null, longitude = null), confirmedLatitude = null, confirmedLongitude = null)
         var saved: ReviewDraft? = null
         compose.setContent { AppTheme { ReviewScreen(initial, null, { saved = it }, {}) } }
-        compose.onNodeWithText("השלם מיקום חסר").performScrollTo().performClick()
-        compose.onNodeWithText("קו רוחב").performScrollTo().performTextReplacement("31.77")
-        compose.onNodeWithText("קו אורך").performScrollTo().performTextReplacement("35.21")
-        compose.onNodeWithText("אשר זמן, מיקום וכתובת שבדקת").performScrollTo().performClick()
+        compose.onNodeWithText("לא נמצא מיקום בתמונה.", substring = true).performScrollTo().assertExists()
+        compose.onNodeWithText("קו רוחב").assertDoesNotExist()
+        compose.onNodeWithText("קו אורך").assertDoesNotExist()
+        compose.onNodeWithText("אשר את התוכן לבדיקה").performScrollTo().assertIsNotEnabled()
         compose.onNodeWithText("שמור טיוטה").performScrollTo().performClick()
         compose.runOnIdle {
             assertNull(saved?.evidence?.latitude)
             assertNull(saved?.evidence?.longitude)
-            assertEquals(31.77, saved!!.confirmedLatitude!!, 0.0)
-            assertEquals(35.21, saved!!.confirmedLongitude!!, 0.0)
+            assertNull(saved?.confirmedLatitude)
+            assertNull(saved?.confirmedLongitude)
             assertNull(saved?.approvedDigest)
         }
     }
