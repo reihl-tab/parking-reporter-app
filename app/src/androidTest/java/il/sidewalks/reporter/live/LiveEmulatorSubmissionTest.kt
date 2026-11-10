@@ -149,12 +149,15 @@ class LiveEmulatorSubmissionTest {
             // A live call can be slow; the wait is deliberately longer than
             // the stub's. DRAFT_NOT_SAVED means the gate refused and nothing
             // was sent, so only then is a retry safe.
-            var outcome = driver.tapSendAndAwaitOnce(120_000)
+            // 300s: the municipal API through the owner tunnel can answer
+            // slowly; a slow-but-successful response must still be caught.
+            // The 120s wait is what turned run 42762339581 OUTCOME_UNKNOWN.
+            var outcome = driver.tapSendAndAwaitOnce(300_000)
             var sendAttempts = 1
             while (outcome == FlowDriver.SendOutcome.DRAFT_NOT_SAVED && sendAttempts < 3) {
                 Thread.sleep(500)
                 sendAttempts += 1
-                outcome = driver.tapSendAndAwaitOnce(120_000)
+                outcome = driver.tapSendAndAwaitOnce(300_000)
             }
             when (outcome) {
                 FlowDriver.SendOutcome.SUBMITTED -> {

@@ -27,6 +27,19 @@ jobs:
         run: python3 scripts/check_repository.py
       # Android build, unit and emulator/e2e jobs belong to M1.
       # This workflow never uses secrets or calls the municipal API.
+  staging-regression:
+    name: Live staging regression (first-install files dir)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v6 (Node 24)
+        with:
+          persist-credentials: false
+      # Reproduces the fresh-install device state (no files/ dir) with a mock
+      # adb; guards the fix for run 42755730613's pre-launch staging failure.
+      - name: Run the staging regression test
+        run: bash scripts/test-stage-live-files.sh
   python-smoke:
     name: Python tooling smoke test
     runs-on: ubuntu-24.04

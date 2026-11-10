@@ -166,8 +166,8 @@ noauth
 noccp
 nodefaultroute
 noipdefault
-mtu 1400
-mru 1400
+mtu 1350
+mru 1350
 maxfail 1
 unit 42
 name {user}
@@ -202,6 +202,10 @@ def down() -> None:
     for cmd in [('ip','route','del','0.0.0.0/1','dev','ppp42'),('ip','route','del','128.0.0.0/1','dev','ppp42'),
                 ('ipsec','down','parking-l2tp'),('systemctl','stop','xl2tpd'),('ipsec','stop')]:
         try:run(*cmd,check=False)
+        except Exception:pass
+    for chain,iface in [('POSTROUTING','-o'),('PREROUTING','-i')]:
+        try:run('iptables','-t','mangle','-D',chain,iface,'ppp42','-p','tcp',
+                '--tcp-flags','SYN,RST','SYN','-j','TCPMSS','--set-mss','1310',check=False)
         except Exception:pass
     # Remove only our firewall chains, not unrelated host policy.
     for binary in ['iptables','ip6tables']:
@@ -285,6 +289,16 @@ def up(env: Mapping[str,str]) -> None:
     stage('install_ppp_routes')
     run('ip','route','add','0.0.0.0/1','dev','ppp42')
     run('ip','route','add','128.0.0.0/1','dev','ppp42')
+    stage('mss_clamp')
+    # The tunnel MTU is smaller than 1500; without clamping, large TCP
+    # segments (the multi-MB filing photo upload) blackhole while small
+    # requests (login probes) pass - the exact hang seen in run 42762339581.
+    # Clamp both directions (our SYNs and the peer's) and keep ppp mtu/mru
+    # at 1350 so locally-originated segments are capped too: MSS = mtu - 40.
+    run('iptables','-t','mangle','-A','POSTROUTING','-o','ppp42','-p','tcp',
+        '--tcp-flags','SYN,RST','SYN','-j','TCPMSS','--set-mss','1310')
+    run('iptables','-t','mangle','-A','PREROUTING','-i','ppp42','-p','tcp',
+        '--tcp-flags','SYN,RST','SYN','-j','TCPMSS','--set-mss','1310')
     # Resolve and verify routes without sending an HTTP/Login/report request.
     stage('verify_municipal_routes_without_request')
     verify_municipal_routes()
