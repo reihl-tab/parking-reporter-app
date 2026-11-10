@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.18.1] - 2026-11-10
+
+### Other changes
+
+- trial: restage photo for the next owner-approved live filing + photo-digest gate (#200) (ca41db3)
+
 ## [0.18.0] - 2026-11-09
 
 ### Features
