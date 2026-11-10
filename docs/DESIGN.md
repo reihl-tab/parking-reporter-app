@@ -39,3 +39,18 @@ Broken-sign and faded-crosswalk categories require an empty plate; changing from
 The normal review and Edit screen show street and house number, never raw coordinate fields. When a new draft has GPS and lacks an address, a disclosure asks permission before the device Geocoder receives coordinates. Accepting runs the lookup without typing coordinates; declining performs no lookup. The existing Edit lookup button remains available. Results use provider street/house components, not the freeform city/postcode label, and stay suggestions until selected and confirmed. No house number is invented if missing. Lookup failure leaves manual address entry.
 
 Coordinate correction remains under an Advanced location correction disclosure, closed by default when location exists and open when it is missing for missing/wrong metadata. Original Evidence/EXIF, hashes, outgoing photo path and digest algorithms are unchanged. Selecting a suggestion clears approval and adds a confirmation warning; it never approves or submits. The shared synthetic/live FlowDriver dismisses optional provider consent (its fixture already supplies a reviewed address) and explicitly opens Advanced to type its known fixture coordinates. No live input, encrypted blob or workflow dispatch is part of this change.
+
+### First-run basic setup (#209)
+
+Welcome now leads to basic setup before home. The compact language picker uses
+ui-prefs without authentication. Only reporter personal fields appear here; no
+OCR/model choice, API credentials or diagnostics. Later (including system Back)
+finishes onboarding without writing a profile, so capture/import stays available.
+Missing municipal credentials still block Send through the existing gate.
+
+Personal fields are transient Compose state, not saved instance state or plaintext
+prefs. Save asks for the existing device unlock and uses the same fresh-read merge,
+encrypted write and missing-field index/rollback as Settings, preserving untouched
+API credentials. Success clears/disposes the form; cancellation or failure stays
+on setup. Only the nonsensitive setup stage survives rotation. Pending shared-photo
+and tile entry is deferred until setup finishes. No live workflow or evidence changes.

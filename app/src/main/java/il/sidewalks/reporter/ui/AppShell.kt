@@ -16,6 +16,8 @@ import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.activity.compose.BackHandler
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
@@ -80,6 +82,8 @@ fun AppShell(
     val selectedLanguage by languageController.selected.collectAsState()
     val language = LanguageResolver.activeLanguage(catalog, selectedLanguage, systemLanguageCode())
     val strings = remember(catalog, language.code) { Strings(catalog, language.code) }
+    var setupStarted by rememberSaveable { mutableStateOf(false) }
+    var setupError by remember { mutableStateOf("") }
     var page by remember { mutableStateOf("home") }
     var profile by remember { mutableStateOf<ReporterSettings?>(null) }
     var draft by remember { mutableStateOf<ReviewDraft?>(null) }
@@ -299,9 +303,55 @@ fun AppShell(
             null -> {}
         }
     }
+    // Shared authenticated, fresh-read merge for onboarding and normal Settings. Neither
+    // onboarding nor its language picker decrypts any existing profile on entry.
+    fun persistSettings(value: ReporterSettings, touchedMunicipal: Set<String>, cleared: () -> Unit, failed: () -> Unit = {}) {
+            authenticate(strings.t("shell.unlock.settings_title"), strings.t("shell.unlock.settings_subtitle")) {
+                try {
+                    // The screen clears itself and profile is dropped after a save: blank
+                    // personal fields keep the stored values; a municipal credential field
+                    // saves as typed only when the user touched it (blank = cleared), an
+                    // untouched one keeps its stored value. Merge against a fresh read.
+                    // The plaintext missing-fields record (IDs only, atomic write) goes
+                    // FIRST: if it fails, nothing was saved and no stale record can
+                    // grey out a later send.
+                    val merged = mergeReporterSettings(value, readSettings(), touchedMunicipal)
+                    val profileStore = il.sidewalks.reporter.security.SettingsProfileStore(context)
+                    profileStore.save(merged.missingMunicipalFields())
+                    try {
+                        saveSettings(merged)
+                    } catch (failure: Exception) {
+                        // The record already says the new answer: restore it to the
+                        // previous stored one, else delete it to fall back to
+                        // "unknown" - neither failure direction may grey out Send wrongly.
+                        try {
+                            val previous = readSettings()
+                            if (previous != null) profileStore.save(previous.missingMunicipalFields()) else profileStore.clear()
+                        } catch (_: Exception) { profileStore.clear() }
+                        throw failure
+                    }
+                    profile = null; cleared(); status = strings.t("shell.status.settings_saved")
+                }
+                catch (_: Exception) { status = strings.t("shell.status.settings_save_failed"); failed() }
+            }
+    }
     ProvideStrings(catalog, language) {
     if (showFirstRun) {
-        FirstRunScreen(strings, onStart = onFirstRunDone)
+        if (!setupStarted) {
+            FirstRunScreen(strings, onStart = { setupStarted = true })
+        } else {
+            // Personal fields use remember, never rememberSaveable or plaintext prefs.
+            // Skip and successful save dispose the form; unfinished setup never consumes entry.
+            BackHandler { onFirstRunDone() }
+            SettingsScreen(null, basicSetup = true, setupError = setupError,
+                selectedLanguage = selectedLanguage,
+                onLanguageSelected = languageController::select,
+                save = { value, touched, cleared ->
+                    setupError = ""
+                    persistSettings(value, touched, { cleared(); onFirstRunDone() },
+                        { setupError = strings.t("shell.status.settings_save_failed") })
+                }, back = onFirstRunDone)
+        }
         return@ProvideStrings
     }
     Scaffold(
@@ -382,34 +432,7 @@ fun AppShell(
             }
         }
         "settings" -> SettingsScreen(profile, save = { value, touchedMunicipal, cleared ->
-            authenticate(strings.t("shell.unlock.settings_title"), strings.t("shell.unlock.settings_subtitle")) {
-                try {
-                    // The screen clears itself and profile is dropped after a save: blank
-                    // personal fields keep the stored values; a municipal credential field
-                    // saves as typed only when the user touched it (blank = cleared), an
-                    // untouched one keeps its stored value. Merge against a fresh read.
-                    // The plaintext missing-fields record (IDs only, atomic write) goes
-                    // FIRST: if it fails, nothing was saved and no stale record can
-                    // grey out a later send.
-                    val merged = mergeReporterSettings(value, readSettings(), touchedMunicipal)
-                    val profileStore = il.sidewalks.reporter.security.SettingsProfileStore(context)
-                    profileStore.save(merged.missingMunicipalFields())
-                    try {
-                        saveSettings(merged)
-                    } catch (failure: Exception) {
-                        // The record already says the new answer: restore it to the
-                        // previous stored one, else delete it to fall back to
-                        // "unknown" - neither failure direction may grey out Send wrongly.
-                        try {
-                            val previous = readSettings()
-                            if (previous != null) profileStore.save(previous.missingMunicipalFields()) else profileStore.clear()
-                        } catch (_: Exception) { profileStore.clear() }
-                        throw failure
-                    }
-                    profile = null; cleared(); status = strings.t("shell.status.settings_saved")
-                }
-                catch (_: Exception) { status = strings.t("shell.status.settings_save_failed") }
-            }
+            persistSettings(value, touchedMunicipal, cleared)
         }, back = { profile = null; page = "home" }, debugTools = if (BuildConfig.DEBUG) {
             {
                 Text(strings.t("shell.debug.title"), style = MaterialTheme.typography.titleMedium)

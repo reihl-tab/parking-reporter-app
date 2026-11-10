@@ -108,7 +108,7 @@ internal class FlowDriver(private val compose: ComposeTestRule) {
         compose.onNodeWithText(fields.categoryLabel).performClick()
         compose.onNodeWithText("ערוך").performScrollTo().performClick()
         if (fields.plate != null) {
-            compose.onNodeWithText("לוחית ללא מקפים").performScrollTo().performTextReplacement(fields.plate)
+            compose.onNodeWithText("מספר לוחית (ספרות בלבד)").performScrollTo().performTextReplacement(fields.plate)
         }
         compose.onNodeWithText("רחוב ומספר בית שאישרת").performScrollTo().performTextReplacement(fields.address)
         compose.onNodeWithText("הטקסט המדויק לבדיקה").performScrollTo().performTextReplacement(fields.text)
