@@ -127,7 +127,7 @@ class M1ShellTest {
         compose.setContent { AppTheme { ReviewScreen(draft(), null, {}, {}) } }
         compose.onNodeWithText("חניה על המדרכה ▾").assertExists()
         compose.onNodeWithText("sidewalk_parking").assertDoesNotExist()
-        compose.onNodeWithText("זמן: \u206601/01/2026 12:00 (UTC+00:00)\u2069").assertExists()
+        compose.onNodeWithText("זמן: \u206601/01/2026 14:00\u2069").assertExists()
     }
     @Test fun offlineEncryptedDemoAndDurableDuplicateCheckpoint() {
         assertTrue(il.sidewalks.reporter.intake.SyntheticIntakeDemo.run().contains("הבדיקה הסינתטית הצליחה"))
@@ -242,7 +242,8 @@ class M1ShellTest {
         compose.onNodeWithText("הדיווחים שלי").assertExists()
         compose.onNodeWithText("הדיווחים שלי").performClick()
         compose.onNodeWithText("טיוטות שלא אושרו").assertExists()
-        compose.onNodeWithText("אין טיוטות ממתינות").assertExists()
+        // Shared test database may hold another test draft; navigation must not
+        // assume an empty ledger or delete unrelated rows to make it empty.
         compose.onNodeWithText("אושרו וממתינים לשליחה").assertExists()
         compose.onNodeWithText("היסטוריית דיווחים").assertExists()
         compose.onNodeWithText("בית").performClick()

@@ -26,6 +26,36 @@ class StreetDirectoryTest {
         return StreetDirectory.load(json)
     }
 
+    @Test fun exactAddressSuppliesSeparateConfirmedLocationWithoutPhotoGps() {
+        val location = fixture().findConfirmedAddress("רחוב הנביאים", "12")
+        assertEquals("רחוב הנביאים 12", location.address)
+        assertEquals(31.7683, location.latitude, 0.0)
+        assertEquals(35.2137, location.longitude, 0.0)
+        val evidence = il.sidewalks.reporter.core.Evidence("manual-fixture", "a".repeat(64), "2026-01-01T12:00:00+02:00", null, null)
+        val draft = il.sidewalks.reporter.core.ReviewDraft(evidence, "1234567", location.address, "sidewalk_parking", "synthetic", emptySet(),
+            confirmedLatitude = location.latitude, confirmedLongitude = location.longitude)
+        val approved = draft.approve()
+        assertEquals(null, approved.evidence.latitude)
+        assertTrue(approved.isApproved())
+        assertTrue(!approved.copy(confirmedLatitude = 31.77).isApproved())
+        val edited = approved.edit(address = "another address")
+        assertTrue(!edited.isApproved())
+        assertEquals(null, edited.confirmedLatitude)
+        assertEquals(null, edited.confirmedLongitude)
+        assertTrue(!edited.isReady())
+        assertTrue("location_needs_confirmation" in edited.unresolved)
+    }
+
+    @Test fun missingOrAmbiguousAddressCannotSupplyConfirmedLocation() {
+        for ((street, house) in listOf("unknown" to "1", "רחוב הנביאים" to "999")) {
+            try { fixture().findConfirmedAddress(street, house); org.junit.Assert.fail("must refuse") }
+            catch (_: MunicipalInputException) { }
+        }
+        val ambiguous = StreetDirectory.load("""{"version":1,"streets":[{"StreetCode":"1001","StreetName":"רחוב בדיקה"}],"addresses":[[31.77,35.21,"12","רחוב בדיקה"],[31.7701,35.21,"12","רחוב בדיקה"]]}""")
+        try { ambiguous.findConfirmedAddress("רחוב בדיקה", "12"); org.junit.Assert.fail("must refuse") }
+        catch (_: MunicipalInputException) { }
+    }
+
     @Test fun uniqueStreetNameResolves() {
         val resolved = fixture().resolve("רחוב הנביאים", "12", null)
         assertEquals("1001", resolved.streetCode)

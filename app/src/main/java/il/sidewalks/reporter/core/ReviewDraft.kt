@@ -53,5 +53,8 @@ data class ReviewDraft(
     fun isApproved(): Boolean = isReady() && approvedDigest == digest()
     fun edit(plate: String = this.plate, address: String = this.address,
              subject: String = this.subject, text: String = this.exactHebrewText): ReviewDraft =
-        copy(plate = if (ReportCategory.from(subject)?.needsPlate == false) "" else plate, address = address, subject = subject, exactHebrewText = if (subject != this.subject && text == this.exactHebrewText) "" else text, approvedDigest = null)
+        copy(plate = if (ReportCategory.from(subject)?.needsPlate == false) "" else plate, address = address, subject = subject, exactHebrewText = if (subject != this.subject && text == this.exactHebrewText) "" else text, approvedDigest = null,
+            confirmedLatitude = if (address != this.address && (evidence.latitude == null || evidence.longitude == null)) null else confirmedLatitude,
+            confirmedLongitude = if (address != this.address && (evidence.latitude == null || evidence.longitude == null)) null else confirmedLongitude,
+            unresolved = if (address != this.address && (evidence.latitude == null || evidence.longitude == null)) unresolved + "location_needs_confirmation" else unresolved)
 }

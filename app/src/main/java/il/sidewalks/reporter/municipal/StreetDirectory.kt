@@ -15,7 +15,7 @@ class StreetDirectory private constructor(
     private val aliases: Map<String, Set<String>>,
     private val points: List<Point>,
 ) {
-    private data class Point(val x: Double, val y: Double, val house: String, val code: String?, val name: String)
+    private data class Point(val x: Double, val y: Double, val house: String, val code: String?, val name: String, val latitude: Double, val longitude: Double)
 
     data class Resolved(
         val streetCode: String,
@@ -25,6 +25,19 @@ class StreetDirectory private constructor(
         val y: Int,
         val coordinateSource: String,
     )
+
+    data class ConfirmableAddress(val address: String, val latitude: Double, val longitude: Double)
+
+    /** Offline explicit address lookup, never device location or nearest-house guessing. */
+    fun findConfirmedAddress(street: String, house: String): ConfirmableAddress {
+        val resolved = resolve(street, house, null)
+        val matches = points.filter { it.code == resolved.streetCode && normalize(it.house) == normalize(resolved.house) }
+        require(matches.isNotEmpty())
+        val point = matches.first()
+        if (matches.any { hypot(it.x - point.x, it.y - point.y) > 1.0 })
+            throw MunicipalInputException("This address has multiple location points. Confirm another exact address.")
+        return ConfirmableAddress("${resolved.streetName} ${resolved.house}", point.latitude, point.longitude)
+    }
 
     private fun normalize(text: String): String {
         val folded = Normalizer.normalize(text, Normalizer.Form.NFKC)
@@ -163,7 +176,7 @@ class StreetDirectory private constructor(
                 if (!inJerusalem(lat, lon)) continue
                 val (x, y) = Itm.toItm(lat, lon)
                 val codes = aliases[StreetDirectoryHolder.normalizeStatic(name)] ?: emptySet()
-                points.add(Point(x.toDouble(), y.toDouble(), house, codes.singleOrNull(), name))
+                points.add(Point(x.toDouble(), y.toDouble(), house, codes.singleOrNull(), name, lat, lon))
             }
             return StreetDirectory(streets, aliases, points)
         }

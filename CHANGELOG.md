@@ -6,6 +6,63 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.26.1] - 2026-11-10
+
+### Fixes
+
+- fix: prove network isolation before private OCR staging (#242) (ecd436f)
+
+## [0.26.0] - 2026-11-10
+
+### Features
+
+- feat: reviewed passport and international phone compatibility (#225) (cc019ec)
+
+## [0.25.1] - 2026-11-10
+
+### Other changes
+
+- chore: re-encrypt trial photo under rotated TRIAL_DATA_KEY (#246) (920f642)
+
+## [0.25.0] - 2026-11-10
+
+### Features
+
+- feat: confirm exact addresses for photos without GPS (#236) (add8724)
+
+## [0.24.2] - 2026-11-10
+
+### Fixes
+
+- fix: preserve offsetless EXIF seconds and fractions on unchanged confirmation (51781cb)
+- fix: preserve human time catalog changes and all current contact translations (7b2215d)
+- fix: retain main plate labels in all languages and remove retired review keys (c5f85f9)
+- fix: keep the same plate input label in catalog, wording pins and UI flow tests (63a0a2c)
+- fix: preserve human Jerusalem time, plate formatting and both integration tests (a787bce)
+- fix: use Jerusalem display and edits consistently for UTC and foreign-offset evidence (46b587c)
+- fix: remove raw metadata controls from normal review and use plain Jerusalem time confirmation (4e38417)
+- fix: explicit advanced timezone correction for missing EXIF offset (5e09e8c)
+- fix: readable local review time and remove approval note (0309563)
+
+### Other changes
+
+- Merge pull request #213 from reihlinstinct/fix/review-readable-local-time (30fbb2b)
+- Merge main contact validation before human time UI verification (d4e5899)
+- chore: stage current main catalog for signed integration (ec7cdd4)
+- test: navigation does not assume shared instrumented ledger is empty (3eb8b8a)
+- test: import text-click helpers used by synthetic GPS consent path (08c9f68)
+- test: align plate field wording pins with the merged formatted plate catalog (4eb1410)
+- test: use translated warning code in synthetic address review pixels (a58475b)
+- test: acknowledge synthetic EXIF GPS prompt before unapproved-send guard check (dfe4bf2)
+- test: reconcile plate label and replace retired raw-location correction tests (a5a14fa)
+- test: mark removed approval note as retired catalog key (2264306)
+- test: dismiss address consent once per synthetic review fixture (4f6f814)
+- Merge main with plate formatting and basic setup before final time UI verification (94e0bdc)
+- chore: stage merged plate/setup files for signed main integration (25bb10f)
+- test: use platform-compatible synthetic EXIF tags and remove raw-field warning tripwires (8fdc4cd)
+- test: scope synthetic EXIF to stub flow without changing shared-entry fixture (41a5d4b)
+- test: retire removed approval-note catalog entry (cdeef0b)
+
 ## [0.24.1] - 2026-11-10
 
 ### Other changes

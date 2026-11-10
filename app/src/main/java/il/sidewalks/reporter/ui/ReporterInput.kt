@@ -9,7 +9,7 @@ object ReporterInput {
             if (digit in 0..9) append(('0'.code + digit).toChar())
         }
     } }
-    fun phoneInput(value: String) = (if (value.startsWith("+")) "+" else "") + digits(value)
+    fun phoneInput(value: String) = (if (value.trimStart().startsWith("+")) "+" else "") + digits(value)
     fun canonicalPhone(value: String): String {
         val clean = phoneInput(value)
         return if (clean.matches(Regex("05[0-9]{8}"))) "+972" + clean.drop(1) else clean
@@ -30,7 +30,7 @@ object ReporterInput {
     }
     fun isIsraeliMobile(value: String) = canonicalPhone(value).matches(Regex("\\+9725[0-9]{8}"))
     fun validId(value: String): Boolean = try { MunicipalPayloads.normalizeNationalId(value); true } catch (_: Exception) { false }
-    fun validPhone(value: String): Boolean = canonicalPhone(value).matches(Regex("\\+[1-9][0-9]{6,14}"))
+    fun validPhone(value: String): Boolean = il.sidewalks.reporter.municipal.PassportSubmission.isSupportedPhone(canonicalPhone(value))
     fun formattedPhone(value: String): String {
         val canonical = canonicalPhone(value)
         if (canonical.matches(Regex("\\+9725[0-9]{8}")))
