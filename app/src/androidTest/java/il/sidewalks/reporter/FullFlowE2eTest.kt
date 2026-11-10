@@ -4,6 +4,8 @@ import android.net.Uri
 import il.sidewalks.reporter.ui.theme.AppTheme
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
@@ -47,7 +49,7 @@ class FullFlowE2eTest {
         il.sidewalks.reporter.i18n.UiPrefsLanguageStore.of(InstrumentationRegistry.getInstrumentation().targetContext).set("he")
     }
 
-    private val sharedUri = Uri.parse("content://il.sidewalks.reporter.testshare/shared-entry-synthetic.jpg")
+    private val sharedUri = Uri.parse("content://il.sidewalks.reporter.testshare/with-metadata.jpg")
     private var ownedPhotoHash: String? = null
 
     /** Never take ownership of a pre-existing row, even one with the test photo. */
@@ -176,7 +178,14 @@ class FullFlowE2eTest {
             launchFlow(settings, null)
             val driver = FlowDriver(compose)
             compose.waitUntil(15_000) {
-                compose.onAllNodesWithText("בדיקת הדיווח").fetchSemanticsNodes().isNotEmpty()
+                compose.onAllNodesWithText("בדיקת הדיווח").fetchSemanticsNodes().isNotEmpty() ||
+                    compose.onAllNodesWithText("נמצא מיקום בתמונה").fetchSemanticsNodes().isNotEmpty()
+            }
+            if (compose.onAllNodesWithText("נמצא מיקום בתמונה").fetchSemanticsNodes().isNotEmpty()) {
+                compose.onNodeWithText("השתמש במיקום").performClick()
+            }
+            if (compose.onAllNodesWithText("למצוא רחוב ומספר בית?").fetchSemanticsNodes().isNotEmpty()) {
+                compose.onNodeWithText("לא עכשיו").performClick()
             }
             assertEquals(FlowDriver.SendOutcome.SEND_NOT_FIRED, driver.tapSendAndAwaitOnce(5_000))
         } finally {

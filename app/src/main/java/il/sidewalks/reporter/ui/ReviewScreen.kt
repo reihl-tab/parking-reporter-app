@@ -23,8 +23,8 @@ import il.sidewalks.reporter.core.ReviewDraft
 import il.sidewalks.reporter.i18n.LocalStrings
 import il.sidewalks.reporter.i18n.ProvideStringsIfMissing
 
-/** A format sample for the ISO time field, the same in every language (not translated). */
-private const val ISO_TIME_EXAMPLE = "\u20662026-01-01T12:00:00+02:00\u2069"
+/** Same 24-hour format sample in every language. */
+private const val LOCAL_TIME_EXAMPLE = "\u206601/01/2026 12:00\u2069"
 
 @Composable
 fun ReviewScreen(initial: ReviewDraft, image: ImageBitmap?, onSave: (ReviewDraft) -> Unit, onBack: () -> Unit, onOutgoingPreview: (() -> Unit)? = null, onSubmit: ((ReviewDraft) -> Unit)? = null, submitting: Boolean = false, submissionNote: String = "", missingCredentialKeys: List<String> = emptyList(), addressLookup: (suspend (Double, Double) -> List<il.sidewalks.reporter.evidence.AddressSuggestion>)? = null, plateRecognizer: (suspend () -> List<String>)? = null) {
@@ -40,12 +40,11 @@ fun ReviewScreen(initial: ReviewDraft, image: ImageBitmap?, onSave: (ReviewDraft
     var geocoding by remember { mutableStateOf(false) }
     var geocodeStatus by remember { mutableStateOf<String?>(null) }
     var draft by remember(initial.evidence.stableId) { mutableStateOf(initial) }
-    var time by remember(initial.evidence.stableId) { mutableStateOf(initial.confirmedTime.orEmpty()) }
+    var time by remember(initial.evidence.stableId) { mutableStateOf(ReviewTime.display(initial.confirmedTime)) }
     var latitude by remember(initial.evidence.stableId) { mutableStateOf(initial.confirmedLatitude?.toString().orEmpty()) }
     var longitude by remember(initial.evidence.stableId) { mutableStateOf(initial.confirmedLongitude?.toString().orEmpty()) }
     var editing by remember(initial.evidence.stableId) { mutableStateOf(false) }
     var categoryMenu by remember { mutableStateOf(false) }
-    var advancedLocation by rememberSaveable(initial.evidence.stableId) { mutableStateOf(initial.confirmedLatitude == null || initial.confirmedLongitude == null) }
     suspend fun findAddress() {
         val lat = latitude.toDoubleOrNull() ?: return
         val lon = longitude.toDoubleOrNull() ?: return
@@ -134,7 +133,7 @@ fun ReviewScreen(initial: ReviewDraft, image: ImageBitmap?, onSave: (ReviewDraft
         if (editing) {
         Text(s.t("review.edit.original_time_title"))
         Text("\u2066${HebrewPresentation.evidenceTime(s, draft.evidence.capturedAtIso)}\u2069", modifier = Modifier.fillMaxWidth(), style = TextStyle(textDirection = TextDirection.Ltr))
-        Text(reviewGpsText(s, hasGps = draft.evidence.latitude != null))
+
         Text(s.t("review.edit.privacy_note"))
         if (il.sidewalks.reporter.core.ReportCategory.from(draft.subject)?.needsPlate != false) {
         Row { Checkbox(checked = useGoogle, enabled = !recognizing, onCheckedChange = { useGoogle = it; plates = emptyList(); ocrStatus = null }); Text(s.t("review.edit.use_mlkit")) }
@@ -161,23 +160,18 @@ fun ReviewScreen(initial: ReviewDraft, image: ImageBitmap?, onSave: (ReviewDraft
         }
         OutlinedTextField(draft.exactHebrewText, { draft = draft.edit(text = it) }, label = { Text(s.t("review.edit.text_field")) }, modifier = Modifier.fillMaxWidth(), minLines = 3)
         Text(s.t("review.edit.confirm_note"))
-        Text(ISO_TIME_EXAMPLE, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(time, { time = it; draft = draft.copy(unresolved = setOf(ReviewWarning.TIME_NEEDS_CONFIRMATION.code), approvedDigest = null) }, textStyle = TextStyle(textDirection = TextDirection.Ltr), label = { Text(s.t("review.edit.time_field")) }, modifier = Modifier.fillMaxWidth())
-        TextButton(onClick = { advancedLocation = !advancedLocation }) { Text(s.t(if (advancedLocation) "review.location.hide_advanced" else "review.location.show_advanced")) }
-        if (advancedLocation) {
-        Text(s.t("review.location.advanced_note"), style = MaterialTheme.typography.bodySmall)
-        OutlinedTextField(latitude, { latitude = it; draft = draft.copy(unresolved = setOf(ReviewWarning.LOCATION_NEEDS_CONFIRMATION.code), approvedDigest = null) }, label = { Text(s.t("review.edit.latitude_field")) }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(longitude, { longitude = it; draft = draft.copy(unresolved = setOf(ReviewWarning.LOCATION_NEEDS_CONFIRMATION.code), approvedDigest = null) }, label = { Text(s.t("review.edit.longitude_field")) }, modifier = Modifier.fillMaxWidth())
-        }
+        Text(s.t("review.edit.jerusalem_time_note"))
+        Text(LOCAL_TIME_EXAMPLE, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(time, { time = it; draft = draft.copy(unresolved = setOf(ReviewWarning.TIME_NEEDS_CONFIRMATION.code), approvedDigest = null) }, textStyle = TextStyle(textDirection = TextDirection.Ltr), isError = ReviewTime.toJerusalemIso(time, draft.confirmedTime) == null, label = { Text(s.t("review.edit.time_field")) }, modifier = Modifier.fillMaxWidth())
         Text(reviewAddressText(s, draft.address))
-        Button(onClick = { draft = draft.confirmEvidence(time, latitude.toDoubleOrNull(), longitude.toDoubleOrNull()) }, modifier = Modifier.fillMaxWidth()) { Text(s.t("review.edit.confirm_button")) }
+        Button(onClick = { val iso = ReviewTime.toJerusalemIso(time, draft.confirmedTime)
+            if (iso != null) draft = draft.confirmEvidence(iso, latitude.toDoubleOrNull(), longitude.toDoubleOrNull())
+            else draft = draft.copy(unresolved = draft.unresolved + ReviewWarning.TIME_NEEDS_CONFIRMATION.code, approvedDigest = null) }, modifier = Modifier.fillMaxWidth()) { Text(s.t("review.edit.confirm_button")) }
         if (draft.unresolved.isNotEmpty()) Text(unresolvedText(s, draft.unresolved))
         }
         if (latitude.toDoubleOrNull() == null || longitude.toDoubleOrNull() == null) {
-            Text(s.t("review.location.missing"))
-            TextButton(onClick = { editing = true; advancedLocation = true }) { Text(s.t("review.location.enter_missing")) }
+            Text(s.t("review.location.missing_plain"))
         }
-        Text(s.t("review.approval_note"))
         Button(enabled = draft.isReady(), onClick = { draft = draft.approve(); onSave(draft) }, modifier = Modifier.fillMaxWidth()) { Text(s.t("review.approve_button")) }
         Text(s.t(if (draft.isApproved()) "review.approved" else "review.not_approved"))
         Button(onClick = { onSave(draft) }, modifier = Modifier.fillMaxWidth()) { Text(s.t("review.save_draft")) }

@@ -28,7 +28,24 @@ class ReviewAddressTest {
     @get:Rule val compose = createComposeRule()
     private fun draft() = ReviewDraft(
         Evidence("address-fixture", "a".repeat(64), "2026-01-01T12:00:00+02:00", 31.77, 35.21),
-        "1234567", "", "sidewalk_parking", "תיאור בדיקה בלבד", setOf("address_not_confirmed"))
+        "1234567", "", "sidewalk_parking", "תיאור בדיקה בלבד", setOf("address_needs_confirmation"))
+
+    @Test fun localTimeFieldKeepsOriginalSecondsAndRemovesOnlyApprovalNote() {
+        val initial = draft().copy(address = "רחוב בדיקה 12", confirmedTime = "2026-01-01T12:00:47+02:00")
+        var saved: ReviewDraft? = null
+        compose.setContent { AppTheme { ReviewScreen(initial, null, { saved = it }, {}, addressLookup = { _, _ -> emptyList() }) } }
+        compose.onNodeWithText("זמן: \u206601/01/2026 12:00\u2069").assertExists()
+        compose.onNodeWithText("כל שינוי מבטל אישור", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("ערוך").performScrollTo().performClick()
+        compose.onNodeWithText("זמן הצילום (24 שעות)").performScrollTo()
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        File(context.filesDir, "review-local-time-synthetic.png").outputStream().use {
+            compose.onRoot().captureToImage().asAndroidBitmap().compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
+        }
+        compose.onNodeWithText("אשר זמן, מיקום וכתובת שבדקת").performScrollTo().performClick()
+        compose.onNodeWithText("שמור טיוטה").performScrollTo().performClick()
+        compose.runOnIdle { assertEquals(initial.evidence, saved?.evidence); assertEquals(initial.confirmedTime, saved?.confirmedTime); assertNull(saved?.approvedDigest) }
+    }
 
     @Test fun plateEntryFormatsDigitsButStoresNoDashes() {
         val initial = draft().copy(address = "רחוב בדיקה 12")
@@ -88,9 +105,8 @@ class ReviewAddressTest {
             assertEquals(initial.confirmedLongitude, saved?.confirmedLongitude)
             assertNull(saved?.approvedDigest)
         }
-        compose.onNodeWithText("תיקון מיקום מתקדם").performScrollTo().performClick()
-        compose.onNodeWithText("קו רוחב").performScrollTo().assertExists()
-        compose.onNodeWithText("קו אורך").performScrollTo().assertExists()
+        compose.onNodeWithText("קו רוחב").assertDoesNotExist()
+        compose.onNodeWithText("קו אורך").assertDoesNotExist()
     }
 
     @Test fun lookupFailureLeavesManualAddressAndNoInventedNumber() {
@@ -116,16 +132,16 @@ class ReviewAddressTest {
         val initial = draft().copy(evidence = draft().evidence.copy(latitude = null, longitude = null), confirmedLatitude = null, confirmedLongitude = null)
         var saved: ReviewDraft? = null
         compose.setContent { AppTheme { ReviewScreen(initial, null, { saved = it }, {}) } }
-        compose.onNodeWithText("השלם מיקום חסר").performScrollTo().performClick()
-        compose.onNodeWithText("קו רוחב").performScrollTo().performTextReplacement("31.77")
-        compose.onNodeWithText("קו אורך").performScrollTo().performTextReplacement("35.21")
-        compose.onNodeWithText("אשר זמן, מיקום וכתובת שבדקת").performScrollTo().performClick()
+        compose.onNodeWithText("לא נמצא מיקום בתמונה.", substring = true).performScrollTo().assertExists()
+        compose.onNodeWithText("קו רוחב").assertDoesNotExist()
+        compose.onNodeWithText("קו אורך").assertDoesNotExist()
+        compose.onNodeWithText("אשר את התוכן לבדיקה").performScrollTo().assertIsNotEnabled()
         compose.onNodeWithText("שמור טיוטה").performScrollTo().performClick()
         compose.runOnIdle {
             assertNull(saved?.evidence?.latitude)
             assertNull(saved?.evidence?.longitude)
-            assertEquals(31.77, saved!!.confirmedLatitude!!, 0.0)
-            assertEquals(35.21, saved!!.confirmedLongitude!!, 0.0)
+            assertNull(saved?.confirmedLatitude)
+            assertNull(saved?.confirmedLongitude)
             assertNull(saved?.approvedDigest)
         }
     }
