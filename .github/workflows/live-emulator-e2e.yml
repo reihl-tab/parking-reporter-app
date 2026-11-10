@@ -112,7 +112,10 @@ jobs:
           sdkmanager_bin=$(command -v sdkmanager || echo "$sdkroot/cmdline-tools/latest/bin/sdkmanager")
           "$sdkmanager_bin" --version
           yes | "$sdkmanager_bin" --licenses > /dev/null 2>&1 || true
-          "$sdkmanager_bin" 'platforms;android-30' 'system-images;android-30;default;x86_64' > /tmp/image-predownload.log 2>&1 || {
+          # Also verify the emulator/build-tools/platform-tools packages while
+          # egress is still direct (a runner-image change must never push
+          # those downloads through the owner tunnel either).
+          "$sdkmanager_bin" 'platforms;android-30' 'system-images;android-30;default;x86_64' 'emulator' 'platform-tools' 'build-tools;37.0.0' > /tmp/image-predownload.log 2>&1 || {
             tail -5 /tmp/image-predownload.log
             exit 1
           }
@@ -294,6 +297,7 @@ jobs:
             adb pull /sdcard/live-rec-4.mp4 /tmp/live-e2e/seg4.mp4 || true
             adb pull /sdcard/live-rec-5.mp4 /tmp/live-e2e/seg5.mp4 || true
             adb pull /sdcard/live-rec-6.mp4 /tmp/live-e2e/seg6.mp4 || true
+            adb shell "ls -la /sdcard/" | grep -i 'live-rec' || true
             adb shell rm -f /sdcard/live-rec-1.mp4 /sdcard/live-rec-2.mp4 /sdcard/live-rec-3.mp4 /sdcard/live-rec-4.mp4 /sdcard/live-rec-5.mp4 /sdcard/live-rec-6.mp4 || true
             # Marker log: try the app package, then the test package (a run
             # once produced no collected log; record which source answered so
@@ -311,10 +315,16 @@ jobs:
             adb shell "run-as il.sidewalks.reporter.test ls files/" > /tmp/live-e2e/files-test.txt 2>/dev/null || true
             adb shell "run-as il.sidewalks.reporter cat files/live-e2e-case-number.txt" > /tmp/live-e2e/live-e2e-case-number.txt || true
             adb shell "run-as il.sidewalks.reporter cat files/live-e2e-submission-state.json" > /tmp/live-e2e/live-e2e-submission-state.json || true
-            adb shell "run-as il.sidewalks.reporter cat files/live-e2e-approved.png" > /tmp/live-e2e/approved.png || true
-            adb shell "run-as il.sidewalks.reporter cat files/live-e2e-submitted.png" > /tmp/live-e2e/submitted.png || true
-            adb shell "run-as il.sidewalks.reporter cat files/live-e2e-outcome-unknown.png" > /tmp/live-e2e/outcome-unknown.png || true
-            adb shell "run-as il.sidewalks.reporter rm -f files/live-params.json files/live-e2e-approved.png files/live-e2e-submitted.png files/live-e2e-outcome-unknown.png files/live-e2e-case-number.txt files/live-e2e-submission-state.json" || true
+            # Screenshots: the test lists the files it actually wrote in
+            # live-e2e-shots.txt; pull exactly those (fixed-name pulls once
+            # produced empty files silently).
+            adb shell "run-as il.sidewalks.reporter cat files/live-e2e-shots.txt" > /tmp/live-e2e/shots.txt 2>/dev/null || true
+            while read -r shot; do
+              case "$shot" in
+                live-e2e-*.png) adb shell "run-as il.sidewalks.reporter cat 'files/$shot'" > "/tmp/live-e2e/$shot" 2>/dev/null || true;;
+              esac
+            done < /tmp/live-e2e/shots.txt
+            adb shell "run-as il.sidewalks.reporter rm -f files/live-params.json files/live-e2e-*.png files/live-e2e-shots.txt files/live-e2e-case-number.txt files/live-e2e-submission-state.json" || true
             adb shell "run-as il.sidewalks.reporter.test rm -f files/live-photo.jpg" || true
       - name: Encrypt the recording and raw output
         if: always()
@@ -335,12 +345,12 @@ jobs:
             cp "$first" recording.mp4
           fi
           test -s instrumentation.txt
-          tar czf private-bundle.tgz $(for f in recording.mp4 instrumentation.txt approved.png submitted.png outcome-unknown.png live-e2e-case-number.txt live-e2e-submission-state.json files-app.txt files-test.txt; do if [ -s "$f" ]; then printf '%s ' "$f"; fi; done)
+          tar czf private-bundle.tgz $(for f in recording.mp4 instrumentation.txt live-e2e-*.png live-e2e-case-number.txt live-e2e-submission-state.json files-app.txt files-test.txt; do if [ -s "$f" ]; then printf '%s ' "$f"; fi; done)
           test -s private-bundle.tgz
           openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt \
             -in private-bundle.tgz -out live-e2e-private-bundle.tgz.enc -pass env:TRIAL_DATA_KEY
           test -s live-e2e-private-bundle.tgz.enc
-          shred -u private-bundle.tgz recording.mp4 seg1.mp4 seg2.mp4 seg3.mp4 seg4.mp4 seg5.mp4 seg6.mp4 approved.png submitted.png outcome-unknown.png live-e2e-case-number.txt live-e2e-submission-state.json instrumentation.txt files-app.txt files-test.txt 2>/dev/null || true
+          shred -u private-bundle.tgz recording.mp4 seg1.mp4 seg2.mp4 seg3.mp4 seg4.mp4 seg5.mp4 seg6.mp4 live-e2e-*.png live-e2e-case-number.txt live-e2e-submission-state.json instrumentation.txt files-app.txt files-test.txt shots.txt 2>/dev/null || true
       - name: Record this run's digest (encrypted, for the duplicate guard)
         if: always()
         env:

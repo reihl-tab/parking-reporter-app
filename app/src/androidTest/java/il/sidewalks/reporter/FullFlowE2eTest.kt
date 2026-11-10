@@ -1,9 +1,10 @@
 package il.sidewalks.reporter
 
 import android.net.Uri
-import androidx.compose.material3.MaterialTheme
+import il.sidewalks.reporter.ui.theme.AppTheme
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
 import il.sidewalks.reporter.ledger.ReportDatabase
@@ -88,7 +89,7 @@ class FullFlowE2eTest {
         val uri = sharedUri
         val signal = mutableStateOf(EntrySignal(1, EntryIntents.Request.SharedPhoto(uri.toString())))
         compose.setContent {
-            MaterialTheme {
+            AppTheme {
                 AppShell(authenticate = { _, _, action -> action() }, requestCamera = { it() },
                     readSettings = { settings }, saveSettings = {}, entry = signal,
                     municipalClientFactory = factory,
@@ -154,6 +155,32 @@ class FullFlowE2eTest {
             } finally {
                 cleanOwnedState()
             }
+        }
+    }
+
+    /**
+     * Regression for run 42769339528: a send tap that never reaches the
+     * app's submit path (here: the send button is disabled because the draft
+     * was never approved) must be reported as SEND_NOT_FIRED - provably no
+     * request was made - and never as a municipal-looking timeout.
+     */
+    @Test fun sendTapWithoutApprovalIsNotFired() {
+        claimSyntheticPhoto()
+        val settings = ReporterSettings(
+            firstName = "ישראל", lastName = "ישראלי", phone = "+972501234567",
+            idNumber = "000000018", email = "synthetic@example.com",
+            municipalSubscriptionKey = "synthetic-key",
+            municipalUsername = "synthetic-user",
+            municipalPassword = "synthetic-pass")
+        try {
+            launchFlow(settings, null)
+            val driver = FlowDriver(compose)
+            compose.waitUntil(15_000) {
+                compose.onAllNodesWithText("בדיקת הדיווח").fetchSemanticsNodes().isNotEmpty()
+            }
+            assertEquals(FlowDriver.SendOutcome.SEND_NOT_FIRED, driver.tapSendAndAwaitOnce(5_000))
+        } finally {
+            cleanOwnedState()
         }
     }
 

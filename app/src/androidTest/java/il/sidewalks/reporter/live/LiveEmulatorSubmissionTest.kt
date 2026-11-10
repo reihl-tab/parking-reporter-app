@@ -146,18 +146,27 @@ class LiveEmulatorSubmissionTest {
             driver.screenshot("live-e2e-approved.png")
             marker("SEND_TAPPED")
             sendTapped = true
+            // The state machine writes its per-report record BEFORE the first
+            // network call, so a new record proves a request fired. Snapshot
+            // now: it is the arbiter if the sending label never shows.
+            val submissionsDir = File(context.noBackupFilesDir, "submissions")
+            val submissionsBefore = submissionsDir.list()?.toSet() ?: emptySet()
             // A live call can be slow; the wait is deliberately longer than
             // the stub's. DRAFT_NOT_SAVED means the gate refused and nothing
             // was sent, so only then is a retry safe.
             // 300s: the municipal API through the owner tunnel can answer
             // slowly; a slow-but-successful response must still be caught.
             // The 120s wait is what turned run 42762339581 OUTCOME_UNKNOWN.
-            var outcome = driver.tapSendAndAwaitOnce(300_000)
+            var outcome = driver.tapSendAndAwaitOnce(300_000, screenshotEveryMs = 20_000)
             var sendAttempts = 1
+            // Only DRAFT_NOT_SAVED retries in-run: the gate's refusal proves
+            // no request was made. SEND_NOT_FIRED never retries in-run - a
+            // missing label is not proof by itself (review on PR #208), it is
+            // arbitrated against the state record below instead.
             while (outcome == FlowDriver.SendOutcome.DRAFT_NOT_SAVED && sendAttempts < 3) {
                 Thread.sleep(500)
                 sendAttempts += 1
-                outcome = driver.tapSendAndAwaitOnce(300_000)
+                outcome = driver.tapSendAndAwaitOnce(300_000, screenshotEveryMs = 20_000)
             }
             when (outcome) {
                 FlowDriver.SendOutcome.SUBMITTED -> {
@@ -177,6 +186,29 @@ class LiveEmulatorSubmissionTest {
                 FlowDriver.SendOutcome.DRAFT_NOT_SAVED -> {
                     outcomeKnown = true
                     throw AssertionError("draft-not-saved persisted across retries")
+                }
+                FlowDriver.SendOutcome.SEND_NOT_FIRED -> {
+                    // Arbitrate the missing sending label against the state
+                    // record, which is written before the first network call.
+                    val submissionsAfter = submissionsDir.list()?.toSet() ?: emptySet()
+                    if (submissionsAfter != submissionsBefore) {
+                        // A record appeared without the sending state: the
+                        // request may have fired. Ambiguous - preserve the
+                        // state evidence and let the 106 inbox decide.
+                        marker("OUTCOME_UNKNOWN")
+                        outcomeKnown = true
+                        runCatching { driver.screenshot("live-e2e-outcome-unknown.png") }
+                        runCatching { preserveSubmissionState(context, hash) }
+                        preserveState = true
+                        throw AssertionError(
+                            "submission record appeared without the sending state - check 106 first")
+                    }
+                    // No sending state AND no state record: provably nothing
+                    // reached the city, so a fixed driver may re-dispatch
+                    // (unlike any post-send outcome). Never retried in-run.
+                    outcomeKnown = true
+                    marker("SEND_NOT_FIRED")
+                    throw AssertionError("send tap never fired - nothing reached the city")
                 }
                 FlowDriver.SendOutcome.TIMEOUT -> {
                     // The request may already have reached the city: the case
