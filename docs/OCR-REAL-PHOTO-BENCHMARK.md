@@ -23,3 +23,7 @@ changes live staged inputs. Ordinary CI stages no manifest and skips private wor
 After measurement, pick the better default and expose the alternative only in
 Settings, with the existing telemetry disclosure. No choice in first-run setup and
 no OCR result automatically approves or sends a report.
+
+## Encrypted raw-text diagnostics
+
+The manual benchmark records bounded raw OCR text (64,000 characters per engine/sample) alongside candidates in its private JSON output. The existing compare-only script encrypts this file and all collected output before uploading; normal CI has no staged private input and exports no OCR output. Raw text is never printed by the test. Production recognition still calls the exact same PlateCandidates filter. This diagnostic does not join numeric fragments, loosen plate matching, approve a plate or submit a report. Compare empty results against raw text privately before choosing an engine.

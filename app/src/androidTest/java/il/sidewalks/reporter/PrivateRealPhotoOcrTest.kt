@@ -4,6 +4,7 @@ import android.graphics.BitmapFactory
 import androidx.test.platform.app.InstrumentationRegistry
 import il.sidewalks.reporter.evidence.OutgoingEvidence
 import il.sidewalks.reporter.recognition.MlKitPlateOcr
+import il.sidewalks.reporter.recognition.PlateCandidates
 import il.sidewalks.reporter.recognition.OfflinePlateOcr
 import org.json.JSONArray
 import org.json.JSONObject
@@ -40,9 +41,12 @@ class PrivateRealPhotoOcrTest {
                     val start = System.nanoTime()
                     val answer = JSONObject()
                     try {
-                        val values = if (engine == "tesseract") OfflinePlateOcr(context).recognize(bitmap)
-                            else MlKitPlateOcr.recognize(bitmap)
-                        answer.put("candidates", JSONArray(values)).put("error", JSONObject.NULL)
+                        val raw = if (engine == "tesseract") OfflinePlateOcr(context).recognizeText(bitmap)
+                            else MlKitPlateOcr.recognizeText(bitmap)
+                        val values = PlateCandidates.fromText(raw)
+                        // This file is exported only by the manual benchmark and encrypted
+                        // before artifact upload. Never print raw OCR to instrumentation/logcat.
+                        answer.put("raw_text", raw).put("candidates", JSONArray(values)).put("error", JSONObject.NULL)
                     } catch (failure: Throwable) {
                         if (failure is ThreadDeath || failure is VirtualMachineError) throw failure
                         // Class only, never exception messages containing paths/private input.

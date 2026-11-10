@@ -37,14 +37,16 @@ class OfflinePlateOcr(private val context: Context) {
         val bitmap = BitmapFactory.decodeByteArray(jpeg, 0, jpeg.size) ?: error("Invalid image")
         try { return recognize(bitmap) } finally { bitmap.recycle() }
     }
-    fun recognize(bitmap: Bitmap): List<String> {
+    fun recognize(bitmap: Bitmap): List<String> = PlateCandidates.fromText(recognizeText(bitmap))
+    /** Raw text for encrypted private diagnostics only; no logs or public output. */
+    internal fun recognizeText(bitmap: Bitmap): String {
         require(bitmap.width in 1..2560 && bitmap.height in 1..2560)
         val tess = TessBaseAPI()
         try {
             check(tess.init(modelDirectory().absolutePath, "eng", TessBaseAPI.OEM_LSTM_ONLY))
             tess.pageSegMode = TessBaseAPI.PageSegMode.PSM_SPARSE_TEXT
             tess.setImage(bitmap)
-            return PlateCandidates.fromText(tess.utF8Text ?: "")
+            return (tess.utF8Text ?: "").take(64_000)
         } finally { tess.recycle() }
     }
 }

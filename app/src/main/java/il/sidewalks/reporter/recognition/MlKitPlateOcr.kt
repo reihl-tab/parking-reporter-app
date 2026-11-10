@@ -9,12 +9,14 @@ import java.util.concurrent.TimeUnit
 
 /** Invoke on a worker thread. Bundled OCR processes images locally; SDK sends Google metrics. */
 object MlKitPlateOcr {
-    fun recognize(bitmap: Bitmap): List<String> {
+    fun recognize(bitmap: Bitmap): List<String> = PlateCandidates.fromText(recognizeText(bitmap))
+    /** Raw text for encrypted private diagnostics only; no logs or public output. */
+    internal fun recognizeText(bitmap: Bitmap): String {
         require(bitmap.width in 1..2560 && bitmap.height in 1..2560)
         val client = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
         try {
             val result = Tasks.await(client.process(InputImage.fromBitmap(bitmap, 0)), 30, TimeUnit.SECONDS)
-            return PlateCandidates.fromText(result.text)
+            return result.text.take(64_000)
         } finally { client.close() }
     }
 }
