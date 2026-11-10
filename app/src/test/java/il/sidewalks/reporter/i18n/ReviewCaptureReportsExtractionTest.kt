@@ -62,7 +62,7 @@ class ReviewCaptureReportsExtractionTest {
         "review.edit.use_mlkit" to "זיהוי עם Google ML Kit במקום Tesseract",
         "review.edit.recognizing" to "מזהה במכשיר...",
         "review.edit.suggest_plate" to "הצע לוחית מתוך הצילום",
-        "review.edit.plate_field" to "מספר לוחית (ספרות בלבד)",
+        "review.edit.plate_field" to "לוחית ללא מקפים",
         "review.edit.address_field" to "רחוב ומספר בית שאישרת",
         "review.edit.geocode_note" to "חיפוש כתובת שולח קואורדינטות בלבד לספק המיקום של המכשיר. מספרי בית הם הצעות בלבד.",
         "review.edit.geocode_button" to "חפש הצעות כתובת לפי המיקום",
