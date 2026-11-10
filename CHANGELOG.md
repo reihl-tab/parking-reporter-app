@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-11-10
+
+### Features
+
+- feat: encrypted private municipal response diagnostics (#220) (57d3fe1)
+
 ## [0.23.1] - 2026-11-10
 
 ### Other changes
