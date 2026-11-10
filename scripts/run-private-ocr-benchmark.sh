@@ -19,9 +19,18 @@ with tarfile.open('/tmp/ocr-benchmark/input.tar') as archive:
 PY
 adb install -r app/build/outputs/apk/debug/app-debug.apk > "$work/output/install.txt" 2>&1
 adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk >> "$work/output/install.txt" 2>&1
-# Do not allow ML Kit telemetry or image transport during the benchmark.
+# Positive control must prove this exact probe works before isolation; TCP-blocked
+# or missing nc is not evidence of offline state. Fail closed on either side.
+if ! adb shell 'echo | toybox nc -w 3 1.1.1.1 443' > "$work/output/online-control.txt" 2>&1; then
+    echo 'network positive control failed - refusing OCR'
+    exit 1
+fi
 adb shell svc wifi disable
 adb shell svc data disable
+if adb shell 'echo | toybox nc -w 3 1.1.1.1 443' > "$work/output/offline-probe.txt" 2>&1; then
+    echo 'network isolation check failed - refusing OCR'
+    exit 1
+fi
 adb shell run-as il.sidewalks.reporter mkdir -p files/ocr-benchmark
 for f in "$work/input"/*; do
     adb shell "run-as il.sidewalks.reporter sh -c 'cat > files/ocr-benchmark/$(basename "$f")'" < "$f"

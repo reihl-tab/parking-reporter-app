@@ -139,6 +139,11 @@ class OkHttpMunicipalClient private constructor(
             .post(PythonJson.writeBytes(body).toRequestBody(JSON_MEDIA_TYPE))
             .build()
         val raw: ByteArray
+        // Diagnostics: which endpoint, how long, and the exception class are
+        // what distinguishes "never reached the city" (connect failure) from
+        // "the city may have it" (read timeout after the request went out).
+        // No request or response content is ever included.
+        val startedAt = System.currentTimeMillis()
         try {
             http.newCall(request).execute().use { response ->
                 if (!response.isSuccessful) {
@@ -161,7 +166,10 @@ class OkHttpMunicipalClient private constructor(
         } catch (e: MunicipalApiException) {
             throw e
         } catch (e: IOException) {
-            throw MunicipalApiException("$endpoint: network failure or invalid response.")
+            val elapsedMs = System.currentTimeMillis() - startedAt
+            throw MunicipalApiException(
+                "$endpoint: network failure or invalid response " +
+                    "(${e.javaClass.simpleName} after ${elapsedMs}ms).")
         }
         val parsed: JSONObject = try {
             JSONObject(String(raw, Charsets.UTF_8))
