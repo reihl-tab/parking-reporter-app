@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.19.1] - 2026-11-10
+
+### Fixes
+
+- fix: live E2E driver - semantics clicks immune to soft keyboard, SEND_NOT_FIRED outcome, wait screenshots (#208) (5c25681)
+
 ## [0.19.0] - 2026-11-10
 
 ### Features
