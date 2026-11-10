@@ -6,6 +6,10 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+### Added
+
+- One-time first-run welcome screen (#187). Upgrading installs have no flag yet, so they see the welcome once after the update.
+
 ## [0.18.5] - 2026-11-10
 
 ### Other changes
