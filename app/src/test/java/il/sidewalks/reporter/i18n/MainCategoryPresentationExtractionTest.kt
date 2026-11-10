@@ -121,7 +121,7 @@ class MainCategoryPresentationExtractionTest {
 
     @Test
     fun evidenceTimeKeepsTheOldHebrewBytesAndIsTranslatedWhenShown() {
-        assertEquals("01/01/2026 12:00", HebrewPresentation.evidenceTime(he, "2026-01-01T12:00:00Z"))
+        assertEquals("01/01/2026 14:00", HebrewPresentation.evidenceTime(he, "2026-01-01T12:00:00Z"))
         assertEquals("01/01/2026 12:00 (אזור זמן לא ידוע)", HebrewPresentation.evidenceTime(he, "2026-01-01T12:00:00"))
         assertEquals("חסר", HebrewPresentation.evidenceTime(he, null))
         assertEquals("חסר", HebrewPresentation.evidenceTime(he, ""))

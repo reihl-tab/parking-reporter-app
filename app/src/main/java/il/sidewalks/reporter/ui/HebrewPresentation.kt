@@ -14,7 +14,7 @@ import java.util.Locale
 object HebrewPresentation {
     fun evidenceTime(strings: Strings, value: String?): String = try {
         val date = OffsetDateTime.parse(value)
-        date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.ROOT))
+        date.atZoneSameInstant(java.time.ZoneId.of("Asia/Jerusalem")).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.ROOT))
     } catch (_: Exception) {
         try {
             LocalDateTime.parse(value).format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm", Locale.ROOT)) +
