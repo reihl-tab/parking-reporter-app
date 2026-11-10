@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.20.1] - 2026-11-10
+
+### Other changes
+
+- test: isolated private real-photo OCR benchmark (#210) (#216) (f8bb8fd)
+
 ## [0.20.0] - 2026-11-10
 
 ### Features
