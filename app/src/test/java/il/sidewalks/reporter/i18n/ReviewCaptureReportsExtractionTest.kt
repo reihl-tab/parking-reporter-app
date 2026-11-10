@@ -75,7 +75,6 @@ class ReviewCaptureReportsExtractionTest {
         "review.edit.latitude_field" to "קו רוחב",
         "review.edit.longitude_field" to "קו אורך",
         "review.edit.confirm_button" to "אשר זמן, מיקום וכתובת שבדקת",
-        "review.approval_note" to "כל שינוי מבטל אישור. האישור כאן אינו שולח לעירייה או לרשת חברתית.",
         "review.approve_button" to "אשר את התוכן לבדיקה",
         "review.approved" to "התוכן אושר מקומית, לא נשלח",
         "review.not_approved" to "התוכן לא אושר",
