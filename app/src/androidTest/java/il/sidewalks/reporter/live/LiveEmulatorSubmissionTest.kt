@@ -2,7 +2,7 @@ package il.sidewalks.reporter.live
 
 import android.content.Context
 import android.net.Uri
-import androidx.compose.material3.MaterialTheme
+import il.sidewalks.reporter.ui.theme.AppTheme
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.room.Room
@@ -124,7 +124,7 @@ class LiveEmulatorSubmissionTest {
         val driver = FlowDriver(compose)
         val signal = mutableStateOf(EntrySignal(1, EntryIntents.Request.SharedPhoto(sharedUri.toString())))
         compose.setContent {
-            MaterialTheme {
+            AppTheme {
                 AppShell(authenticate = { _, _, action -> action() }, requestCamera = { it() },
                     readSettings = { settings }, saveSettings = {}, entry = signal)
             }

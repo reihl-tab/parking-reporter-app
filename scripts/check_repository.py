@@ -63,6 +63,14 @@ def check() -> list[str]:
             continue
         if path.suffix.lower() in {".jks", ".keystore", ".p12", ".apk", ".aab", ".db"} or path.name == ".env":
             errors.append(f"Forbidden sensitive/generated file: {path.relative_to(ROOT)}")
+    # The recorded live flow must use the shipped palette, not M3 baseline purple.
+    live_test = ROOT / "app/src/androidTest/java/il/sidewalks/reporter/live/LiveEmulatorSubmissionTest.kt"
+    if live_test.is_file():
+        live_source = live_test.read_text(encoding="utf-8")
+        if ("import il.sidewalks.reporter.ui.theme.AppTheme" not in live_source
+                or not re.search(r"compose\.setContent\s*\{\s*AppTheme\s*\{", live_source)
+                or re.search(r"\bMaterialTheme\s*\{", live_source)):
+            errors.append("Live emulator flow must render with AppTheme, never baseline MaterialTheme")
     return errors
 
 
