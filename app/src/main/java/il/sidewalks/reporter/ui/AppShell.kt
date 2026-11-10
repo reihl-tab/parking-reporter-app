@@ -407,7 +407,10 @@ fun AppShell(
                 il.sidewalks.reporter.security.SettingsProfileStore(context).read()
                     ?.mapNotNull(::municipalFieldLabelKey).orEmpty()
             }
-            ReviewScreen(value, image, ::saveDraft, onBack = { page = "home" },
+            ReviewScreen(value, image, ::saveDraft, manualAddressLookup = { street, house ->
+                val directory = streetsDirectory ?: (streetDirectoryLoader?.invoke() ?: loadStreetDirectory(context)).also { streetsDirectory = it }
+                directory.findConfirmedAddress(street, house)
+            }, onBack = { page = "home" },
                 onSubmit = { shown -> submitReport(shown) },
                 submitting = submitting, submissionNote = submissionNote, missingCredentialKeys = missingCredentials, onOutgoingPreview = {
                 scope.launch {
