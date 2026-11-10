@@ -10,6 +10,10 @@ on:
         description: 'sha256 of the exact owner-approved Hebrew text (must match the staged TRIAL_APPROVED_TEXT)'
         required: true
         type: string
+      approved_photo_sha256:
+        description: 'sha256 of the exact owner-approved photo (must match the decrypted staged trial photo)' 
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -46,11 +50,13 @@ jobs:
         env:
           CONFIRM_INPUT: ${{ inputs.confirm }}
           APPROVED_SHA256_INPUT: ${{ inputs.approved_sha256 }}
+          APPROVED_PHOTO_SHA256_INPUT: ${{ inputs.approved_photo_sha256 }}
         run: |
           # The dispatch values reach the shell only as quoted env vars,
           # never through workflow-expression interpolation.
           test "$CONFIRM_INPUT" = 'FILE-LIVE-REPORT' || { echo 'confirm input mismatch - refusing to run'; exit 1; }
           printf '%s' "$APPROVED_SHA256_INPUT" | grep -qxE '[0-9a-f]{64}'
+          printf '%s' "$APPROVED_PHOTO_SHA256_INPUT" | grep -qxE '[0-9a-f]{64}'
       - name: Refuse a digest an earlier live run already took
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -164,6 +170,20 @@ jobs:
           openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
             -in trial/trial-photo.jpg.enc -out /tmp/live-e2e/photo.jpg -pass env:TRIAL_DATA_KEY
           test -s /tmp/live-e2e/photo.jpg
+      - name: Bind the staged photo to the approved photo digest
+        env:
+          APPROVED_PHOTO_SHA256_INPUT: ${{ inputs.approved_photo_sha256 }}
+        run: |
+          set -euo pipefail
+          # The photo is staged input only: the app itself re-encodes it
+          # through OutgoingEvidence (EXIF dropped, <=1.1 MB) before anything
+          # is uploaded. Here we bind WHICH photo may be filed to the digest
+          # the owner approved, the same way the text check works, before any
+          # case secret is read.
+          digest=$(sha256sum /tmp/live-e2e/photo.jpg | cut -d' ' -f1)
+          test "$digest" = "$(printf '%s' "$APPROVED_PHOTO_SHA256_INPUT" | tr 'A-F' 'a-f')" \
+            || { echo 'approved photo digest mismatch - refusing to run'; exit 1; }
+          echo 'staged photo matches the owner-approved photo digest'
       - name: Stage live params (private)
         env:
           J106_SUBSCRIPTION_KEY: ${{ secrets.J106_SUBSCRIPTION_KEY }}
