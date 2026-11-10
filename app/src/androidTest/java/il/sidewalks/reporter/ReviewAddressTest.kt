@@ -37,7 +37,6 @@ class ReviewAddressTest {
         compose.onNodeWithText("לא עכשיו").performClick()
         compose.onNodeWithText("זמן: \u206601/01/2026 12:00\u2069").assertExists()
         compose.onNodeWithText("כל שינוי מבטל אישור", substring = true).assertDoesNotExist()
-        compose.onNodeWithText("לא עכשיו").performClick()
         compose.onNodeWithText("ערוך").performScrollTo().performClick()
         compose.onNodeWithText("זמן הצילום (24 שעות)").performScrollTo()
         val context = InstrumentationRegistry.getInstrumentation().targetContext
@@ -53,6 +52,7 @@ class ReviewAddressTest {
         val initial = draft().copy(address = "רחוב בדיקה 12")
         var saved: ReviewDraft? = null
         compose.setContent { AppTheme { ReviewScreen(initial, null, { saved = it }, {}) } }
+        compose.onNodeWithText("לא עכשיו").performClick()
         compose.onNodeWithText("ערוך").performScrollTo().performClick()
         compose.onNodeWithText("מספר לוחית (ספרות בלבד)").performScrollTo().performTextReplacement("ab123-45-678")
         val context = InstrumentationRegistry.getInstrumentation().targetContext
