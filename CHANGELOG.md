@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.22.2] - 2026-11-10
+
+### Other changes
+
+- live e2e: recognize failure notes, classify by state, one-line collect shells (#226) (fdb5041)
+
 ## [0.22.1] - 2026-11-10
 
 ### Other changes
