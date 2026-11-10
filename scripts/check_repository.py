@@ -3,6 +3,7 @@
 from pathlib import Path
 import re
 import sys
+import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 REQUIRED = (
@@ -63,6 +64,26 @@ def check() -> list[str]:
             continue
         if path.suffix.lower() in {".jks", ".keystore", ".p12", ".apk", ".aab", ".db"} or path.name == ".env":
             errors.append(f"Forbidden sensitive/generated file: {path.relative_to(ROOT)}")
+    # Launcher resources are an app identity, not the Quick Settings tile.
+    manifest = ROOT / "app/src/main/AndroidManifest.xml"
+    android = "{http://schemas.android.com/apk/res/android}"
+    if manifest.is_file():
+        application = ET.parse(manifest).getroot().find("application")
+        for attr, name in (("icon", "ic_launcher"), ("roundIcon", "ic_launcher_round")):
+            if application is None or application.get(android + attr) != "@mipmap/" + name:
+                errors.append("Application must declare launcher " + attr)
+            icon = ROOT / f"app/src/main/res/mipmap-anydpi-v26/{name}.xml"
+            if not icon.is_file():
+                errors.append("Missing adaptive launcher icon: " + name)
+                continue
+            adaptive = ET.parse(icon).getroot()
+            for layer in ("background", "foreground", "monochrome"):
+                node = adaptive.find(layer)
+                resource = node.get(android + "drawable", "") if node is not None else ""
+                if not resource.startswith("@drawable/") or not (
+                    ROOT / "app/src/main/res/drawable" / (resource.removeprefix("@drawable/") + ".xml")
+                ).is_file():
+                    errors.append(f"Launcher {name} needs a valid {layer} resource")
     # The recorded live flow must use the shipped palette, not M3 baseline purple.
     live_test = ROOT / "app/src/androidTest/java/il/sidewalks/reporter/live/LiveEmulatorSubmissionTest.kt"
     if live_test.is_file():
