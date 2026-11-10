@@ -268,7 +268,7 @@ class ShellSettingsExtractionTest {
     @Test
     fun setupKeysExistInAllLanguagesAndNeverReadProfiles() {
         for (key in listOf("setup.title", "setup.description", "setup.save_continue", "setup.later")) {
-            for (code in listOf("he", "en", "ar", "ru", "am"))
+            for (code in I18nTestFiles.languageCodes())
                 assertTrue("$key/$code", raw.getJSONObject(key).optString(code).isNotBlank())
         }
         val shell = source("AppShell.kt")
