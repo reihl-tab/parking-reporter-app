@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.25.0] - 2026-11-10
+
+### Features
+
+- feat: confirm exact addresses for photos without GPS (#236) (add8724)
+
 ## [0.24.2] - 2026-11-10
 
 ### Fixes
