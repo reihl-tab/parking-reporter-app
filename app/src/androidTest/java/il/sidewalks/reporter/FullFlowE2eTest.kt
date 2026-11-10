@@ -4,6 +4,8 @@ import android.net.Uri
 import il.sidewalks.reporter.ui.theme.AppTheme
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.room.Room
 import androidx.test.platform.app.InstrumentationRegistry
