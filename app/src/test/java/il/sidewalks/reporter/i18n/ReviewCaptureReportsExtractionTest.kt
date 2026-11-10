@@ -191,7 +191,7 @@ class ReviewCaptureReportsExtractionTest {
             assertTrue("$key is used but missing from strings.json", entry != null)
             for (code in languages) assertTrue("$key/$code", entry!!.optString(code).isNotBlank())
         }
-        val retired = setOf("review.edit.latitude_field", "review.edit.longitude_field", "review.edit.timezone_toggle", "review.edit.timezone_field", "review.edit.timezone_note", "review.location.show_advanced", "review.location.hide_advanced", "review.location.advanced_note", "review.location.missing", "review.location.enter_missing")
+        val retired = setOf("review.approval_note", "review.edit.latitude_field", "review.edit.longitude_field", "review.edit.timezone_toggle", "review.edit.timezone_field", "review.edit.timezone_note", "review.location.show_advanced", "review.location.hide_advanced", "review.location.advanced_note", "review.location.missing", "review.location.enter_missing")
         val screenKeys = catalog.keys.filter { it.startsWith("review.") || it.startsWith("capture.") || it.startsWith("reports.") }.toSet() - retired
         assertEquals("review./capture./reports. keys in the catalog vs the keys the screens use", screenKeys, used)
         assertEquals(all.keys - retired, screenKeys)
