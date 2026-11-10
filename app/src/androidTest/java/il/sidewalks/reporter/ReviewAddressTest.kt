@@ -11,6 +11,7 @@ import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.test.platform.app.InstrumentationRegistry
 import il.sidewalks.reporter.core.Evidence
 import il.sidewalks.reporter.core.ReviewDraft
@@ -29,22 +30,28 @@ class ReviewAddressTest {
         Evidence("address-fixture", "a".repeat(64), "2026-01-01T12:00:00+02:00", 31.77, 35.21),
         "1234567", "", "sidewalk_parking", "תיאור בדיקה בלבד", setOf("address_not_confirmed"))
 
-    @Test fun localTimeFieldKeepsOriginalSecondsAndRemovesOnlyApprovalNote() {
-        val initial = draft().copy(address = "רחוב בדיקה 12", confirmedTime = "2026-01-01T12:00:47+02:00")
+    @Test fun plateEntryFormatsDigitsButStoresNoDashes() {
+        val initial = draft().copy(address = "רחוב בדיקה 12")
         var saved: ReviewDraft? = null
-        compose.setContent { AppTheme { ReviewScreen(initial, null, { saved = it }, {}, addressLookup = { _, _ -> emptyList() }) } }
-        compose.onNodeWithText("לא עכשיו").performClick()
-        compose.onNodeWithText("זמן: \u206601/01/2026 12:00\u2069").assertExists()
-        compose.onNodeWithText("כל שינוי מבטל אישור", substring = true).assertDoesNotExist()
+        compose.setContent { AppTheme { ReviewScreen(initial, null, { saved = it }, {}) } }
         compose.onNodeWithText("ערוך").performScrollTo().performClick()
-        compose.onNodeWithText("זמן הצילום (24 שעות)").performScrollTo()
+        compose.onNodeWithText("מספר לוחית (ספרות בלבד)").performScrollTo().performTextReplacement("ab123-45-678")
         val context = InstrumentationRegistry.getInstrumentation().targetContext
-        File(context.filesDir, "review-local-time-synthetic.png").outputStream().use {
+        File(context.filesDir, "review-formatted-plate-synthetic.png").outputStream().use {
             compose.onRoot().captureToImage().asAndroidBitmap().compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
         }
-        compose.onNodeWithText("אשר זמן, מיקום וכתובת שבדקת").performScrollTo().performClick()
         compose.onNodeWithText("שמור טיוטה").performScrollTo().performClick()
-        compose.runOnIdle { assertEquals(initial.evidence, saved?.evidence); assertEquals(initial.confirmedTime, saved?.confirmedTime); assertNull(saved?.approvedDigest) }
+        compose.runOnIdle { assertEquals("12345678", saved?.plate); assertNull(saved?.approvedDigest) }
+    }
+
+    @Test fun unambiguousOcrPrefillsWithoutSuggestionTapOrApproval() {
+        val initial = draft().copy(address = "רחוב בדיקה 12", plate = "")
+        var saved: ReviewDraft? = null
+        val bitmap = android.graphics.Bitmap.createBitmap(20, 20, android.graphics.Bitmap.Config.ARGB_8888)
+        compose.setContent { AppTheme { ReviewScreen(initial, bitmap.asImageBitmap(), { saved = it }, {}, plateRecognizer = { listOf("1234567") }) } }
+        compose.waitUntil(10_000) { compose.onAllNodesWithText("לוחית: \u206612-345-67\u2069").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("שמור טיוטה").performScrollTo().performClick()
+        compose.runOnIdle { assertEquals("1234567", saved?.plate); assertNull(saved?.approvedDigest) }
     }
 
     @Test fun gpsSuggestsStreetHouseButNeverApprovesOrChangesEvidence() {
@@ -109,17 +116,16 @@ class ReviewAddressTest {
         val initial = draft().copy(evidence = draft().evidence.copy(latitude = null, longitude = null), confirmedLatitude = null, confirmedLongitude = null)
         var saved: ReviewDraft? = null
         compose.setContent { AppTheme { ReviewScreen(initial, null, { saved = it }, {}) } }
-        compose.onNodeWithText("לא נמצא מיקום בתמונה. בחר תמונה עם מיקום כדי לשלוח דיווח.").performScrollTo().assertExists()
-        compose.onNodeWithText("ערוך").performScrollTo().performClick()
-        compose.onNodeWithText("קו רוחב").assertDoesNotExist()
-        compose.onNodeWithText("קו אורך").assertDoesNotExist()
-        compose.onNodeWithText("תיקון מיקום מתקדם").assertDoesNotExist()
+        compose.onNodeWithText("השלם מיקום חסר").performScrollTo().performClick()
+        compose.onNodeWithText("קו רוחב").performScrollTo().performTextReplacement("31.77")
+        compose.onNodeWithText("קו אורך").performScrollTo().performTextReplacement("35.21")
+        compose.onNodeWithText("אשר זמן, מיקום וכתובת שבדקת").performScrollTo().performClick()
         compose.onNodeWithText("שמור טיוטה").performScrollTo().performClick()
         compose.runOnIdle {
             assertNull(saved?.evidence?.latitude)
             assertNull(saved?.evidence?.longitude)
-            assertNull(saved?.confirmedLatitude)
-            assertNull(saved?.confirmedLongitude)
+            assertEquals(31.77, saved!!.confirmedLatitude!!, 0.0)
+            assertEquals(35.21, saved!!.confirmedLongitude!!, 0.0)
             assertNull(saved?.approvedDigest)
         }
     }
