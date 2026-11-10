@@ -62,7 +62,7 @@ class ReviewCaptureReportsExtractionTest {
         "review.edit.use_mlkit" to "זיהוי עם Google ML Kit במקום Tesseract",
         "review.edit.recognizing" to "מזהה במכשיר...",
         "review.edit.suggest_plate" to "הצע לוחית מתוך הצילום",
-        "review.edit.plate_field" to "מספר לוחית (ספרות בלבד)",
+        "review.edit.plate_field" to "לוחית ללא מקפים",
         "review.edit.address_field" to "רחוב ומספר בית שאישרת",
         "review.edit.geocode_note" to "חיפוש כתובת שולח קואורדינטות בלבד לספק המיקום של המכשיר. מספרי בית הם הצעות בלבד.",
         "review.edit.geocode_button" to "חפש הצעות כתובת לפי המיקום",
@@ -71,11 +71,15 @@ class ReviewCaptureReportsExtractionTest {
         "review.address_suggestion" to "הצעה בלבד: {address}",
         "review.edit.text_field" to "הטקסט המדויק לבדיקה",
         "review.edit.confirm_note" to "בדוק את הרחוב ומספר הבית ואשר את זמן הצילום. אין לנחש מידע חסר. מיקום התמונה המקורי נשמר בנפרד.",
-        "review.edit.time_field" to "זמן מאושר עם אזור זמן (ISO)",
+        "review.edit.timezone_toggle" to "תיקון אזור זמן",
+        "review.edit.timezone_field" to "אזור זמן (למשל +02:00)",
+        "review.edit.timezone_note" to "רק אם אזור הזמן חסר או שגוי: הזן היסט שבדקת לזמן הצילום. אין לנחש.",
+        "review.location.missing_plain" to "לא נמצא מיקום בתמונה. בחר תמונה עם מיקום כדי לשלוח דיווח.",
+        "review.edit.jerusalem_time_note" to "הזמן מוצג לפי השעון המקומי בירושלים. אשר רק זמן שבדקת.",
+        "review.edit.time_field" to "זמן הצילום (24 שעות)",
         "review.edit.latitude_field" to "קו רוחב",
         "review.edit.longitude_field" to "קו אורך",
         "review.edit.confirm_button" to "אשר זמן, מיקום וכתובת שבדקת",
-        "review.approval_note" to "כל שינוי מבטל אישור. האישור כאן אינו שולח לעירייה או לרשת חברתית.",
         "review.approve_button" to "אשר את התוכן לבדיקה",
         "review.approved" to "התוכן אושר מקומית, לא נשלח",
         "review.not_approved" to "התוכן לא אושר",
@@ -187,9 +191,10 @@ class ReviewCaptureReportsExtractionTest {
             assertTrue("$key is used but missing from strings.json", entry != null)
             for (code in languages) assertTrue("$key/$code", entry!!.optString(code).isNotBlank())
         }
-        val screenKeys = catalog.keys.filter { it.startsWith("review.") || it.startsWith("capture.") || it.startsWith("reports.") }.toSet()
+        val retired = setOf("review.edit.latitude_field", "review.edit.longitude_field", "review.edit.timezone_toggle", "review.edit.timezone_field", "review.edit.timezone_note", "review.location.show_advanced", "review.location.hide_advanced", "review.location.advanced_note", "review.location.missing", "review.location.enter_missing")
+        val screenKeys = catalog.keys.filter { it.startsWith("review.") || it.startsWith("capture.") || it.startsWith("reports.") }.toSet() - retired
         assertEquals("review./capture./reports. keys in the catalog vs the keys the screens use", screenKeys, used)
-        assertEquals(all.keys, screenKeys)
+        assertEquals(all.keys - retired, screenKeys)
         assertTrue(keysNamedIn("CaptureScreen.kt").all { it.startsWith("capture.") })
         assertTrue(keysNamedIn("ReportsScreen.kt").all { it.startsWith("reports.") })
         assertTrue((keysNamedIn("ReviewScreen.kt") + keysNamedIn("ReviewTexts.kt")).all { it.startsWith("review.") })
@@ -200,8 +205,8 @@ class ReviewCaptureReportsExtractionTest {
         // Byte-identical to the old literals: digits and Latin get LRI..PDI, as the old code did by hand.
         assertEquals("לוחית: ${lri}12-345-67$pdi", reviewPlateText(he, "1234567"))
         assertEquals("הצעה בלבד: ${lri}123-45-678$pdi", reviewPlateSuggestionText(he, "12345678"))
-        assertEquals("זמן: ${lri}01/01/2026 12:00 (UTC+00:00)$pdi", reviewTimeText(he, "2026-01-01T12:00:00Z"))
-        assertEquals("זמן: ${lri}01/01/2026 12:00 (UTC+02:00)$pdi", reviewTimeText(he, "2026-01-01T12:00:00+02:00"))
+        assertEquals("זמן: ${lri}01/01/2026 14:00$pdi", reviewTimeText(he, "2026-01-01T12:00:00Z"))
+        assertEquals("זמן: ${lri}01/01/2026 12:00$pdi", reviewTimeText(he, "2026-01-01T12:00:00+02:00"))
         assertEquals("פתח טיוטה ${lri}aaaabbbb$pdi", reportsOpenDraftText(he, "aaaabbbb"))
         assertEquals("פתח דיווח ${lri}ccccdddd$pdi", reportsOpenApprovedText(he, "ccccdddd"))
         // Hebrew values get the catalog's FSI..PDI where the old line had LRI..PDI or nothing.
@@ -217,7 +222,7 @@ class ReviewCaptureReportsExtractionTest {
         // LTR languages are not isolated by the catalog.
         assertEquals("Plate: 12-345-67", reviewPlateText(en, "1234567"))
         assertEquals("Plate: not confirmed", reviewPlateText(en, ""))
-        assertEquals("Time: 01/01/2026 12:00 (UTC+00:00)", reviewTimeText(en, "2026-01-01T12:00:00Z"))
+        assertEquals("Time: 01/01/2026 14:00", reviewTimeText(en, "2026-01-01T12:00:00Z"))
         assertEquals("Open draft aaaabbbb", reportsOpenDraftText(en, "aaaabbbb"))
         assertEquals("GPS: missing", reviewGpsText(en, hasGps = false))
     }
@@ -322,7 +327,7 @@ class ReviewCaptureReportsExtractionTest {
     fun screensStoreCodesAndFollowTheActiveLanguage() {
         val screen = source("ReviewScreen.kt")
         val stores = Regex("""unresolved = setOf\(([^)]*)\)""").findAll(screen).map { it.groupValues[1] }.toList()
-        assertEquals(3, stores.size)
+        assertEquals(1, stores.size)
         assertEquals("suggestions add, never erase, existing warnings", 2, Regex("""unresolved = draft\.unresolved \+ ReviewWarning\.SUGGESTED_ADDRESS_NEEDS_CONFIRMATION\.code""").findAll(screen).count())
         assertTrue("ReviewScreen must store codes: $stores", stores.all { Regex("""ReviewWarning\.[A-Z_]+\.code""").matches(it) })
         val shell = source("AppShell.kt")
