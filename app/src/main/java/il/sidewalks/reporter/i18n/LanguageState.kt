@@ -43,31 +43,36 @@ class LanguageController(private val store: LanguageStore) {
 
 /** Picks the active catalog language from the stored choice and the system locale. */
 object LanguageResolver {
-    /** Used only when the catalog itself has no Hebrew entry (an empty or broken catalog). */
-    private val HEBREW_FALLBACK = Language(StringCatalog.HEBREW, StringCatalog.HEBREW, TextDir.RTL, true, null)
+    /**
+     * Used only when the catalog itself has no languages (an empty or broken asset): keys
+     * then render as themselves. "und" is BCP 47 for an undetermined language, so no real
+     * language is named outside the catalog; RTL keeps the app's home layout.
+     */
+    val EMPTY_CATALOG_LANGUAGE = Language("und", "und", TextDir.RTL, true, null)
 
     /**
-     * The selected code if the catalog has it; an unknown selected code gives he. With no
-     * selection (null), the system locale's language if the catalog has it, else he.
+     * The selected code if the catalog has it; an unknown selected code gives the catalog's
+     * default language. With no selection (null), the system locale's language if the catalog
+     * has it (by code or by one of its `aliases`), else the default language.
      */
     fun activeLanguage(catalog: StringCatalog, selected: String?, systemLanguage: String?): Language {
-        if (selected != null) return catalog.language(selected) ?: hebrew(catalog)
+        if (selected != null) return catalog.language(selected) ?: defaultLanguage(catalog)
         val system = normalize(systemLanguage)
-        if (system != null) catalog.language(system)?.let { return it }
-        return hebrew(catalog)
+        if (system != null) catalog.languageOrAlias(system)?.let { return it }
+        return defaultLanguage(catalog)
     }
 
     /**
-     * A system locale language as a catalog code: lower case, region dropped, and the
-     * legacy ISO code "iw" (which java.util.Locale may still report for Hebrew) mapped to he.
+     * A system locale language as a bare code: lower case, region dropped. Legacy codes
+     * (java.util.Locale may still report "iw") are matched by the catalog's `aliases`.
      */
     fun normalize(systemLanguage: String?): String? {
         val base = systemLanguage?.trim()?.lowercase()?.split('-', '_')?.firstOrNull()
-        if (base.isNullOrEmpty()) return null
-        return if (base == "iw") StringCatalog.HEBREW else base
+        return if (base.isNullOrEmpty()) null else base
     }
 
-    fun hebrew(catalog: StringCatalog): Language = catalog.language(StringCatalog.HEBREW) ?: HEBREW_FALLBACK
+    /** The catalog's default (source) language; [EMPTY_CATALOG_LANGUAGE] for an empty catalog. */
+    fun defaultLanguage(catalog: StringCatalog): Language = catalog.defaultLanguage ?: EMPTY_CATALOG_LANGUAGE
 
     /** A native language name for the picker, isolated in its own direction. */
     fun pickerLabel(language: Language): String {

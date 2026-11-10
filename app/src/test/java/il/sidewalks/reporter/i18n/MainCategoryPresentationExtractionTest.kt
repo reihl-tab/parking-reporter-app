@@ -25,8 +25,10 @@ class MainCategoryPresentationExtractionTest {
 
     private val catalog = I18nTestFiles.realCatalog()
     private val raw = JSONObject(I18nTestFiles.realCatalogText()).getJSONObject("strings")
-    private val he = Strings(catalog, "he")
-    private val en = Strings(catalog, "en")
+    /** The catalog default (the source language, Hebrew) and English, named by its own name (td423). */
+    private val source = I18nTestFiles.defaultCode()
+    private val he = Strings(catalog, source)
+    private val en = Strings(catalog, I18nTestFiles.codeNamed("English"))
     private val lri = I18nTestFiles.LRI
     private val pdi = I18nTestFiles.PDI
     private val fsi = I18nTestFiles.FSI
@@ -47,7 +49,7 @@ class MainCategoryPresentationExtractionTest {
 
     private val all get() = categories + presentation
 
-    private val languages = listOf("he", "en", "ar", "ru", "am")
+    private val languages = I18nTestFiles.languageCodes()
 
     private val sources = mapOf(
         "ReportCategory.kt" to "src/main/java/il/sidewalks/reporter/core/ReportCategory.kt",
@@ -68,8 +70,8 @@ class MainCategoryPresentationExtractionTest {
     @Test
     fun extractedHebrewValuesEqualTheOldLiteralsByteForByte() {
         for ((key, literal) in all) {
-            assertEquals("he value of $key", literal, raw.getJSONObject(key).getString("he"))
-            assertEquals(key, literal, catalog.t("he", key))
+            assertEquals("he value of $key", literal, raw.getJSONObject(key).getString(source))
+            assertEquals(key, literal, catalog.t(source, key))
         }
     }
 

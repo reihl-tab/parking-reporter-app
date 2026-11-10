@@ -32,8 +32,10 @@ class ReviewCaptureReportsExtractionTest {
 
     private val catalog = I18nTestFiles.realCatalog()
     private val raw = JSONObject(I18nTestFiles.realCatalogText()).getJSONObject("strings")
-    private val he = Strings(catalog, "he")
-    private val en = Strings(catalog, "en")
+    /** The catalog default (the source language, Hebrew) and English, named by its own name (td423). */
+    private val source = I18nTestFiles.defaultCode()
+    private val he = Strings(catalog, source)
+    private val en = Strings(catalog, I18nTestFiles.codeNamed("English"))
     private val lri = I18nTestFiles.LRI
     private val fsi = I18nTestFiles.FSI
     private val pdi = I18nTestFiles.PDI
@@ -143,7 +145,7 @@ class ReviewCaptureReportsExtractionTest {
 
     private val all get() = review + isolatedByTheCatalog + warnings + capture + reports
 
-    private val languages = listOf("he", "en", "ar", "ru", "am")
+    private val languages = I18nTestFiles.languageCodes()
 
     private val sources = mapOf(
         "ReviewScreen.kt" to "src/main/java/il/sidewalks/reporter/ui/ReviewScreen.kt",
@@ -166,7 +168,7 @@ class ReviewCaptureReportsExtractionTest {
     @Test
     fun extractedHebrewValuesEqualTheOldLiteralsByteForByte() {
         for ((key, literal) in all) {
-            assertEquals("he value of $key", literal, raw.getJSONObject(key).getString("he"))
+            assertEquals("he value of $key", literal, raw.getJSONObject(key).getString(source))
         }
     }
 
@@ -174,7 +176,7 @@ class ReviewCaptureReportsExtractionTest {
     fun plainHebrewValuesRenderExactlyAsBefore() {
         for ((key, literal) in all) {
             if (literal.contains('{')) continue
-            assertEquals(key, literal, catalog.t("he", key))
+            assertEquals(key, literal, catalog.t(source, key))
         }
     }
 
@@ -284,7 +286,7 @@ class ReviewCaptureReportsExtractionTest {
         // A PR-2a draft made while English or Arabic was active.
         assertEquals(ReviewWarning.MISSING_GPS, ReviewWarning.fromStored("GPS missing", catalog))
         assertEquals(listOf("GPS חסר"), reviewWarningLabels(he, setOf("GPS missing")))
-        assertEquals(ReviewWarning.ADDRESS_NEEDS_CONFIRMATION, ReviewWarning.fromStored(raw.getJSONObject("review.warning.address_needs_confirmation").getString("ar"), catalog))
+        assertEquals(ReviewWarning.ADDRESS_NEEDS_CONFIRMATION, ReviewWarning.fromStored(raw.getJSONObject("review.warning.address_needs_confirmation").getString(I18nTestFiles.codeNamed("العربية")), catalog))
         // A legacy draft as the ledger holds it: the codec sorts the set.
         val legacy = DraftCodec.decode(DraftCodec.encode(draft(setOf("GPS חסר", "זמן חסר", "כתובת ומספר בית דורשים אישור"))))
         assertEquals(listOf("GPS missing", "Time missing", "Address and house number need confirmation"), reviewWarningLabels(en, legacy.unresolved))

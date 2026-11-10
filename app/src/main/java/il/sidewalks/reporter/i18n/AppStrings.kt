@@ -14,6 +14,9 @@ object AppCatalog {
         cached ?: load(context).also { cached = it }
     }
 
+    /** The catalog's default (source) language code: what tests pin to get the default UI. */
+    fun defaultCode(context: Context): String = LanguageResolver.defaultLanguage(get(context)).code
+
     private fun load(context: Context): StringCatalog = try {
         context.assets.open(StringCatalog.ASSET_PATH).bufferedReader(Charsets.UTF_8).use { StringCatalog.parse(it.readText()) }
     } catch (_: Exception) {
@@ -44,7 +47,7 @@ fun systemLanguageCode(): String? {
 /**
  * Screens read [LocalStrings]; inside the app AppShell provides it. A screen hosted on
  * its own (instrumented tests, previews) has no provider: this gives it the real catalog
- * in its default language (he) instead of rendering raw keys.
+ * in its default language (the block marked `default`) instead of rendering raw keys.
  */
 @Composable
 fun ProvideStringsIfMissing(content: @Composable () -> Unit) {
@@ -53,5 +56,5 @@ fun ProvideStringsIfMissing(content: @Composable () -> Unit) {
         return
     }
     val catalog = rememberAppCatalog()
-    ProvideStrings(catalog, LanguageResolver.hebrew(catalog), content)
+    ProvideStrings(catalog, LanguageResolver.defaultLanguage(catalog), content)
 }

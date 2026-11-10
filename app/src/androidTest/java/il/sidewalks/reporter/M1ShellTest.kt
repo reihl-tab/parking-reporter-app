@@ -29,7 +29,7 @@ class M1ShellTest {
     // en-US on the CI emulator. These tests look texts up by their Hebrew wording, so the
     // UI language is pinned to he through the real "ui-prefs" store.
     @Before fun pinHebrewUiLanguage() {
-        il.sidewalks.reporter.i18n.UiPrefsLanguageStore.of(InstrumentationRegistry.getInstrumentation().targetContext).set("he")
+        InstrumentationRegistry.getInstrumentation().targetContext.let { il.sidewalks.reporter.i18n.UiPrefsLanguageStore.of(it).set(il.sidewalks.reporter.i18n.AppCatalog.defaultCode(it)) }
     }
     private fun draft() = ReviewDraft(Evidence("synthetic", "a".repeat(64), "2026-01-01T12:00:00Z", 31.0, 35.0),
         "1234567", "רחוב בדיקה 1", "sidewalk_parking", "רכב חונה על המדרכה", emptySet())

@@ -26,8 +26,10 @@ class LiveCategoryResolutionTest {
             File("app/src/main/assets/i18n/strings.json"),
         ).first { it.isFile }
         val json = stringsFile.readText(Charsets.UTF_8)
+        // The catalog's default language (Hebrew): the label the picker shows by default.
+        val source = il.sidewalks.reporter.i18n.StringCatalog.parse(json).defaultLanguage!!.code
         val label = Regex(
-            """"${Regex.escape(category.labelKey)}"\s*:\s*\{[^}]*"he"\s*:\s*"((?:[^"\\]|\\.)*)"""")
+            """"${Regex.escape(category.labelKey)}"\s*:\s*\{[^}]*"${Regex.escape(source)}"\s*:\s*"((?:[^"\\]|\\.)*)"""")
             .find(json)?.groupValues?.get(1)
             ?: throw AssertionError("label missing for the staged subject")
         File(out).writeText("LIVE_CATEGORY label=$label\n")

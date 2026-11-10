@@ -49,8 +49,19 @@ object HardcodedUiStringScanner {
         return lexer.findings
     }
 
+    /** One string or raw string literal: its line and its static text (templates removed). */
+    data class Literal(val line: Int, val text: String)
+
+    /** Every string literal in [source], comments and char literals skipped (for [HardcodedLanguageCodeTest]). */
+    fun literals(source: String): List<Literal> {
+        val lexer = Lexer("", source)
+        lexer.code(untilBrace = false)
+        return lexer.literals
+    }
+
     private class Lexer(val file: String, val src: String) {
         val findings = mutableListOf<Finding>()
+        val literals = mutableListOf<Literal>()
         var pos = 0
         var line = 1
         private val context = StringBuilder()
@@ -179,6 +190,7 @@ object HardcodedUiStringScanner {
         }
 
         private fun report(lineNo: Int, before: String, text: String) {
+            literals += Literal(lineNo, text.replace(TEMPLATE.toString(), " "))
             if (LOG_CONTEXT.containsMatchIn(before)) return
             val shown = text.replace(TEMPLATE.toString(), "\${…}")
             when {

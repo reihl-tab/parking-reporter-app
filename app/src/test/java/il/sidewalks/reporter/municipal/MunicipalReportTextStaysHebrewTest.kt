@@ -73,7 +73,7 @@ class MunicipalReportTextStaysHebrewTest {
     private fun <T> underEachLocale(block: () -> T): Map<String, T> {
         val saved = Locale.getDefault()
         try {
-            return listOf("he", "en", "ar", "ru", "am").associateWith { code ->
+            return I18nTestFiles.languageCodes().associateWith { code ->
                 Locale.setDefault(Locale.forLanguageTag(code))
                 block()
             }
@@ -98,7 +98,7 @@ class MunicipalReportTextStaysHebrewTest {
     fun createCasePayloadIsTheSameHebrewInEveryUiLanguage() {
         for (category in ReportCategory.entries) {
             val byLocale = underEachLocale { submit(category) }
-            val hebrew = byLocale.getValue("he")
+            val hebrew = byLocale.getValue(I18nTestFiles.defaultCode())
             for ((code, report) in byLocale) assertEquals("$category under $code", hebrew, report)
             assertEquals(reportText, hebrew["CaseDescription"])
             assertEquals(reportTextSha256, sha256(hebrew["CaseDescription"] as String))

@@ -15,6 +15,21 @@ internal object I18nTestFiles {
 
     fun realCatalog(): StringCatalog = StringCatalog.parse(realCatalogText())
 
+    /** The real catalog's languages, in catalog order: what tests iterate instead of a list. */
+    fun languageCodes(): List<String> = realCatalog().languages.map { it.code }
+
+    /** The real catalog's default (source) language, whose values the extraction tests pin. */
+    fun defaultCode(): String = realCatalog().defaultLanguage!!.code
+
+    /**
+     * The code of the catalog language whose own name is [nativeName]. Tests that pin the
+     * wording of one particular language name it the way the picker does, by its own name,
+     * so no language code is written outside the catalog (td423).
+     */
+    fun codeNamed(nativeName: String): String =
+        realCatalog().languages.singleOrNull { it.nativeName == nativeName }?.code
+            ?: error("no catalog language is called $nativeName")
+
     const val LRI = "\u2066"
     const val FSI = "\u2068"
     const val PDI = "\u2069"

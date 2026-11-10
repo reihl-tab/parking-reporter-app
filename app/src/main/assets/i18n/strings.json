@@ -4,13 +4,19 @@
       "code": "he",
       "name": "עברית",
       "dir": "rtl",
-      "default": true
+      "default": true,
+      "machine_draft": false,
+      "plural": "one_two_other",
+      "aliases": ["iw"]
     },
     {
       "code": "en",
       "name": "English",
       "dir": "ltr",
       "default": false,
+      "machine_draft": true,
+      "plural": "one_is_1",
+      "fallback": true,
       "status": "machine-draft, needs native review"
     },
     {
@@ -18,6 +24,8 @@
       "name": "العربية",
       "dir": "rtl",
       "default": false,
+      "machine_draft": true,
+      "plural": "arabic_6",
       "status": "machine-draft, needs native review"
     },
     {
@@ -25,6 +33,8 @@
       "name": "Русский",
       "dir": "ltr",
       "default": false,
+      "machine_draft": true,
+      "plural": "slavic_one_few_many",
       "status": "machine-draft, needs native review"
     },
     {
@@ -32,6 +42,8 @@
       "name": "አማርኛ",
       "dir": "ltr",
       "default": false,
+      "machine_draft": true,
+      "plural": "one_is_0_1",
       "status": "machine-draft, needs native review"
     }
   ],

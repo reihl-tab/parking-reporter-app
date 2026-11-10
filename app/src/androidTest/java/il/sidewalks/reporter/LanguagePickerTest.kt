@@ -8,6 +8,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.platform.app.InstrumentationRegistry
+import il.sidewalks.reporter.i18n.AppCatalog
 import il.sidewalks.reporter.i18n.Bidi
 import il.sidewalks.reporter.i18n.UiPrefsLanguageStore
 import il.sidewalks.reporter.ui.AppShell
@@ -25,9 +26,9 @@ class LanguagePickerTest {
     private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
     private val prefs get() = context.getSharedPreferences(UiPrefsLanguageStore.PREFS_NAME, android.content.Context.MODE_PRIVATE)
 
-    @Before fun pinHebrew() { UiPrefsLanguageStore.of(context).set("he") }
+    @Before fun pinHebrew() { UiPrefsLanguageStore.of(context).set(AppCatalog.defaultCode(context)) }
 
-    @After fun restoreHebrew() { prefs.edit().putString(UiPrefsLanguageStore.KEY_LANGUAGE, "he").commit() }
+    @After fun restoreHebrew() { prefs.edit().putString(UiPrefsLanguageStore.KEY_LANGUAGE, AppCatalog.defaultCode(context)).commit() }
 
     @Test fun pickingALanguageAppliesLivePersistsAndNeverAuthenticatesOrTouchesSettings() {
         var authCalls = 0
@@ -58,7 +59,8 @@ class LanguagePickerTest {
         compose.onNodeWithText("בדיקה").performScrollTo().assertExists()
         compose.onNodeWithText("${Bidi.LRI}English${Bidi.PDI}").performScrollTo().assertIsSelected()
         compose.runOnIdle {
-            assertEquals("en", prefs.getString(UiPrefsLanguageStore.KEY_LANGUAGE, null))
+            // The tapped option is English by its own name; its code is the catalog's.
+            assertEquals(AppCatalog.get(context).languages.single { it.nativeName == "English" }.code, prefs.getString(UiPrefsLanguageStore.KEY_LANGUAGE, null))
             assertEquals(1, authCalls)
             assertEquals(1, settingsReads)
             assertEquals(0, settingsWrites)

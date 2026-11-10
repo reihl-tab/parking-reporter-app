@@ -16,22 +16,30 @@ import org.junit.Test
 class LicensesStringsTest {
 
     private val raw = JSONObject(I18nTestFiles.realCatalogText()).getJSONObject("strings")
-    private val languages = listOf("he", "en", "ar", "ru", "am")
+
+    /** Every catalog language (td423): a new language is covered by the structural checks at once. */
+    private val languages = I18nTestFiles.languageCodes()
+
+    /** Wording pins are keyed by each language's own name, so no code is written here. */
+    private fun code(nativeName: String): String = I18nTestFiles.codeNamed(nativeName)
 
     private fun value(key: String, lang: String): String = raw.getJSONObject(key).getString(lang)
 
+    /** A pin table may only name catalog languages; a language without a pin is checked structurally. */
+    private fun pinsByCode(pins: Map<String, String>): Map<String, String> = pins.mapKeys { (name, _) -> code(name) }
+
     private val mlkitBody = linkedMapOf(
-        "he" to "זיהוי טקסט בתמונות באמצעות Google ML Kit, בכפוף לתנאי השירות של ML Kit (הכוללים את תנאי השימוש של Google APIs): developers.google.com/ml-kit/terms",
-        "en" to "On-image text recognition by Google ML Kit, subject to the ML Kit Terms of Service (which incorporate the Google APIs Terms of Service): developers.google.com/ml-kit/terms",
-        "ar" to "التعرف على النص في الصور بواسطة Google ML Kit، وفقًا لشروط خدمة ML Kit (التي تتضمن شروط استخدام Google APIs): developers.google.com/ml-kit/terms",
-        "ru" to "Распознавание текста на изображениях с помощью Google ML Kit в соответствии с условиями использования ML Kit (включающими условия использования Google APIs): developers.google.com/ml-kit/terms",
-        "am" to "በምስሎች ላይ ያለውን ጽሑፍ መለየት በGoogle ML Kit፣ በML Kit የአገልግሎት ውሎች ሥር (የGoogle APIs የአገልግሎት ውሎችን ያካትታሉ): developers.google.com/ml-kit/terms",
+        "עברית" to "זיהוי טקסט בתמונות באמצעות Google ML Kit, בכפוף לתנאי השירות של ML Kit (הכוללים את תנאי השימוש של Google APIs): developers.google.com/ml-kit/terms",
+        "English" to "On-image text recognition by Google ML Kit, subject to the ML Kit Terms of Service (which incorporate the Google APIs Terms of Service): developers.google.com/ml-kit/terms",
+        "العربية" to "التعرف على النص في الصور بواسطة Google ML Kit، وفقًا لشروط خدمة ML Kit (التي تتضمن شروط استخدام Google APIs): developers.google.com/ml-kit/terms",
+        "Русский" to "Распознавание текста на изображениях с помощью Google ML Kit в соответствии с условиями использования ML Kit (включающими условия использования Google APIs): developers.google.com/ml-kit/terms",
+        "አማርኛ" to "በምስሎች ላይ ያለውን ጽሑፍ መለየት በGoogle ML Kit፣ በML Kit የአገልግሎት ውሎች ሥር (የGoogle APIs የአገልግሎት ውሎችን ያካትታሉ): developers.google.com/ml-kit/terms",
     )
 
     @Test
-    fun mlkitBodyIsPinnedInAllFiveLanguages() {
-        for (lang in languages) {
-            assertEquals("licenses.mlkit.body[$lang]", mlkitBody[lang], value("licenses.mlkit.body", lang))
+    fun mlkitBodyIsPinnedInEveryPinnedLanguage() {
+        for ((lang, pinned) in pinsByCode(mlkitBody)) {
+            assertEquals("licenses.mlkit.body[$lang]", pinned, value("licenses.mlkit.body", lang))
         }
     }
 
@@ -48,7 +56,7 @@ class LicensesStringsTest {
 
     @Test
     fun amharicOsmBodyUsesDerivedNotTheOldWord() {
-        val am = value("licenses.osm.body", "am")
+        val am = value("licenses.osm.body", code("አማርኛ"))
         assertTrue(am.contains("የተገኘው የአድራሻ ዳታቤዝ"))
         assertFalse(am.contains("የተራመደው"))
     }
@@ -59,7 +67,7 @@ class LicensesStringsTest {
         while (keys.hasNext()) {
             val key = keys.next()
             val entry = raw.optJSONObject(key) ?: continue
-            assertFalse("$key[am]", entry.optString("am").contains("የተራመደው"))
+            assertFalse("$key[am]", entry.optString(code("አማርኛ")).contains("የተራመደው"))
         }
     }
 
@@ -68,34 +76,34 @@ class LicensesStringsTest {
     // area, so the addresses section is reproducible only while OSM relation 1381350 and the
     // server's area derived from it are unchanged.
     private val osmBody = linkedMapOf(
-        "he" to "נקודות הכתובות מבוססות על נתוני OpenStreetMap, © תורמי OpenStreetMap, רישיון ODbL 1.0: openstreetmap.org/copyright — מסד הנתונים הנגזר של הכתובות מופץ ברישיון ODbL 1.0 וניתן לשחזור מדויק בעזרת מחולל הקוד הפתוח במאגר האפליקציה והקלטים המקובעים המתועדים בו, כל עוד יחס הגבול 1381350 של OpenStreetMap (והאזור שהשרת גוזר ממנו) לא השתנה.",
-        "en" to "Address points are based on OpenStreetMap data, © OpenStreetMap contributors, ODbL 1.0: openstreetmap.org/copyright - the derivative address database is distributed under ODbL 1.0 and can be reproduced exactly with the open-source generator in the app's repository and its documented pinned inputs, as long as the OpenStreetMap boundary relation 1381350 (and the area the server derives from it) is unchanged.",
-        "ar" to "تستند نقاط العناوين إلى بيانات OpenStreetMap، © مساهمو OpenStreetMap، رخصة ODbL 1.0: openstreetmap.org/copyright - قاعدة العناوين المشتقة موزعة بموجب ODbL 1.0 ويمكن إعادة إنتاجها بدقة عبر المولّد المفتوح المصدر في مستودع التطبيق ومدخلاته المثبتة الموثقة، ما دامت علاقة الحدود 1381350 في OpenStreetMap (والمنطقة التي يشتقها الخادم منها) دون تغيير.",
-        "ru" to "Адресные точки основаны на данных OpenStreetMap, © участники OpenStreetMap, лицензия ODbL 1.0: openstreetmap.org/copyright - производная база адресов распространяется по лицензии ODbL 1.0 и может быть точно воспроизведена генератором с открытым кодом из репозитория приложения и его задокументированными зафиксированными входными данными, пока граничное отношение OpenStreetMap 1381350 (и область, которую сервер строит на его основе) остаётся неизменным.",
-        "am" to "የአድራሻ ነጥቦች በOpenStreetMap ውሂብ ላይ የተመሰረቱ ናቸው፣ © የOpenStreetMap አበርካቾች፣ ODbL 1.0 ፍቃድ: openstreetmap.org/copyright - የተገኘው የአድራሻ ዳታቤዝ በODbL 1.0 ሥር ይሰራጫል እና በመተግበሪያው ማከማቻ ውስጥ ባለው ክፍት ምንጭ አመንጭ እና በተመዘገቡ ተቆልፈው በሚገኙ ግቤቶች በትክክል መድገም ይቻላል፣ የOpenStreetMap የወሰን ግንኙነት 1381350 (እና አገልጋዩ ከእሱ የሚያመነጨው ክልል) እስካልተቀየረ ድረስ።",
+        "עברית" to "נקודות הכתובות מבוססות על נתוני OpenStreetMap, © תורמי OpenStreetMap, רישיון ODbL 1.0: openstreetmap.org/copyright — מסד הנתונים הנגזר של הכתובות מופץ ברישיון ODbL 1.0 וניתן לשחזור מדויק בעזרת מחולל הקוד הפתוח במאגר האפליקציה והקלטים המקובעים המתועדים בו, כל עוד יחס הגבול 1381350 של OpenStreetMap (והאזור שהשרת גוזר ממנו) לא השתנה.",
+        "English" to "Address points are based on OpenStreetMap data, © OpenStreetMap contributors, ODbL 1.0: openstreetmap.org/copyright - the derivative address database is distributed under ODbL 1.0 and can be reproduced exactly with the open-source generator in the app's repository and its documented pinned inputs, as long as the OpenStreetMap boundary relation 1381350 (and the area the server derives from it) is unchanged.",
+        "العربية" to "تستند نقاط العناوين إلى بيانات OpenStreetMap، © مساهمو OpenStreetMap، رخصة ODbL 1.0: openstreetmap.org/copyright - قاعدة العناوين المشتقة موزعة بموجب ODbL 1.0 ويمكن إعادة إنتاجها بدقة عبر المولّد المفتوح المصدر في مستودع التطبيق ومدخلاته المثبتة الموثقة، ما دامت علاقة الحدود 1381350 في OpenStreetMap (والمنطقة التي يشتقها الخادم منها) دون تغيير.",
+        "Русский" to "Адресные точки основаны на данных OpenStreetMap, © участники OpenStreetMap, лицензия ODbL 1.0: openstreetmap.org/copyright - производная база адресов распространяется по лицензии ODbL 1.0 и может быть точно воспроизведена генератором с открытым кодом из репозитория приложения и его задокументированными зафиксированными входными данными, пока граничное отношение OpenStreetMap 1381350 (и область, которую сервер строит на его основе) остаётся неизменным.",
+        "አማርኛ" to "የአድራሻ ነጥቦች በOpenStreetMap ውሂብ ላይ የተመሰረቱ ናቸው፣ © የOpenStreetMap አበርካቾች፣ ODbL 1.0 ፍቃድ: openstreetmap.org/copyright - የተገኘው የአድራሻ ዳታቤዝ በODbL 1.0 ሥር ይሰራጫል እና በመተግበሪያው ማከማቻ ውስጥ ባለው ክፍት ምንጭ አመንጭ እና በተመዘገቡ ተቆልፈው በሚገኙ ግቤቶች በትክክል መድገም ይቻላል፣ የOpenStreetMap የወሰን ግንኙነት 1381350 (እና አገልጋዩ ከእሱ የሚያመነጨው ክልል) እስካልተቀየረ ድረስ።",
     )
 
     /** The exactness claim in each language; the boundary condition must follow it. */
     private val exactnessClaim = linkedMapOf(
-        "he" to "לשחזור מדויק",
-        "en" to "reproduced exactly",
-        "ar" to "بدقة",
-        "ru" to "точно воспроизведена",
-        "am" to "በትክክል",
+        "עברית" to "לשחזור מדויק",
+        "English" to "reproduced exactly",
+        "العربية" to "بدقة",
+        "Русский" to "точно воспроизведена",
+        "አማርኛ" to "በትክክል",
     )
 
     @Test
-    fun osmBodyIsPinnedInAllFiveLanguages() {
-        for (lang in languages) {
-            assertEquals("licenses.osm.body[$lang]", osmBody[lang], value("licenses.osm.body", lang))
+    fun osmBodyIsPinnedInEveryPinnedLanguage() {
+        for ((lang, pinned) in pinsByCode(osmBody)) {
+            assertEquals("licenses.osm.body[$lang]", pinned, value("licenses.osm.body", lang))
         }
     }
 
     @Test
     fun osmBodyStatesTheBoundaryConditionAfterTheExactnessClaim() {
-        for (lang in languages) {
+        for ((lang, claimText) in pinsByCode(exactnessClaim)) {
             val text = value("licenses.osm.body", lang)
-            val claim = text.indexOf(exactnessClaim.getValue(lang))
+            val claim = text.indexOf(claimText)
             val relation = text.indexOf("1381350")
             assertTrue("$lang still states the exactness claim", claim >= 0)
             assertTrue("$lang names boundary relation 1381350", relation >= 0)
@@ -116,7 +124,18 @@ class LicensesStringsTest {
             assertEquals("$lang names ODbL 1.0 twice (source and derivative)", 2, Regex("ODbL 1\\.0").findAll(text).count())
             assertTrue("$lang copyright link", text.contains("openstreetmap.org/copyright"))
         }
-        assertTrue(value("licenses.osm.body", "en").contains("open-source generator in the app's repository"))
-        assertTrue(value("licenses.osm.body", "he").contains("מחולל הקוד הפתוח במאגר האפליקציה"))
+        assertTrue(value("licenses.osm.body", code("English")).contains("open-source generator in the app's repository"))
+        assertTrue(value("licenses.osm.body", code("עברית")).contains("מחולל הקוד הפתוח במאגר האפליקציה"))
+        for (lang in languages) {
+            assertTrue("$lang names the boundary relation", value("licenses.osm.body", lang).contains("1381350"))
+        }
+    }
+
+    @Test
+    fun everyPinTableNamesOnlyCatalogLanguages() {
+        for (pins in listOf(mlkitBody, osmBody, exactnessClaim)) {
+            assertTrue(pinsByCode(pins).keys.all { it in languages })
+            assertEquals("one pin per language", pins.size, pinsByCode(pins).keys.toSet().size)
+        }
     }
 }

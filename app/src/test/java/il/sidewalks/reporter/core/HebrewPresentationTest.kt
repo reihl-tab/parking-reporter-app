@@ -8,8 +8,8 @@ import org.junit.Test
 
 class HebrewPresentationTest {
     private val catalog = I18nTestFiles.realCatalog()
-    private val he = Strings(catalog, "he")
-    private val en = Strings(catalog, "en")
+    private val he = Strings(catalog, I18nTestFiles.defaultCode())
+    private val en = Strings(catalog, I18nTestFiles.codeNamed("English"))
 
     @Test fun formatKeepsEvidenceOffsetAndDoesNotGuessTimezone() {
         assertEquals("01/01/2026 12:00 (UTC+00:00)", HebrewPresentation.evidenceTime(he, "2026-01-01T12:00:00Z"))

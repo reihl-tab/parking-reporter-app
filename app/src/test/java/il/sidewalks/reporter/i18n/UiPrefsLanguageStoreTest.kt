@@ -7,7 +7,11 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** The SharedPreferences side of the UI language (issue #115 PR-2a), over an in-memory fake. */
+/**
+ * The SharedPreferences side of the UI language (issue #115 PR-2a), over an in-memory fake.
+ * The store keeps any code as given; xe, xa and xr are no real language (those live only in
+ * the catalog).
+ */
 class UiPrefsLanguageStoreTest {
 
     private class MemoryPrefs : SharedPreferences {
@@ -53,9 +57,9 @@ class UiPrefsLanguageStoreTest {
     fun setStoresTheCodeUnderTheLanguageKey() {
         val prefs = MemoryPrefs()
         val store = UiPrefsLanguageStore(prefs)
-        store.set("en")
-        assertEquals("en", prefs.map["language"])
-        assertEquals("en", store.get())
+        store.set("xe")
+        assertEquals("xe", prefs.map["language"])
+        assertEquals("xe", store.get())
         assertEquals(setOf("language"), prefs.map.keys)
     }
 
@@ -63,7 +67,7 @@ class UiPrefsLanguageStoreTest {
     fun setNullRemovesTheKey() {
         val prefs = MemoryPrefs()
         val store = UiPrefsLanguageStore(prefs)
-        store.set("ar")
+        store.set("xa")
         assertTrue(prefs.contains("language"))
         store.set(null)
         assertFalse(prefs.contains("language"))
@@ -82,8 +86,8 @@ class UiPrefsLanguageStoreTest {
     @Test
     fun theControllerOverTheRealStoreRoundTrips() {
         val prefs = MemoryPrefs()
-        LanguageController(UiPrefsLanguageStore(prefs)).select("ru")
-        assertEquals("ru", LanguageController(UiPrefsLanguageStore(prefs)).selected.value)
+        LanguageController(UiPrefsLanguageStore(prefs)).select("xr")
+        assertEquals("xr", LanguageController(UiPrefsLanguageStore(prefs)).selected.value)
         LanguageController(UiPrefsLanguageStore(prefs)).select(null)
         assertNull(LanguageController(UiPrefsLanguageStore(prefs)).selected.value)
         assertFalse(prefs.contains("language"))

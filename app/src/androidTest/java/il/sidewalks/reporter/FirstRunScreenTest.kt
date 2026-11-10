@@ -9,6 +9,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.platform.app.InstrumentationRegistry
+import il.sidewalks.reporter.i18n.AppCatalog
 import il.sidewalks.reporter.i18n.UiPrefsLanguageStore
 import il.sidewalks.reporter.ui.AppShell
 import il.sidewalks.reporter.ui.FirstRunStore
@@ -31,13 +32,13 @@ class FirstRunScreenTest {
     }
 
     @Before fun pinHebrewAndClearFlag() {
-        UiPrefsLanguageStore.of(context).set("he")
+        UiPrefsLanguageStore.of(context).set(AppCatalog.defaultCode(context))
         clearFirstRunFlag()
     }
 
     @After fun restore() {
         context.getSharedPreferences(UiPrefsLanguageStore.PREFS_NAME, android.content.Context.MODE_PRIVATE)
-            .edit().putString(UiPrefsLanguageStore.KEY_LANGUAGE, "he").commit()
+            .edit().putString(UiPrefsLanguageStore.KEY_LANGUAGE, AppCatalog.defaultCode(context)).commit()
         clearFirstRunFlag()
     }
 
