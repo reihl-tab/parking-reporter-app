@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.24.1] - 2026-11-10
+
+### Other changes
+
+- test: capture bounded OCR text only in encrypted private benchmark (#228) (65819cf)
+
 ## [0.24.0] - 2026-11-10
 
 ### Features
