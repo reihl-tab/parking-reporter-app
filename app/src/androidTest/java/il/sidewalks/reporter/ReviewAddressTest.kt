@@ -11,6 +11,7 @@ import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.test.platform.app.InstrumentationRegistry
 import il.sidewalks.reporter.core.Evidence
 import il.sidewalks.reporter.core.ReviewDraft
@@ -28,6 +29,30 @@ class ReviewAddressTest {
     private fun draft() = ReviewDraft(
         Evidence("address-fixture", "a".repeat(64), "2026-01-01T12:00:00+02:00", 31.77, 35.21),
         "1234567", "", "sidewalk_parking", "תיאור בדיקה בלבד", setOf("address_not_confirmed"))
+
+    @Test fun plateEntryFormatsDigitsButStoresNoDashes() {
+        val initial = draft().copy(address = "רחוב בדיקה 12")
+        var saved: ReviewDraft? = null
+        compose.setContent { AppTheme { ReviewScreen(initial, null, { saved = it }, {}) } }
+        compose.onNodeWithText("ערוך").performScrollTo().performClick()
+        compose.onNodeWithText("מספר לוחית (ספרות בלבד)").performScrollTo().performTextReplacement("ab123-45-678")
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        File(context.filesDir, "review-formatted-plate-synthetic.png").outputStream().use {
+            compose.onRoot().captureToImage().asAndroidBitmap().compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
+        }
+        compose.onNodeWithText("שמור טיוטה").performScrollTo().performClick()
+        compose.runOnIdle { assertEquals("12345678", saved?.plate); assertNull(saved?.approvedDigest) }
+    }
+
+    @Test fun unambiguousOcrPrefillsWithoutSuggestionTapOrApproval() {
+        val initial = draft().copy(address = "רחוב בדיקה 12", plate = "")
+        var saved: ReviewDraft? = null
+        val bitmap = android.graphics.Bitmap.createBitmap(20, 20, android.graphics.Bitmap.Config.ARGB_8888)
+        compose.setContent { AppTheme { ReviewScreen(initial, bitmap.asImageBitmap(), { saved = it }, {}, plateRecognizer = { listOf("1234567") }) } }
+        compose.waitUntil(10_000) { compose.onAllNodesWithText("לוחית: \u206612-345-67\u2069").fetchSemanticsNodes().isNotEmpty() }
+        compose.onNodeWithText("שמור טיוטה").performScrollTo().performClick()
+        compose.runOnIdle { assertEquals("1234567", saved?.plate); assertNull(saved?.approvedDigest) }
+    }
 
     @Test fun gpsSuggestsStreetHouseButNeverApprovesOrChangesEvidence() {
         val initial = draft()

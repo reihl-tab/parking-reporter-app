@@ -6,6 +6,24 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.22.1] - 2026-11-10
+
+### Other changes
+
+- test: verify private OCR network isolation (#217) (80fd25a)
+
+## [0.22.0] - 2026-11-10
+
+### Features
+
+- feat: formatted plate entry and OCR prefill (#215) (a35317a)
+
+## [0.21.0] - 2026-11-10
+
+### Features
+
+- feat: basic settings after first-run welcome (#209) (#211) (5215817)
+
 ## [0.20.1] - 2026-11-10
 
 ### Other changes

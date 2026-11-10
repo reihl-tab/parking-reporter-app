@@ -64,7 +64,7 @@ class ReviewCaptureReportsExtractionTest {
         "review.edit.use_mlkit" to "זיהוי עם Google ML Kit במקום Tesseract",
         "review.edit.recognizing" to "מזהה במכשיר...",
         "review.edit.suggest_plate" to "הצע לוחית מתוך הצילום",
-        "review.edit.plate_field" to "לוחית ללא מקפים",
+        "review.edit.plate_field" to "מספר לוחית (ספרות בלבד)",
         "review.edit.address_field" to "רחוב ומספר בית שאישרת",
         "review.edit.geocode_note" to "חיפוש כתובת שולח קואורדינטות בלבד לספק המיקום של המכשיר. מספרי בית הם הצעות בלבד.",
         "review.edit.geocode_button" to "חפש הצעות כתובת לפי המיקום",
@@ -200,8 +200,8 @@ class ReviewCaptureReportsExtractionTest {
     @Test
     fun interpolatedReviewTextsKeepTheOldHebrewBytes() {
         // Byte-identical to the old literals: digits and Latin get LRI..PDI, as the old code did by hand.
-        assertEquals("לוחית: ${lri}1234567$pdi", reviewPlateText(he, "1234567"))
-        assertEquals("הצעה בלבד: ${lri}12345678$pdi", reviewPlateSuggestionText(he, "12345678"))
+        assertEquals("לוחית: ${lri}12-345-67$pdi", reviewPlateText(he, "1234567"))
+        assertEquals("הצעה בלבד: ${lri}123-45-678$pdi", reviewPlateSuggestionText(he, "12345678"))
         assertEquals("זמן: ${lri}01/01/2026 12:00 (UTC+00:00)$pdi", reviewTimeText(he, "2026-01-01T12:00:00Z"))
         assertEquals("זמן: ${lri}01/01/2026 12:00 (UTC+02:00)$pdi", reviewTimeText(he, "2026-01-01T12:00:00+02:00"))
         assertEquals("פתח טיוטה ${lri}aaaabbbb$pdi", reportsOpenDraftText(he, "aaaabbbb"))
@@ -217,7 +217,7 @@ class ReviewCaptureReportsExtractionTest {
         assertEquals("זמן: $fsi${lri}01/01/2026 12:00 (אזור זמן לא ידוע)$pdi$pdi", reviewTimeText(he, "2026-01-01T12:00:00"))
         assertEquals("זמן: $fsi${lri}חסר$pdi$pdi", reviewTimeText(he, null))
         // LTR languages are not isolated by the catalog.
-        assertEquals("Plate: 1234567", reviewPlateText(en, "1234567"))
+        assertEquals("Plate: 12-345-67", reviewPlateText(en, "1234567"))
         assertEquals("Plate: not confirmed", reviewPlateText(en, ""))
         assertEquals("Time: 01/01/2026 12:00 (UTC+00:00)", reviewTimeText(en, "2026-01-01T12:00:00Z"))
         assertEquals("Open draft aaaabbbb", reportsOpenDraftText(en, "aaaabbbb"))

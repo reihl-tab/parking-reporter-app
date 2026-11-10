@@ -72,10 +72,10 @@ internal fun unresolvedText(strings: Strings, unresolved: Set<String>): String {
 }
 
 internal fun reviewPlateText(strings: Strings, plate: String): String =
-    strings.t("review.plate", mapOf("plate" to plate.ifBlank { strings.t("review.plate_not_confirmed") }))
+    strings.t("review.plate", mapOf("plate" to (plate.takeIf { it.isNotBlank() }?.let { PlateEntry.format(it) } ?: strings.t("review.plate_not_confirmed"))))
 
 internal fun reviewPlateSuggestionText(strings: Strings, plate: String): String =
-    strings.t("review.plate_suggestion", mapOf("plate" to plate))
+    strings.t("review.plate_suggestion", mapOf("plate" to PlateEntry.format(plate)))
 
 internal fun reviewAddressText(strings: Strings, address: String): String =
     strings.t("review.address", mapOf("address" to address.ifBlank { strings.t("review.address_missing") }))
