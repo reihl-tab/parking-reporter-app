@@ -71,9 +71,6 @@ class ReviewCaptureReportsExtractionTest {
         "review.address_suggestion" to "הצעה בלבד: {address}",
         "review.edit.text_field" to "הטקסט המדויק לבדיקה",
         "review.edit.confirm_note" to "בדוק את הרחוב ומספר הבית ואשר את זמן הצילום. אין לנחש מידע חסר. מיקום התמונה המקורי נשמר בנפרד.",
-        "review.edit.timezone_toggle" to "תיקון אזור זמן",
-        "review.edit.timezone_field" to "אזור זמן (למשל +02:00)",
-        "review.edit.timezone_note" to "רק אם אזור הזמן חסר או שגוי: הזן היסט שבדקת לזמן הצילום. אין לנחש.",
         "review.location.missing_plain" to "לא נמצא מיקום בתמונה. בחר תמונה עם מיקום כדי לשלוח דיווח.",
         "review.edit.jerusalem_time_note" to "הזמן מוצג לפי השעון המקומי בירושלים. אשר רק זמן שבדקת.",
         "review.edit.time_field" to "זמן הצילום (24 שעות)",
@@ -92,14 +89,12 @@ class ReviewCaptureReportsExtractionTest {
         "review.submit.unavailable" to "שליחה אינה זמינה בגרסת הבדיקה",
         "review.back" to "חזור",
         "review.geocode.loading" to "מחפש רחוב ומספר בית לפי מיקום התמונה…",
-        "review.location.show_advanced" to "תיקון מיקום מתקדם",
         "review.location.hide_advanced" to "הסתר תיקון מיקום מתקדם",
         "review.location.advanced_note" to "רק אם המיקום חסר או שגוי: הזן קואורדינטות שבדקת. מיקום התמונה המקורי נשמר בנפרד.",
         "review.location.lookup_title" to "למצוא רחוב ומספר בית?",
         "review.location.lookup_yes" to "כן, חפש כתובת",
         "review.location.lookup_later" to "לא עכשיו",
         "review.location.missing" to "חסר מיקום מאושר; יש להשלים מיקום לפני אישור הדיווח.",
-        "review.location.enter_missing" to "השלם מיקום חסר",
     )
 
     /**
