@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-11-10
+
+### Features
+
+- feat: validate reporter contact fields and hide advanced municipal settings (#223) (f037c4d)
+
 ## [0.22.2] - 2026-11-10
 
 ### Other changes
