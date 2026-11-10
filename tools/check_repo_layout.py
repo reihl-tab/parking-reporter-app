@@ -73,7 +73,7 @@ def check(root: Path) -> list[str]:
             violations.append(f"unlisted top-level directory: {top}/ (via {path})")
             continue
         name = parts[-1]
-        if not any(fnmatch.fnmatchcase(name, pat) for pat in dirs[top]["allow"]):
+        if path not in dirs[top].get("allow_paths", []) and not any(fnmatch.fnmatchcase(name, pat) for pat in dirs[top]["allow"]):
             violations.append(f"type not allowed in {top}/: {path}")
     return violations
 

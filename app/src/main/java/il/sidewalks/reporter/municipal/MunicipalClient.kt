@@ -56,6 +56,7 @@ class OkHttpMunicipalClient private constructor(
     private val subscriptionKey: String,
     private val username: String,
     private val password: String,
+    private val diagnostic: ((ResponseDiagnostic) -> Unit)? = null,
 ) : MunicipalClient {
 
     /**
@@ -63,8 +64,8 @@ class OkHttpMunicipalClient private constructor(
      * is not a parameter on purpose - a client that can be pointed at
      * another host can leak the municipal credentials there.
      */
-    constructor(subscriptionKey: String, username: String, password: String) :
-        this(DEFAULT_BASE_URL, subscriptionKey, username, password)
+    constructor(subscriptionKey: String, username: String, password: String, diagnostic: ((ResponseDiagnostic) -> Unit)? = null) :
+        this(DEFAULT_BASE_URL, subscriptionKey, username, password, diagnostic)
 
     init {
         if (subscriptionKey.isEmpty() || username.isEmpty() || password.isEmpty()) {
@@ -139,8 +140,23 @@ class OkHttpMunicipalClient private constructor(
             .post(PythonJson.writeBytes(body).toRequestBody(JSON_MEDIA_TYPE))
             .build()
         val raw: ByteArray
+        // Diagnostics: which endpoint, how long, and the exception class are
+        // what distinguishes "never reached the city" (connect failure) from
+        // "the city may have it" (read timeout after the request went out).
+        // No request or response content is ever included.
+        val startedAt = System.currentTimeMillis()
         try {
             http.newCall(request).execute().use { response ->
+                runCatching { if (diagnostic != null) {
+                val privateSecrets = listOf(subscriptionKey, username, password, body["Token"] as? String ?: body["token"] as? String ?: "")
+                val preview = response.peekBody(ResponseDiagnostics.MAX_BODY_BYTES.toLong() + 1).string()
+                val headers = listOf("Content-Type", "Date", "Retry-After").mapNotNull { name ->
+                    response.header(name)?.take(256)?.let { name to it }
+                }.toMap()
+                // Diagnostics must never turn a successful case creation into a retry.
+                diagnostic.invoke(ResponseDiagnostic(endpoint, response.code, headers,
+                    ResponseDiagnostics.redactBody(preview, privateSecrets), null))
+                } }
                 if (!response.isSuccessful) {
                     throw MunicipalApiException("$endpoint: HTTP ${response.code}.")
                 }
@@ -161,7 +177,12 @@ class OkHttpMunicipalClient private constructor(
         } catch (e: MunicipalApiException) {
             throw e
         } catch (e: IOException) {
-            throw MunicipalApiException("$endpoint: network failure or invalid response.")
+            runCatching { diagnostic?.invoke(ResponseDiagnostic(endpoint, null, emptyMap(), "", e.javaClass.simpleName)) }
+            val elapsedMs = System.currentTimeMillis() - startedAt
+            throw MunicipalApiException(
+                "$endpoint: network failure or invalid response " +
+                    "(${e.javaClass.simpleName} after ${elapsedMs}ms).")
+
         }
         val parsed: JSONObject = try {
             JSONObject(String(raw, Charsets.UTF_8))
@@ -186,7 +207,8 @@ class OkHttpMunicipalClient private constructor(
             subscriptionKey: String,
             username: String,
             password: String,
-        ): OkHttpMunicipalClient = OkHttpMunicipalClient(baseUrl, subscriptionKey, username, password)
+            diagnostic: ((ResponseDiagnostic) -> Unit)? = null,
+        ): OkHttpMunicipalClient = OkHttpMunicipalClient(baseUrl, subscriptionKey, username, password, diagnostic)
 
         private const val TIMEOUT_SECONDS = 45L
         private const val MAX_RESPONSE_BYTES = 16L * 1024 * 1024

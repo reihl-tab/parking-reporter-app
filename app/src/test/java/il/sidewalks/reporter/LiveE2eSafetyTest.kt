@@ -70,10 +70,16 @@ class LiveE2eSafetyTest {
         // SEND_NOT_FIRED is arbitrated against the submission-state record
         // (written before the first network call), never retried on a
         // missing label alone: a record means ambiguous, check 106 first.
+        // A municipal failure note (SUBMIT_FAILED) is classified the same
+        // way: "prepared"/absent means CreateCase was never reached and a
+        // re-dispatch is safe; anything later means the 106 side decides.
         assertTrue(source.contains("DRAFT_NOT_SAVED && sendAttempts < 3"))
         assertTrue(source.contains("SEND_NOT_FIRED"))
         assertTrue(source.contains("submissionsBefore"))
         assertTrue(source.contains("submission record appeared without the sending state - check 106 first"))
+        assertTrue(source.contains("FlowDriver.SendOutcome.SUBMIT_FAILED"))
+        assertTrue(source.contains("SUBMIT_FAILED_PRE_CASE"))
+        assertTrue(source.contains("submit failed after case creation started - check 106 first"))
     }
 
     @Test fun liveProviderServesOnlyAStagedPhoto() {

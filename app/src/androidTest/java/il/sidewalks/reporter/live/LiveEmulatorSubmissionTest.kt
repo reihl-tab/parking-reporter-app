@@ -73,6 +73,26 @@ class LiveEmulatorSubmissionTest {
             throw e
         } finally {
             // The params carry repository secrets; never leave them on device.
+            // Test-only diagnostics export. The workflow immediately encrypts this evidence;
+            // app production has no UI/share/export path for server response logs.
+            runCatching {
+                val store = java.security.KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+                val key = store.getKey("parking-response-diagnostics-v1", null) as? javax.crypto.SecretKey
+                if (key != null) {
+                    val output = File(context.filesDir, "live-e2e-response-log.jsonl")
+                    output.writeText("")
+                    File(context.noBackupFilesDir, "municipal-response-log").listFiles()?.filter { it.extension == "enc" }?.forEach { file ->
+                        val bytes = file.readBytes()
+                        val size = bytes[0].toInt() and 255
+                        require(size == 12)
+                        val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding").apply {
+                            init(javax.crypto.Cipher.DECRYPT_MODE, key, javax.crypto.spec.GCMParameterSpec(128, bytes.copyOfRange(1, 13)))
+                        }
+                        val plain = cipher.doFinal(bytes.copyOfRange(13, bytes.size))
+                        try { output.appendText(String(plain, Charsets.UTF_8) + "\n") } finally { plain.fill(0) }
+                    }
+                }
+            }
             paramsFile.delete()
         }
     }
@@ -210,6 +230,30 @@ class LiveEmulatorSubmissionTest {
                     marker("SEND_NOT_FIRED")
                     throw AssertionError("send tap never fired - nothing reached the city")
                 }
+                FlowDriver.SendOutcome.SUBMIT_FAILED -> {
+                    // The app answered with a failure note. The persisted
+                    // state record says how far the submission got:
+                    // "prepared" (or no record) means CreateCase was never
+                    // reached, so nothing can exist at the city and a fixed
+                    // re-dispatch is safe; "creating"/"attaching" means the
+                    // case may exist and only the 106 side can decide.
+                    marker("SUBMIT_FAILED")
+                    runCatching { driver.screenshot("live-e2e-submit-failed.png") }
+                    when (submissionStatus(context, hash)) {
+                        null, "prepared" -> {
+                            outcomeKnown = true
+                            marker("SUBMIT_FAILED_PRE_CASE")
+                            throw AssertionError("submit failed before case creation - nothing reached the city")
+                        }
+                        else -> {
+                            marker("OUTCOME_UNKNOWN")
+                            outcomeKnown = true
+                            runCatching { preserveSubmissionState(context, hash) }
+                            preserveState = true
+                            throw AssertionError("submit failed after case creation started - check 106 first")
+                        }
+                    }
+                }
                 FlowDriver.SendOutcome.TIMEOUT -> {
                     // The request may already have reached the city: the case
                     // may exist. Keep the app's submission-state record for
@@ -237,6 +281,19 @@ class LiveEmulatorSubmissionTest {
             throw t
         } finally {
             if (!cleaned && !preserveState) runCatching { cleanOwnedPhoto(context, hash) }
+        }
+    }
+
+    /** The persisted submission status ("prepared"/"creating"/...) for this run's staged photo, or null. */
+    private fun submissionStatus(context: Context, hash: String): String? {
+        val db = Room.databaseBuilder(context, ReportDatabase::class.java, "report-ledger.db").build()
+        try {
+            val record = runBlocking { db.reports().findPhoto(hash) } ?: return null
+            val state = File(context.noBackupFilesDir, "submissions/${record.stableId}.json")
+            if (!state.isFile) return null
+            return JSONObject(state.readText()).optString("status").ifEmpty { null }
+        } finally {
+            db.close()
         }
     }
 

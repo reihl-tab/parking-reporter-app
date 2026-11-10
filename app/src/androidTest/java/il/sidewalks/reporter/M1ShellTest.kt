@@ -76,6 +76,7 @@ class M1ShellTest {
         screenshot("m1-settings-synthetic.png")
         compose.onNodeWithText("שם פרטי").performTextInput("בדיקה")
         compose.onNodeWithText("שם משפחה").performTextInput("מדווח")
+        compose.onNodeWithText("חיבור 106 מתקדם").performScrollTo().performClick()
         compose.onNodeWithText("מפתח מנוי").performScrollTo().performTextInput("synthetic-subscription-key")
         compose.onNodeWithText("שם משתמש API").performScrollTo().performTextInput("synthetic-api-user")
         compose.onNodeWithText("סיסמת API").performScrollTo().performTextInput("synthetic-api-pass")

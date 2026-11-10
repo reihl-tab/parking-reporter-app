@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import re
+import hashlib
 import sys
 import xml.etree.ElementTree as ET
 
@@ -64,6 +65,10 @@ def check() -> list[str]:
             continue
         if path.suffix.lower() in {".jks", ".keystore", ".p12", ".apk", ".aab", ".db"} or path.name == ".env":
             errors.append(f"Forbidden sensitive/generated file: {path.relative_to(ROOT)}")
+    wrapper = ROOT / "gradle/wrapper/gradle-wrapper.jar"
+    expected_wrapper = "3b8a25775a69158b5ad2b1d17a80a88dc7b40a352a73eb27d06c612a7ce68e98"
+    if not wrapper.is_file() or hashlib.sha256(wrapper.read_bytes()).hexdigest() != expected_wrapper:
+        errors.append("Gradle wrapper JAR must match the pinned upstream SHA256")
     # Launcher resources are an app identity, not the Quick Settings tile.
     manifest = ROOT / "app/src/main/AndroidManifest.xml"
     android = "{http://schemas.android.com/apk/res/android}"

@@ -24,6 +24,13 @@ class ShellSettingsExtractionTest {
 
     /** Key -> the Hebrew literal it replaced. */
     private val extracted = linkedMapOf(
+        "settings.api.advanced" to "חיבור 106 מתקדם",
+        "settings.phone.israel_only" to "אפשר לשמור מספר בינלאומי. שליחה ל-106 נתמכת כרגע רק עם מספר נייד ישראלי.",
+        "settings.email.invalid" to "כתובת האימייל אינה תקינה. בדוק את הכתובת.",
+
+        "settings.id.invalid" to "מספר תעודת הזהות אינו תקין. בדוק את הספרות וספרת הביקורת.",
+        "settings.phone.invalid" to "הזן מספר בינלאומי עם + וקוד מדינה, או מספר נייד ישראלי שמתחיל ב-05.",
+
         "shell.nav.home" to "בית",
         "shell.nav.reports" to "הדיווחים שלי",
         "shell.nav.settings" to "הגדרות",

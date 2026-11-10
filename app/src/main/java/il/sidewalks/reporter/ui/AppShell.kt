@@ -169,7 +169,9 @@ fun AppShell(
                                 OkHttpMunicipalClient(
                                     subscriptionKey = s.municipalSubscriptionKey,
                                     username = s.municipalUsername,
-                                    password = s.municipalPassword) },
+                                    password = s.municipalPassword,
+                                    diagnostic = { diagnostic -> il.sidewalks.reporter.security.EncryptedResponseLog(context)
+                                        .append(shown.evidence.stableId, diagnostic) }) },
                             directory,
                             { id -> FileSubmissionStateStore.forReport(
                                 File(context.noBackupFilesDir, "submissions"), id) },

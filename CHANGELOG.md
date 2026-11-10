@@ -6,6 +6,36 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.24.1] - 2026-11-10
+
+### Other changes
+
+- test: capture bounded OCR text only in encrypted private benchmark (#228) (65819cf)
+
+## [0.24.0] - 2026-11-10
+
+### Features
+
+- feat: encrypted private municipal response diagnostics (#220) (57d3fe1)
+
+## [0.23.1] - 2026-11-10
+
+### Other changes
+
+- build: track verified Gradle wrapper for automatic discovery (#232) (720ac48)
+
+## [0.23.0] - 2026-11-10
+
+### Features
+
+- feat: validate reporter contact fields and hide advanced municipal settings (#223) (f037c4d)
+
+## [0.22.2] - 2026-11-10
+
+### Other changes
+
+- live e2e: recognize failure notes, classify by state, one-line collect shells (#226) (fdb5041)
+
 ## [0.22.1] - 2026-11-10
 
 ### Other changes
