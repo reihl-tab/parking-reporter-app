@@ -13,6 +13,11 @@ class ReviewTimeTest {
         val original = "2026-01-01T12:00:47.123+02:00"
         assertEquals(original, ReviewTime.toIso("01/01/2026 12:00", original))
     }
+    @Test fun missingZoneRequiresExplicitCheckedOffset() {
+        assertEquals("2026-01-01T12:00+02:00", ReviewTime.toIso("01/01/2026 12:00", "2026-01-01T12:00:00", "+02:00"))
+        assertEquals("2026-01-01T12:00+03:00", ReviewTime.toIso("01/01/2026 12:00", null, "+03:00"))
+        assertNull(ReviewTime.toIso("01/01/2026 12:00", null, "unknown"))
+    }
     @Test fun editedMinutesUseKnownOffsetAndStrictDate() {
         assertEquals("2026-01-02T21:15+02:00", ReviewTime.toIso("02/01/2026 21:15", "2026-01-01T12:00:00+02:00"))
         for (bad in listOf("31/02/2026 12:00", "01/01/2026 24:00", "01/01/2026 12:00 PM", "2026-01-01T12:00:00Z"))

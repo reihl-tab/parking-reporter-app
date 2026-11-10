@@ -38,6 +38,8 @@ fun ReviewScreen(initial: ReviewDraft, image: ImageBitmap?, onSave: (ReviewDraft
     var geocodeStatus by remember { mutableStateOf<String?>(null) }
     var draft by remember(initial.evidence.stableId) { mutableStateOf(initial) }
     var time by remember(initial.evidence.stableId) { mutableStateOf(ReviewTime.display(initial.confirmedTime)) }
+    var timeOffset by remember(initial.evidence.stableId) { mutableStateOf(ReviewTime.offset(initial.confirmedTime)) }
+    var showTimeZone by rememberSaveable(initial.evidence.stableId) { mutableStateOf(ReviewTime.offset(initial.confirmedTime).isBlank()) }
     var latitude by remember(initial.evidence.stableId) { mutableStateOf(initial.confirmedLatitude?.toString().orEmpty()) }
     var longitude by remember(initial.evidence.stableId) { mutableStateOf(initial.confirmedLongitude?.toString().orEmpty()) }
     var editing by remember(initial.evidence.stableId) { mutableStateOf(false) }
@@ -154,7 +156,13 @@ fun ReviewScreen(initial: ReviewDraft, image: ImageBitmap?, onSave: (ReviewDraft
         OutlinedTextField(draft.exactHebrewText, { draft = draft.edit(text = it) }, label = { Text(s.t("review.edit.text_field")) }, modifier = Modifier.fillMaxWidth(), minLines = 3)
         Text(s.t("review.edit.confirm_note"))
         Text(LOCAL_TIME_EXAMPLE, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(time, { time = it; draft = draft.copy(unresolved = setOf(ReviewWarning.TIME_NEEDS_CONFIRMATION.code), approvedDigest = null) }, textStyle = TextStyle(textDirection = TextDirection.Ltr), isError = ReviewTime.toIso(time, draft.confirmedTime) == null, label = { Text(s.t("review.edit.time_field")) }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(time, { time = it; draft = draft.copy(unresolved = setOf(ReviewWarning.TIME_NEEDS_CONFIRMATION.code), approvedDigest = null) }, textStyle = TextStyle(textDirection = TextDirection.Ltr), isError = ReviewTime.toIso(time, draft.confirmedTime, timeOffset) == null, label = { Text(s.t("review.edit.time_field")) }, modifier = Modifier.fillMaxWidth())
+        TextButton(onClick = { showTimeZone = !showTimeZone }) { Text(s.t("review.edit.timezone_toggle")) }
+        if (showTimeZone) {
+            Text(s.t("review.edit.timezone_note"), style = MaterialTheme.typography.bodySmall)
+            OutlinedTextField(timeOffset, { timeOffset = it; draft = draft.copy(unresolved = draft.unresolved + ReviewWarning.TIME_NEEDS_CONFIRMATION.code, approvedDigest = null) },
+                textStyle = TextStyle(textDirection = TextDirection.Ltr), label = { Text(s.t("review.edit.timezone_field")) }, modifier = Modifier.fillMaxWidth())
+        }
         TextButton(onClick = { advancedLocation = !advancedLocation }) { Text(s.t(if (advancedLocation) "review.location.hide_advanced" else "review.location.show_advanced")) }
         if (advancedLocation) {
         Text(s.t("review.location.advanced_note"), style = MaterialTheme.typography.bodySmall)
@@ -162,7 +170,7 @@ fun ReviewScreen(initial: ReviewDraft, image: ImageBitmap?, onSave: (ReviewDraft
         OutlinedTextField(longitude, { longitude = it; draft = draft.copy(unresolved = setOf(ReviewWarning.LOCATION_NEEDS_CONFIRMATION.code), approvedDigest = null) }, label = { Text(s.t("review.edit.longitude_field")) }, modifier = Modifier.fillMaxWidth())
         }
         Text(reviewAddressText(s, draft.address))
-        Button(onClick = { val iso = ReviewTime.toIso(time, draft.confirmedTime)
+        Button(onClick = { val iso = ReviewTime.toIso(time, draft.confirmedTime, timeOffset)
             if (iso != null) draft = draft.confirmEvidence(iso, latitude.toDoubleOrNull(), longitude.toDoubleOrNull())
             else draft = draft.copy(unresolved = draft.unresolved + ReviewWarning.TIME_NEEDS_CONFIRMATION.code, approvedDigest = null) }, modifier = Modifier.fillMaxWidth()) { Text(s.t("review.edit.confirm_button")) }
         if (draft.unresolved.isNotEmpty()) Text(unresolvedText(s, draft.unresolved))

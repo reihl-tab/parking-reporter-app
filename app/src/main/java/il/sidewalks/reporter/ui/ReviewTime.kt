@@ -2,6 +2,7 @@ package il.sidewalks.reporter.ui
 
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.ResolverStyle
 import java.util.Locale
@@ -16,11 +17,12 @@ object ReviewTime {
     } catch (_: Exception) {
         try { LocalDateTime.parse(value).format(format) } catch (_: Exception) { "" }
     }
-    fun toIso(input: String, previous: String?): String? {
-        if (input == display(previous)) return previous?.takeIf { validOffset(it) }
+    fun offset(value: String?): String = try { OffsetDateTime.parse(value).offset.id } catch (_: Exception) { "" }
+    fun toIso(input: String, previous: String?, offsetText: String = offset(previous)): String? {
+        if (input == display(previous) && offsetText == offset(previous)) return previous?.takeIf { validOffset(it) }
         return try {
             val local = LocalDateTime.parse(input, format)
-            val offset = OffsetDateTime.parse(previous).offset
+            val offset = ZoneOffset.of(offsetText)
             local.atOffset(offset).toString()
         } catch (_: Exception) { null }
     }
