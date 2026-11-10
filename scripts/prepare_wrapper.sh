@@ -1,6 +1,8 @@
 #!/bin/sh
 set -eu
 mkdir -p gradle/wrapper
+# The verified wrapper is tracked for automatic build discovery. The fallback
+# supports clean source archives that omit binary files.
 if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
   curl --fail --location --proto '=https' --tlsv1.2 https://raw.githubusercontent.com/gradle/gradle/v9.8.2/gradle/wrapper/gradle-wrapper.jar -o gradle/wrapper/gradle-wrapper.jar
 fi

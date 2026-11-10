@@ -55,6 +55,9 @@
     "gradle": {
       "allow": [
         "*.properties"
+      ],
+      "allow_paths": [
+        "gradle/wrapper/gradle-wrapper.jar"
       ]
     },
     "scripts": {

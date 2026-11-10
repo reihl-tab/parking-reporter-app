@@ -29,8 +29,8 @@ reports/
 __pycache__/
 *.pyc
 
-# Official launcher is fetched with checksum verification before builds.
-gradle/wrapper/gradle-wrapper.jar
+# Official Gradle wrapper is tracked for CodeQL autobuild discovery.
+# scripts/prepare_wrapper.sh still verifies its SHA256 before explicit builds.
 
 # Verified upstream model fetched only at build time.
 app/src/main/assets/tessdata/*.traineddata
