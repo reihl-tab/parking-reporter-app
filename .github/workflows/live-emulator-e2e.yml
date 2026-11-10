@@ -11,7 +11,7 @@ on:
         required: true
         type: string
       approved_photo_sha256:
-        description: 'sha256 of the exact owner-approved photo (must match the decrypted staged trial photo)' 
+        description: 'sha256 of the exact owner-approved photo (must match the decrypted staged trial photo)'
         required: true
         type: string
 
@@ -181,7 +181,7 @@ jobs:
           # the owner approved, the same way the text check works, before any
           # case secret is read.
           digest=$(sha256sum /tmp/live-e2e/photo.jpg | cut -d' ' -f1)
-          test "$digest" = "$(printf '%s' "$APPROVED_PHOTO_SHA256_INPUT" | tr 'A-F' 'a-f')" \
+          test "$digest" = "$APPROVED_PHOTO_SHA256_INPUT" \
             || { echo 'approved photo digest mismatch - refusing to run'; exit 1; }
           echo 'staged photo matches the owner-approved photo digest'
       - name: Stage live params (private)
@@ -253,8 +253,11 @@ jobs:
           script: |
             adb install -r app/build/outputs/apk/debug/app-debug.apk
             adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-            adb shell "run-as il.sidewalks.reporter.test sh -c 'cat > files/live-photo.jpg'" < /tmp/live-e2e/photo.jpg
-            adb shell "run-as il.sidewalks.reporter sh -c 'cat > files/live-params.json'" < /tmp/live-e2e/params.json
+            adb shell "run-as il.sidewalks.reporter.test sh -c 'mkdir -p files && cat > files/live-photo.jpg'" < /tmp/live-e2e/photo.jpg
+            adb shell "run-as il.sidewalks.reporter sh -c 'mkdir -p files && cat > files/live-params.json'" < /tmp/live-e2e/params.json
+            test "$(adb shell "run-as il.sidewalks.reporter.test sh -c 'sha256sum files/live-photo.jpg 2>/dev/null || toybox sha256sum files/live-photo.jpg'" | tr -d '\r' | cut -d' ' -f1)" = "$(sha256sum /tmp/live-e2e/photo.jpg | cut -d' ' -f1)" || { echo 'FAIL-FAST: staged photo on device does not match the approved photo'; exit 1; }
+            adb shell "run-as il.sidewalks.reporter sh -c 'test -s files/live-params.json'" || { echo 'FAIL-FAST: staged params missing on device'; exit 1; }
+            echo 'preflight: staged photo and params verified on device'
             ( for i in 1 2 3 4 5 6; do if [ -f /tmp/live-e2e/stop-rec ]; then break; fi; adb shell screenrecord --time-limit 170 /sdcard/live-rec-$i.mp4 >/dev/null 2>&1; done ) &
             adb shell am instrument -w -r -e class il.sidewalks.reporter.live.LiveEmulatorSubmissionTest il.sidewalks.reporter.test/androidx.test.runner.AndroidJUnitRunner > /tmp/live-e2e/instrumentation.txt 2>&1; echo $? > /tmp/live-e2e/instrumentation.rc
             touch /tmp/live-e2e/stop-rec
