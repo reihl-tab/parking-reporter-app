@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.26.0] - 2026-11-10
+
+### Features
+
+- feat: reviewed passport and international phone compatibility (#225) (cc019ec)
+
 ## [0.25.1] - 2026-11-10
 
 ### Other changes
