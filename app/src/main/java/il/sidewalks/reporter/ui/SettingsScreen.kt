@@ -10,6 +10,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.intl.LocaleList
 import androidx.compose.ui.text.style.TextDirection
@@ -69,6 +72,8 @@ fun SettingsScreen(
     // saves as typed (blank = cleared); an untouched field keeps its stored value.
     var touchedMunicipal by remember { mutableStateOf(setOf<String>()) }
     var saved by remember { mutableStateOf(false) }
+    var phoneFocused by remember { mutableStateOf(false) }
+    var advanced106 by remember { mutableStateOf(false) }
     ProvideStringsIfMissing {
     val s = LocalStrings.current
     Column(Modifier.fillMaxSize().systemBarsPadding().padding(16.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -80,18 +85,34 @@ fun SettingsScreen(
         } else Text(s.t("settings.privacy.mlkit_note"))
         Text(s.t("settings.privacy.title"), style = MaterialTheme.typography.titleLarge)
         if (!basicSetup) Text(s.t("settings.privacy.description"))
-        OutlinedTextField(firstName, { firstName = it; saved = false }, label = { Text(s.t("settings.field.first_name")) }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(lastName, { lastName = it; saved = false }, label = { Text(s.t("settings.field.last_name")) }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(id, { id = it; saved = false }, label = { Text(s.t("settings.field.id_number")) }, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword, autoCorrectEnabled = false), modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(phone, { phone = it; saved = false }, label = { Text(s.t("settings.field.phone")) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, autoCorrectEnabled = false), modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(email, { email = it; saved = false }, label = { Text(s.t("settings.field.email")) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, autoCorrectEnabled = false), modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(firstName, { firstName = ReporterInput.nameInput(it); saved = false }, label = { Text(s.t("settings.field.first_name")) }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(lastName, { lastName = ReporterInput.nameInput(it); saved = false }, label = { Text(s.t("settings.field.last_name")) }, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(id, { id = ReporterInput.digits(it); saved = false }, label = { Text(s.t("settings.field.id_number")) }, isError = id.isNotBlank() && !ReporterInput.validId(id), supportingText = { if (id.isNotBlank() && !ReporterInput.validId(id)) Text(s.t("settings.id.invalid")) }, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword, autoCorrectEnabled = false), modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(phone, { phone = ReporterInput.phoneInput(it); saved = false },
+            label = { Text(s.t("settings.field.phone")) },
+            textStyle = TextStyle(textDirection = TextDirection.Ltr),
+            isError = phone.isNotBlank() && !ReporterInput.validPhone(phone),
+            supportingText = {
+                if (phone.isNotBlank() && !ReporterInput.validPhone(phone)) Text(s.t("settings.phone.invalid"))
+                else if (phone.isNotBlank() && !ReporterInput.isIsraeliMobile(phone)) Text(s.t("settings.phone.israel_only"))
+            },
+            visualTransformation = if (phoneFocused) VisualTransformation.None else PhoneDisplayTransformation,
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone, autoCorrectEnabled = false),
+            modifier = Modifier.fillMaxWidth().onFocusChanged { focus ->
+                phoneFocused = focus.isFocused
+                if (!focus.isFocused) phone = ReporterInput.canonicalPhone(phone)
+            })
+        OutlinedTextField(email, { email = it; saved = false }, label = { Text(s.t("settings.field.email")) }, isError = email.isNotBlank() && !ReporterInput.validEmail(email), supportingText = { if (email.isNotBlank() && !ReporterInput.validEmail(email)) Text(s.t("settings.email.invalid")) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, autoCorrectEnabled = false), modifier = Modifier.fillMaxWidth())
         if (!basicSetup) {
         HorizontalDivider()
+        TextButton(onClick = { advanced106 = !advanced106 }) { Text(s.t("settings.api.advanced")) }
+        if (advanced106) {
         Text(s.t("settings.api.title"), style = MaterialTheme.typography.titleMedium)
         Text(s.t("settings.api.description"), style = MaterialTheme.typography.bodySmall)
         OutlinedTextField(subscriptionKey, { subscriptionKey = it; saved = false; touchedMunicipal = touchedMunicipal + "subscription_key" }, label = { Text(s.t("settings.field.subscription_key")) }, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false), modifier = Modifier.fillMaxWidth())
         OutlinedTextField(apiUsername, { apiUsername = it; saved = false; touchedMunicipal = touchedMunicipal + "api_username" }, label = { Text(s.t("settings.field.api_username")) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii, autoCorrectEnabled = false), modifier = Modifier.fillMaxWidth())
         OutlinedTextField(apiPassword, { apiPassword = it; saved = false; touchedMunicipal = touchedMunicipal + "api_password" }, label = { Text(s.t("settings.field.api_password")) }, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false), modifier = Modifier.fillMaxWidth())
+        }
         }
         // Blank personal fields keep the stored values via mergeReporterSettings in the
         // caller's save callback; a municipal credential field saves as typed only when
@@ -100,7 +121,7 @@ fun SettingsScreen(
         // blanked credential still enables the button, so clearing works on a blank screen too.
         // stays disabled when every field is blank (and nothing was touched) or right after a save.
         val anyField = listOf(firstName, lastName, id, phone, email, subscriptionKey, apiUsername, apiPassword).any { it.isNotBlank() }
-        Button(enabled = !saved && (anyField || touchedMunicipal.isNotEmpty()), onClick = { save(ReporterSettings(firstName.trim(), lastName.trim(), phone.trim(), id.trim(), email.trim(),
+        Button(enabled = !saved && (anyField || touchedMunicipal.isNotEmpty()) && (id.isBlank() || ReporterInput.validId(id)) && (phone.isBlank() || ReporterInput.validPhone(phone)) && (email.isBlank() || ReporterInput.validEmail(email)), onClick = { save(ReporterSettings(firstName.trim(), lastName.trim(), ReporterInput.canonicalPhone(phone), id.trim(), email.trim(),
             municipalSubscriptionKey = subscriptionKey.trim(),
             municipalUsername = apiUsername.trim(),
             municipalPassword = apiPassword.trim()), touchedMunicipal) {
