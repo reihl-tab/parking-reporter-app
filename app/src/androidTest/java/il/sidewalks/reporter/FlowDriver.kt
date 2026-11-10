@@ -128,12 +128,29 @@ internal class FlowDriver(private val compose: ComposeTestRule) {
     }
 
     /** What the UI showed after one send tap. */
-    internal enum class SendOutcome { SUBMITTED, DRAFT_NOT_SAVED, TIMEOUT, SEND_NOT_FIRED }
+    internal enum class SendOutcome { SUBMITTED, DRAFT_NOT_SAVED, TIMEOUT, SEND_NOT_FIRED, SUBMIT_FAILED }
 
     private fun outcomeShown(): Boolean =
         compose.onAllNodesWithText("נשלח לעירייה. מספר קריאה", substring = true)
             .fetchSemanticsNodes().isNotEmpty() ||
             compose.onAllNodesWithText("הטיוטה לא נשמרה", substring = true)
+                .fetchSemanticsNodes().isNotEmpty()
+
+    /**
+     * The app answered the submission with a failure note: the municipal
+     * step replied with an error ("העירייה ענתה"), a local crash was
+     * labelled ("שגיאה מקומית"), or the saved state is uncertain
+     * ("המצב מול העירייה אינו ודאי"). Run 42774734605 waited the full 300s
+     * on exactly such a note because only the two success-path strings were
+     * recognized. How far the submission got is decided from the state
+     * record by the caller, not here.
+     */
+    private fun failureNoteShown(): Boolean =
+        compose.onAllNodesWithText("העירייה ענתה", substring = true)
+            .fetchSemanticsNodes().isNotEmpty() ||
+            compose.onAllNodesWithText("שגיאה מקומית", substring = true)
+                .fetchSemanticsNodes().isNotEmpty() ||
+            compose.onAllNodesWithText("המצב מול העירייה אינו ודאי", substring = true)
                 .fetchSemanticsNodes().isNotEmpty()
 
     /**
@@ -159,7 +176,7 @@ internal class FlowDriver(private val compose: ComposeTestRule) {
         val fired = try {
             compose.waitUntil(SEND_FIRED_WAIT_MS) {
                 compose.onAllNodesWithText("שולח לעירייה", substring = true)
-                    .fetchSemanticsNodes().isNotEmpty() || outcomeShown()
+                    .fetchSemanticsNodes().isNotEmpty() || outcomeShown() || failureNoteShown()
             }; true
         } catch (e: ComposeTimeoutException) { false }
         if (!fired) return SendOutcome.SEND_NOT_FIRED
@@ -172,7 +189,7 @@ internal class FlowDriver(private val compose: ComposeTestRule) {
             if (remaining <= 0) return SendOutcome.TIMEOUT
             val slice = if (screenshotEveryMs > 0) minOf(screenshotEveryMs, remaining) else remaining
             try {
-                compose.waitUntil(slice) { outcomeShown() }
+                compose.waitUntil(slice) { outcomeShown() || failureNoteShown() }
                 break
             } catch (e: ComposeTimeoutException) {
                 if (screenshotEveryMs <= 0 || System.currentTimeMillis() - startedAt >= outcomeWaitMs) {
@@ -182,8 +199,9 @@ internal class FlowDriver(private val compose: ComposeTestRule) {
                 screenshot("live-e2e-wait-%02d.png".format(shot))
             }
         }
-        return if (compose.onAllNodesWithText("נשלח לעירייה. מספר קריאה", substring = true)
-            .fetchSemanticsNodes().isNotEmpty()) SendOutcome.SUBMITTED else SendOutcome.DRAFT_NOT_SAVED
+        if (compose.onAllNodesWithText("נשלח לעירייה. מספר קריאה", substring = true)
+            .fetchSemanticsNodes().isNotEmpty()) return SendOutcome.SUBMITTED
+        return if (failureNoteShown()) SendOutcome.SUBMIT_FAILED else SendOutcome.DRAFT_NOT_SAVED
     }
 
     fun tapSendAndAwaitCaseNumber() {
@@ -201,6 +219,7 @@ internal class FlowDriver(private val compose: ComposeTestRule) {
                 }
                 SendOutcome.TIMEOUT -> fail("no submission outcome shown")
                 SendOutcome.SEND_NOT_FIRED -> fail("send tap never fired")
+                SendOutcome.SUBMIT_FAILED -> fail("municipal submit failed (see the on-screen note)")
             }
         }
     }
