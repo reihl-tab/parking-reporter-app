@@ -176,7 +176,14 @@ class FullFlowE2eTest {
             launchFlow(settings, null)
             val driver = FlowDriver(compose)
             compose.waitUntil(15_000) {
-                compose.onAllNodesWithText("בדיקת הדיווח").fetchSemanticsNodes().isNotEmpty()
+                compose.onAllNodesWithText("בדיקת הדיווח").fetchSemanticsNodes().isNotEmpty() ||
+                    compose.onAllNodesWithText("נמצא מיקום בתמונה").fetchSemanticsNodes().isNotEmpty()
+            }
+            if (compose.onAllNodesWithText("נמצא מיקום בתמונה").fetchSemanticsNodes().isNotEmpty()) {
+                compose.onNodeWithText("השתמש במיקום").performClick()
+            }
+            if (compose.onAllNodesWithText("למצוא רחוב ומספר בית?").fetchSemanticsNodes().isNotEmpty()) {
+                compose.onNodeWithText("לא עכשיו").performClick()
             }
             assertEquals(FlowDriver.SendOutcome.SEND_NOT_FIRED, driver.tapSendAndAwaitOnce(5_000))
         } finally {
