@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.18.3] - 2026-11-10
+
+### Other changes
+
+- live-e2e: fix outcome-unknown hang + keep heavy downloads off the owner tunnel (#203) (174074a)
+
 ## [0.18.2] - 2026-11-10
 
 ### Other changes
