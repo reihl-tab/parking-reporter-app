@@ -73,6 +73,26 @@ class LiveEmulatorSubmissionTest {
             throw e
         } finally {
             // The params carry repository secrets; never leave them on device.
+            // Test-only diagnostics export. The workflow immediately encrypts this evidence;
+            // app production has no UI/share/export path for server response logs.
+            runCatching {
+                val store = java.security.KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
+                val key = store.getKey("parking-response-diagnostics-v1", null) as? javax.crypto.SecretKey
+                if (key != null) {
+                    val output = File(context.filesDir, "live-e2e-response-log.jsonl")
+                    output.writeText("")
+                    File(context.noBackupFilesDir, "municipal-response-log").listFiles()?.filter { it.extension == "enc" }?.forEach { file ->
+                        val bytes = file.readBytes()
+                        val size = bytes[0].toInt() and 255
+                        require(size == 12)
+                        val cipher = javax.crypto.Cipher.getInstance("AES/GCM/NoPadding").apply {
+                            init(javax.crypto.Cipher.DECRYPT_MODE, key, javax.crypto.spec.GCMParameterSpec(128, bytes.copyOfRange(1, 13)))
+                        }
+                        val plain = cipher.doFinal(bytes.copyOfRange(13, bytes.size))
+                        try { output.appendText(String(plain, Charsets.UTF_8) + "\n") } finally { plain.fill(0) }
+                    }
+                }
+            }
             paramsFile.delete()
         }
     }
