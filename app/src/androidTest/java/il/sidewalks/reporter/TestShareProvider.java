@@ -44,7 +44,10 @@ public class TestShareProvider extends ContentProvider {
             if (metadata) {
             android.media.ExifInterface exif = new android.media.ExifInterface(tmp.getAbsolutePath());
             exif.setAttribute(android.media.ExifInterface.TAG_DATETIME_ORIGINAL, "2026:01:01 12:00:00");
-            exif.setLatLong(31.77, 35.2137);
+            exif.setAttribute(android.media.ExifInterface.TAG_GPS_LATITUDE, "31/1,46/1,12/1");
+            exif.setAttribute(android.media.ExifInterface.TAG_GPS_LATITUDE_REF, "N");
+            exif.setAttribute(android.media.ExifInterface.TAG_GPS_LONGITUDE, "35/1,12/1,4932/100");
+            exif.setAttribute(android.media.ExifInterface.TAG_GPS_LONGITUDE_REF, "E");
             exif.saveAttributes();
             }
             if (!tmp.renameTo(file)) {

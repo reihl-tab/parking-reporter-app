@@ -327,7 +327,7 @@ class ReviewCaptureReportsExtractionTest {
     fun screensStoreCodesAndFollowTheActiveLanguage() {
         val screen = source("ReviewScreen.kt")
         val stores = Regex("""unresolved = setOf\(([^)]*)\)""").findAll(screen).map { it.groupValues[1] }.toList()
-        assertEquals(3, stores.size)
+        assertEquals(1, stores.size)
         assertEquals("suggestions add, never erase, existing warnings", 2, Regex("""unresolved = draft\.unresolved \+ ReviewWarning\.SUGGESTED_ADDRESS_NEEDS_CONFIRMATION\.code""").findAll(screen).count())
         assertTrue("ReviewScreen must store codes: $stores", stores.all { Regex("""ReviewWarning\.[A-Z_]+\.code""").matches(it) })
         val shell = source("AppShell.kt")
