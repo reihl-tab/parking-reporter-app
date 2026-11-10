@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-11-10
+
+### Features
+
+- feat: one-time first-run welcome screen (#187) (#188) (f9245a4)
+
 ### Added
 
 - One-time first-run welcome screen (#187). Upgrading installs have no flag yet, so they see the welcome once after the update.
