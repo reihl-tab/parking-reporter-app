@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.19.2] - 2026-11-10
+
+### Fixes
+
+- fix: street and house number in report review (#204) (#207) (40e7d00)
+
 ## [0.19.1] - 2026-11-10
 
 ### Fixes
