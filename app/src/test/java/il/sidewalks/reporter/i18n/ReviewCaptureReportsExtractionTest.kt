@@ -70,7 +70,7 @@ class ReviewCaptureReportsExtractionTest {
         "review.geocode.check_house_number" to "בדוק ואשר את מספר הבית בעצמך",
         "review.address_suggestion" to "הצעה בלבד: {address}",
         "review.edit.text_field" to "הטקסט המדויק לבדיקה",
-        "review.edit.confirm_note" to "מלא ואשר זמן עם אזור זמן וקואורדינטות ידועות לך. אין לנחש מידע חסר. הערכים המקוריים נשמרים בנפרד.",
+        "review.edit.confirm_note" to "בדוק את הרחוב ומספר הבית ואשר את זמן הצילום. אין לנחש מידע חסר. מיקום התמונה המקורי נשמר בנפרד.",
         "review.edit.time_field" to "זמן מאושר עם אזור זמן (ISO)",
         "review.edit.latitude_field" to "קו רוחב",
         "review.edit.longitude_field" to "קו אורך",
@@ -87,6 +87,15 @@ class ReviewCaptureReportsExtractionTest {
         "review.submit.disabled_button" to "שלח",
         "review.submit.unavailable" to "שליחה אינה זמינה בגרסת הבדיקה",
         "review.back" to "חזור",
+        "review.geocode.loading" to "מחפש רחוב ומספר בית לפי מיקום התמונה…",
+        "review.location.show_advanced" to "תיקון מיקום מתקדם",
+        "review.location.hide_advanced" to "הסתר תיקון מיקום מתקדם",
+        "review.location.advanced_note" to "רק אם המיקום חסר או שגוי: הזן קואורדינטות שבדקת. מיקום התמונה המקורי נשמר בנפרד.",
+        "review.location.lookup_title" to "למצוא רחוב ומספר בית?",
+        "review.location.lookup_yes" to "כן, חפש כתובת",
+        "review.location.lookup_later" to "לא עכשיו",
+        "review.location.missing" to "חסר מיקום מאושר; יש להשלים מיקום לפני אישור הדיווח.",
+        "review.location.enter_missing" to "השלם מיקום חסר",
     )
 
     /**
@@ -313,7 +322,8 @@ class ReviewCaptureReportsExtractionTest {
     fun screensStoreCodesAndFollowTheActiveLanguage() {
         val screen = source("ReviewScreen.kt")
         val stores = Regex("""unresolved = setOf\(([^)]*)\)""").findAll(screen).map { it.groupValues[1] }.toList()
-        assertEquals(4, stores.size)
+        assertEquals(3, stores.size)
+        assertEquals("suggestions add, never erase, existing warnings", 2, Regex("""unresolved = draft\.unresolved \+ ReviewWarning\.SUGGESTED_ADDRESS_NEEDS_CONFIRMATION\.code""").findAll(screen).count())
         assertTrue("ReviewScreen must store codes: $stores", stores.all { Regex("""ReviewWarning\.[A-Z_]+\.code""").matches(it) })
         val shell = source("AppShell.kt")
         assertEquals(1, Regex("""val missing = initialReviewWarnings\(evidence\)\n""").findAll(shell).count())

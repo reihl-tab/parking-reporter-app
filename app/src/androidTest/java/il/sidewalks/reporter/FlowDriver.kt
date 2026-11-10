@@ -99,6 +99,11 @@ internal class FlowDriver(private val compose: ComposeTestRule) {
                 compose.onAllNodesWithText("בדיקת הדיווח").fetchSemanticsNodes().isNotEmpty()
             }
         }
+        // This scripted flow already has an approved address; no provider
+        // lookup is needed. Dismiss the optional address consent if shown.
+        if (compose.onAllNodesWithText("למצוא רחוב ומספר בית?").fetchSemanticsNodes().isNotEmpty()) {
+            compose.onNodeWithText("לא עכשיו").performClick()
+        }
         compose.onNodeWithText("נדרש תיקון קטגוריה ▾").performScrollTo().performClick()
         compose.onNodeWithText(fields.categoryLabel).performClick()
         compose.onNodeWithText("ערוך").performScrollTo().performClick()
@@ -108,6 +113,10 @@ internal class FlowDriver(private val compose: ComposeTestRule) {
         compose.onNodeWithText("רחוב ומספר בית שאישרת").performScrollTo().performTextReplacement(fields.address)
         compose.onNodeWithText("הטקסט המדויק לבדיקה").performScrollTo().performTextReplacement(fields.text)
         compose.onNodeWithText("זמן מאושר עם אזור זמן (ISO)").performScrollTo().performTextReplacement(fields.capturedAtIso)
+        // Missing-GPS drafts already expose Advanced; GPS drafts keep it closed.
+        if (compose.onAllNodesWithText("תיקון מיקום מתקדם").fetchSemanticsNodes().isNotEmpty()) {
+            compose.onNodeWithText("תיקון מיקום מתקדם").performScrollTo().performClick()
+        }
         compose.onNodeWithText("קו רוחב").performScrollTo().performTextReplacement(fields.latitude)
         compose.onNodeWithText("קו אורך").performScrollTo().performTextReplacement(fields.longitude)
         clickButton("אשר זמן, מיקום וכתובת שבדקת")

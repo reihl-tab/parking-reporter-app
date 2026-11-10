@@ -4,7 +4,10 @@ import android.content.Context
 import android.location.Geocoder
 import java.util.Locale
 
-data class AddressSuggestion(val street: String, val house: String?, val display: String)
+data class AddressSuggestion(val street: String, val house: String?, val display: String) {
+    /** Do not pass a provider's city/postcode as the confirmed street address. */
+    val streetAndHouse: String get() = listOfNotNull(street.trim().takeIf { it.isNotEmpty() }, house?.trim()?.takeIf { it.isNotEmpty() }).joinToString(" ")
+}
 /** Suggestions are not evidence or approval. House/street always require owner confirmation. */
 class AddressResolver(context: Context) {
     private val geocoder = Geocoder(context, Locale.forLanguageTag("he"))
