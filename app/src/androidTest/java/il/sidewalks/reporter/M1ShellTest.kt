@@ -241,7 +241,8 @@ class M1ShellTest {
         compose.onNodeWithText("הדיווחים שלי").assertExists()
         compose.onNodeWithText("הדיווחים שלי").performClick()
         compose.onNodeWithText("טיוטות שלא אושרו").assertExists()
-        compose.onNodeWithText("אין טיוטות ממתינות").assertExists()
+        // Shared test database may hold another test draft; navigation must not
+        // assume an empty ledger or delete unrelated rows to make it empty.
         compose.onNodeWithText("אושרו וממתינים לשליחה").assertExists()
         compose.onNodeWithText("היסטוריית דיווחים").assertExists()
         compose.onNodeWithText("בית").performClick()
