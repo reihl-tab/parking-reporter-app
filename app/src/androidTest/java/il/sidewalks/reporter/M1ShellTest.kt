@@ -72,7 +72,7 @@ class M1ShellTest {
         // stored only inside the encrypted settings. The screenshot is taken before any
         // value is typed, so no credential ever reaches a captured image.
         var saved: ReporterSettings? = null
-        compose.setContent { AppTheme { SettingsScreen(null, { value, clear -> saved = value; clear() }, {}) } }
+        compose.setContent { AppTheme { SettingsScreen(null, { value, _, clear -> saved = value; clear() }, {}) } }
         screenshot("m1-settings-synthetic.png")
         compose.onNodeWithText("שם פרטי").performTextInput("בדיקה")
         compose.onNodeWithText("שם משפחה").performTextInput("מדווח")
@@ -225,7 +225,7 @@ class M1ShellTest {
 
     @Test fun settingsSaveDisabledWhenAllBlankAndAfterSave() {
         var saved: ReporterSettings? = null
-        compose.setContent { AppTheme { SettingsScreen(null, { s, done -> saved = s; done() }, {}) } }
+        compose.setContent { AppTheme { SettingsScreen(null, { s, _, done -> saved = s; done() }, {}) } }
         compose.onNodeWithText("אמת זהות ושמור מוצפן").assertIsNotEnabled()
         compose.onNodeWithText("שם פרטי").performTextInput("בדיקה")
         compose.onNodeWithText("אמת זהות ושמור מוצפן").performScrollTo().assertIsEnabled().performClick()

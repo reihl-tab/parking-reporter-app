@@ -59,9 +59,11 @@ class SubmissionCoordinatorTest {
 
     @Test fun missingCredentialsBlocked() {
         val noCreds = settings.copy(municipalPassword = "")
-        val outcome = coordinator(RecordingClient()).submitApproved(approvedDraft(), noCreds, jpegFile())
-        assertEquals(SubmissionCoordinator.Reason.MISSING_CREDENTIALS,
-            (outcome as SubmissionCoordinator.Outcome.Blocked).reason)
+        val outcome = coordinator(RecordingClient()).submitApproved(approvedDraft(), noCreds, jpegFile()) as SubmissionCoordinator.Outcome.Blocked
+        assertEquals(SubmissionCoordinator.Reason.MISSING_CREDENTIALS, outcome.reason)
+        // The detail names exactly which values are missing (constant IDs, never values).
+        assertEquals("municipal credentials absent: api_password", outcome.detail)
+        assertEquals(listOf("api_password"), outcome.missingFields)
     }
 
     @Test fun unresolvableAddressBlockedBeforeAnyNetwork() {

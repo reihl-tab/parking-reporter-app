@@ -83,6 +83,7 @@ class ReviewCaptureReportsExtractionTest {
         "review.outgoing_preview" to "בדוק תמונה נפרדת ללא נתוני צילום",
         "review.submit.button" to "שלח לעירייה",
         "review.submit.sending" to "שולח לעירייה...",
+        "review.submit.missing_credentials" to "לא ניתן לשלוח - יש להגדיר בהגדרות את הערכים:",
         "review.submit.disabled_button" to "שלח",
         "review.submit.unavailable" to "שליחה אינה זמינה בגרסת הבדיקה",
         "review.back" to "חזור",

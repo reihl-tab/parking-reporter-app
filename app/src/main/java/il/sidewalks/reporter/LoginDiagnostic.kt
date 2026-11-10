@@ -9,10 +9,15 @@ import java.util.concurrent.TimeUnit
 
 data class LoginCredentials(val subscriptionKey: String, val username: String, val password: String) {
     fun isComplete(): Boolean = listOf(subscriptionKey, username, password).all { it.isNotBlank() }
+    fun missingFields(): List<String> = listOfNotNull(
+        "subscription_key".takeIf { subscriptionKey.isBlank() },
+        "api_username".takeIf { username.isBlank() },
+        "api_password".takeIf { password.isBlank() },
+    )
     override fun toString(): String = "LoginCredentials(redacted)"
 }
 enum class DiagnosticOutcome { SUCCESS, DENIED, INVALID_RESPONSE, NETWORK_ERROR, MISSING_CREDENTIALS, NOT_MOBILE }
-data class DiagnosticResult(val outcome: DiagnosticOutcome, val httpStatus: Int? = null)
+data class DiagnosticResult(val outcome: DiagnosticOutcome, val httpStatus: Int? = null, val missingFields: List<String> = emptyList())
 fun interface DiagnosticRunner { fun run(credentials: LoginCredentials, mobileData: Boolean): DiagnosticResult }
 
 /** Only Login exists in this client. It cannot create contacts, cases or attachments. */
@@ -22,7 +27,7 @@ class LoginDiagnostic internal constructor(
 ) : DiagnosticRunner {
     override fun run(credentials: LoginCredentials, mobileData: Boolean): DiagnosticResult {
         if (!mobileData) return DiagnosticResult(DiagnosticOutcome.NOT_MOBILE)
-        if (!credentials.isComplete()) return DiagnosticResult(DiagnosticOutcome.MISSING_CREDENTIALS)
+        if (!credentials.isComplete()) return DiagnosticResult(DiagnosticOutcome.MISSING_CREDENTIALS, missingFields = credentials.missingFields())
         val body = JSONObject().put("UserName", credentials.username).put("Password", credentials.password).toString()
         val request = Request.Builder().url(loginUrl)
             .header("Ocp-Apim-Subscription-Key", credentials.subscriptionKey)

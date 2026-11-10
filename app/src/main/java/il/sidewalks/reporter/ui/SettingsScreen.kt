@@ -24,24 +24,31 @@ import il.sidewalks.reporter.i18n.ProvideStringsIfMissing
 import il.sidewalks.reporter.i18n.TextDir
 import il.sidewalks.reporter.security.ReporterSettings
 
-/** A save merges blank fields against the freshly read stored settings: after a save
- *  the screen clears itself and the caller drops its copy, so blank always means
- *  "keep the stored value". Removing a stored value needs a dedicated action. */
-internal fun mergeReporterSettings(value: ReporterSettings, stored: ReporterSettings?): ReporterSettings = value.copy(
-    firstName = value.firstName.ifBlank { stored?.firstName.orEmpty() },
-    lastName = value.lastName.ifBlank { stored?.lastName.orEmpty() },
-    phone = value.phone.ifBlank { stored?.phone.orEmpty() },
-    idNumber = value.idNumber.ifBlank { stored?.idNumber.orEmpty() },
-    email = value.email.ifBlank { stored?.email.orEmpty() },
-    municipalSubscriptionKey = value.municipalSubscriptionKey.ifBlank { stored?.municipalSubscriptionKey.orEmpty() },
-    municipalUsername = value.municipalUsername.ifBlank { stored?.municipalUsername.orEmpty() },
-    municipalPassword = value.municipalPassword.ifBlank { stored?.municipalPassword.orEmpty() })
+/** A save merges blank PERSONAL fields against the freshly read stored settings:
+ *  a blank personal field means "keep the stored value". The municipal credential
+ *  fields save exactly as typed when [touchedMunicipal] is null (typed is final);
+ *  when the caller passes the screen's touched set, an untouched credential field
+ *  keeps its stored value and only a field the user actually edited can clear it
+ *  (owner 2026-11-09: clearing a credential field and saving removes its value). */
+internal fun mergeReporterSettings(value: ReporterSettings, stored: ReporterSettings?, touchedMunicipal: Set<String>? = null): ReporterSettings {
+    val merged = value.copy(
+        firstName = value.firstName.ifBlank { stored?.firstName.orEmpty() },
+        lastName = value.lastName.ifBlank { stored?.lastName.orEmpty() },
+        phone = value.phone.ifBlank { stored?.phone.orEmpty() },
+        idNumber = value.idNumber.ifBlank { stored?.idNumber.orEmpty() },
+        email = value.email.ifBlank { stored?.email.orEmpty() })
+    if (touchedMunicipal == null) return merged
+    return merged.copy(
+        municipalSubscriptionKey = if ("subscription_key" in touchedMunicipal) merged.municipalSubscriptionKey else stored?.municipalSubscriptionKey.orEmpty(),
+        municipalUsername = if ("api_username" in touchedMunicipal) merged.municipalUsername else stored?.municipalUsername.orEmpty(),
+        municipalPassword = if ("api_password" in touchedMunicipal) merged.municipalPassword else stored?.municipalPassword.orEmpty())
+}
 
 /** Caller obtains fresh system authentication before opening and again before saving. */
 @Composable
 fun SettingsScreen(
     initial: ReporterSettings?,
-    save: (ReporterSettings, () -> Unit) -> Unit,
+    save: (ReporterSettings, Set<String>, () -> Unit) -> Unit,
     back: () -> Unit,
     debugTools: (@Composable () -> Unit)? = null,
     selectedLanguage: String? = null,
@@ -56,6 +63,9 @@ fun SettingsScreen(
     var subscriptionKey by remember { mutableStateOf(initial?.municipalSubscriptionKey.orEmpty()) }
     var apiUsername by remember { mutableStateOf(initial?.municipalUsername.orEmpty()) }
     var apiPassword by remember { mutableStateOf(initial?.municipalPassword.orEmpty()) }
+    // Municipal fields the user actually edited this visit: only a touched field
+    // saves as typed (blank = cleared); an untouched field keeps its stored value.
+    var touchedMunicipal by remember { mutableStateOf(setOf<String>()) }
     var saved by remember { mutableStateOf(false) }
     ProvideStringsIfMissing {
     val s = LocalStrings.current
@@ -71,19 +81,23 @@ fun SettingsScreen(
         HorizontalDivider()
         Text(s.t("settings.api.title"), style = MaterialTheme.typography.titleMedium)
         Text(s.t("settings.api.description"), style = MaterialTheme.typography.bodySmall)
-        OutlinedTextField(subscriptionKey, { subscriptionKey = it; saved = false }, label = { Text(s.t("settings.field.subscription_key")) }, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false), modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(apiUsername, { apiUsername = it; saved = false }, label = { Text(s.t("settings.field.api_username")) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii, autoCorrectEnabled = false), modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(apiPassword, { apiPassword = it; saved = false }, label = { Text(s.t("settings.field.api_password")) }, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false), modifier = Modifier.fillMaxWidth())
-        // Blank fields keep the stored values via mergeReporterSettings in the caller's
-        // save callback, and the button stays disabled when every field is blank or right
-        // after a save. Values are trimmed; blank can never mean "delete a stored value".
+        OutlinedTextField(subscriptionKey, { subscriptionKey = it; saved = false; touchedMunicipal = touchedMunicipal + "subscription_key" }, label = { Text(s.t("settings.field.subscription_key")) }, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false), modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(apiUsername, { apiUsername = it; saved = false; touchedMunicipal = touchedMunicipal + "api_username" }, label = { Text(s.t("settings.field.api_username")) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii, autoCorrectEnabled = false), modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(apiPassword, { apiPassword = it; saved = false; touchedMunicipal = touchedMunicipal + "api_password" }, label = { Text(s.t("settings.field.api_password")) }, visualTransformation = PasswordVisualTransformation(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false), modifier = Modifier.fillMaxWidth())
+        // Blank personal fields keep the stored values via mergeReporterSettings in the
+        // caller's save callback; a municipal credential field saves as typed only when
+        // the user touched it (blank = cleared), otherwise its stored value is kept.
+        // The fields clear after a save so no credential lingers on screen; a touched-then-
+        // blanked credential still enables the button, so clearing works on a blank screen too.
+        // stays disabled when every field is blank (and nothing was touched) or right after a save.
         val anyField = listOf(firstName, lastName, id, phone, email, subscriptionKey, apiUsername, apiPassword).any { it.isNotBlank() }
-        Button(enabled = !saved && anyField, onClick = { save(ReporterSettings(firstName.trim(), lastName.trim(), phone.trim(), id.trim(), email.trim(),
-            municipalSubscriptionKey = subscriptionKey.trim().ifBlank { initial?.municipalSubscriptionKey.orEmpty() },
-            municipalUsername = apiUsername.trim().ifBlank { initial?.municipalUsername.orEmpty() },
-            municipalPassword = apiPassword.trim().ifBlank { initial?.municipalPassword.orEmpty() })) {
+        Button(enabled = !saved && (anyField || touchedMunicipal.isNotEmpty()), onClick = { save(ReporterSettings(firstName.trim(), lastName.trim(), phone.trim(), id.trim(), email.trim(),
+            municipalSubscriptionKey = subscriptionKey.trim(),
+            municipalUsername = apiUsername.trim(),
+            municipalPassword = apiPassword.trim()), touchedMunicipal) {
             firstName = ""; lastName = ""; id = ""; phone = ""; email = ""
-            subscriptionKey = ""; apiUsername = ""; apiPassword = ""; saved = true
+            subscriptionKey = ""; apiUsername = ""; apiPassword = ""
+            touchedMunicipal = setOf(); saved = true
         } }, modifier = Modifier.fillMaxWidth()) { Text(s.t("settings.save.button")) }
         if (saved) Text(s.t("settings.save.done"))
         // The UI language lives in "ui-prefs": picking one never calls save, never asks for

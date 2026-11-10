@@ -91,7 +91,12 @@ fun DiagnosticScreen(runner: DiagnosticRunner, isMobile: () -> Boolean) {
             }, enabled = approved && !running && listOf(key, username, password).all { it.isNotBlank() }) {
                 Text(if (running) "בודק..." else "בדוק התחברות בלבד")
             }
-            result?.let { Text("תוצאת בדיקה: ⁦${it.outcome.name}⁩ ⁦${it.httpStatus ?: "-"}⁩") }
+            result?.let { r ->
+                // Name the missing values when the diagnostic reports them
+                // (constant field IDs, never values).
+                Text("תוצאת בדיקה: ⁦${r.outcome.name}⁩ ⁦${r.httpStatus ?: "-"}⁩" +
+                    (if (r.missingFields.isNotEmpty()) " ⁦חסר: " + r.missingFields.joinToString(", ") + "⁩" else ""))
+            }
             Text("אין ניסיון חוזר אוטומטי. דווח רק על התוצאה, לא על הפרטים.")
         }
     }

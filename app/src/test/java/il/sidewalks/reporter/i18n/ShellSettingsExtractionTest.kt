@@ -215,6 +215,16 @@ class ShellSettingsExtractionTest {
         assertEquals("every outcome has its own text", Reason.entries.size, Reason.entries.map { blocked(it) }.toSet().size)
         assertEquals("שגיאה מקומית, לא בוצעה שליחה (${fsi}שגיאה$pdi)",
             municipalOutcomeText(he, Outcome.Blocked(Reason.LOCAL_FAILURE, "שגיאה")))
+        // Owner 2026-11-09: the typed missing-field IDs name the missing values
+        // (constant catalog labels); unknown IDs are dropped, not mislabeled.
+        assertEquals("חסרים פרטי גישה לעירייה בהגדרות: מפתח מנוי, סיסמת API",
+            municipalOutcomeText(he, Outcome.Blocked(Reason.MISSING_CREDENTIALS,
+                "municipal credentials absent: subscription_key, api_password",
+                missingFields = listOf("subscription_key", "api_password"))))
+        assertEquals("חסרים פרטי גישה לעירייה בהגדרות: מפתח מנוי",
+            municipalOutcomeText(he, Outcome.Blocked(Reason.MISSING_CREDENTIALS,
+                "municipal credentials absent: subscription_key, future_field",
+                missingFields = listOf("subscription_key", "future_field"))))
     }
 
     @Test

@@ -42,7 +42,11 @@ class LoginDiagnosticTest {
         MockWebServer().use { server ->
             val diagnostic = LoginDiagnostic(LoginDiagnostic.safeClient(), server.url("/Login").toString())
             assertEquals(DiagnosticOutcome.NOT_MOBILE, diagnostic.run(credentials, false).outcome)
-            assertEquals(DiagnosticOutcome.MISSING_CREDENTIALS, diagnostic.run(LoginCredentials("", "", ""), true).outcome)
+            val missing = diagnostic.run(LoginCredentials("", "", ""), true)
+            assertEquals(DiagnosticOutcome.MISSING_CREDENTIALS, missing.outcome)
+            assertEquals(listOf("subscription_key", "api_username", "api_password"), missing.missingFields)
+            assertEquals(listOf("api_password"),
+                diagnostic.run(LoginCredentials("synthetic-key", "synthetic-user", ""), true).missingFields)
             assertEquals(0, server.requestCount)
         }
     }

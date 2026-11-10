@@ -24,7 +24,7 @@ import il.sidewalks.reporter.i18n.ProvideStringsIfMissing
 private const val ISO_TIME_EXAMPLE = "\u20662026-01-01T12:00:00+02:00\u2069"
 
 @Composable
-fun ReviewScreen(initial: ReviewDraft, image: ImageBitmap?, onSave: (ReviewDraft) -> Unit, onBack: () -> Unit, onOutgoingPreview: (() -> Unit)? = null, onSubmit: ((ReviewDraft) -> Unit)? = null, submitting: Boolean = false, submissionNote: String = "") {
+fun ReviewScreen(initial: ReviewDraft, image: ImageBitmap?, onSave: (ReviewDraft) -> Unit, onBack: () -> Unit, onOutgoingPreview: (() -> Unit)? = null, onSubmit: ((ReviewDraft) -> Unit)? = null, submitting: Boolean = false, submissionNote: String = "", missingCredentialKeys: List<String> = emptyList()) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var plates by remember(initial.evidence.stableId) { mutableStateOf<List<String>>(emptyList()) }
@@ -135,9 +135,16 @@ fun ReviewScreen(initial: ReviewDraft, image: ImageBitmap?, onSave: (ReviewDraft
         Text(s.t(if (draft.isApproved()) "review.approved" else "review.not_approved"))
         Button(onClick = { onSave(draft) }, modifier = Modifier.fillMaxWidth()) { Text(s.t("review.save_draft")) }
         onOutgoingPreview?.let { action -> Button(onClick = action, modifier = Modifier.fillMaxWidth()) { Text(s.t("review.outgoing_preview")) } }
+        if (onSubmit != null && missingCredentialKeys.isNotEmpty()) {
+            // Owner 2026-11-09: when required municipal values are unset, say which
+            // ones and grey out send (UI only; the unlock gate before submit is unchanged).
+            // Only where a live submit exists - a trial/disabled build shows the
+            // generic disabled button instead.
+            Text(s.t("review.submit.missing_credentials") + " " + missingCredentialKeys.joinToString(", ") { s.t(it) }, style = MaterialTheme.typography.bodySmall)
+        }
         if (onSubmit != null) {
             // Send the draft this screen actually shows, not some other copy.
-            Button(enabled = draft.isApproved() && !submitting, onClick = { onSubmit(draft) }, modifier = Modifier.fillMaxWidth()) { Text(s.t(if (submitting) "review.submit.sending" else "review.submit.button")) }
+            Button(enabled = draft.isApproved() && !submitting && missingCredentialKeys.isEmpty(), onClick = { onSubmit(draft) }, modifier = Modifier.fillMaxWidth()) { Text(s.t(if (submitting) "review.submit.sending" else "review.submit.button")) }
             if (submissionNote.isNotEmpty()) Text(submissionNote, style = MaterialTheme.typography.bodySmall)
         } else {
             Button(onClick = {}, enabled = false, modifier = Modifier.fillMaxWidth()) { Text(s.t("review.submit.disabled_button")) }

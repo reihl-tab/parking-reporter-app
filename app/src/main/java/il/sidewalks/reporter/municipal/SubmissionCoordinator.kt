@@ -33,8 +33,14 @@ class SubmissionCoordinator(
          * Refused before or during submission: [reason] is machine-readable
          * for the UI's Hebrew mapping; [detail] is the municipality's or
          * validator's exact answer, shown verbatim where the UI allows.
+         * [missingFields] carries the unset municipal credential IDs (never
+         * values) for MISSING_CREDENTIALS, so the UI needs no string parsing.
          */
-        data class Blocked(val reason: Reason, val detail: String) : Outcome
+        data class Blocked(
+            val reason: Reason,
+            val detail: String,
+            val missingFields: List<String> = emptyList(),
+        ) : Outcome
     }
 
     enum class Reason {
@@ -60,7 +66,11 @@ class SubmissionCoordinator(
     ): Outcome {
         if (!draft.isApproved()) return Outcome.Blocked(Reason.NOT_APPROVED, "draft not approved")
         if (!settings.hasMunicipalCredentials()) {
-            return Outcome.Blocked(Reason.MISSING_CREDENTIALS, "municipal credentials absent")
+            // Name exactly which values are missing (constant field IDs, never
+            // values) so the UI can say it (owner 2026-11-09).
+            return Outcome.Blocked(Reason.MISSING_CREDENTIALS,
+                "municipal credentials absent: " + settings.missingMunicipalFields().joinToString(", "),
+                missingFields = settings.missingMunicipalFields())
         }
         val category = ReportCategory.from(draft.subject)
             ?: return Outcome.Blocked(Reason.UNSUPPORTED_CATEGORY, draft.subject)

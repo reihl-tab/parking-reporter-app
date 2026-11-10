@@ -336,9 +336,16 @@ fun AppShell(
             // Live submit is always visible (owner 19:49: no master toggle
             // and no settings pre-read; the per-submit device unlock is the
             // gate, and missing credentials answer after it).
+            // Plaintext field-IDs record: which municipal credentials are unset, no
+            // values, readable without the unlock that a settings read would need.
+            // null (never saved) keeps the old answer-after-unlock behavior.
+            val missingCredentials = remember(value.evidence.stableId) {
+                il.sidewalks.reporter.security.SettingsProfileStore(context).read()
+                    ?.mapNotNull(::municipalFieldLabelKey).orEmpty()
+            }
             ReviewScreen(value, image, ::saveDraft, onBack = { page = "home" },
                 onSubmit = { shown -> submitReport(shown) },
-                submitting = submitting, submissionNote = submissionNote, onOutgoingPreview = {
+                submitting = submitting, submissionNote = submissionNote, missingCredentialKeys = missingCredentials, onOutgoingPreview = {
                 scope.launch {
                     try {
                         val derivative = withContext(Dispatchers.IO) {
@@ -362,12 +369,32 @@ fun AppShell(
                 TextButton(onClick = { outgoing = null; page = "review" }, modifier = Modifier.fillMaxWidth()) { Text(strings.t("shell.outgoing.back_to_review")) }
             }
         }
-        "settings" -> SettingsScreen(profile, save = { value, cleared ->
+        "settings" -> SettingsScreen(profile, save = { value, touchedMunicipal, cleared ->
             authenticate(strings.t("shell.unlock.settings_title"), strings.t("shell.unlock.settings_subtitle")) {
                 try {
-                    // The screen clears itself and profile is dropped after a save, so blank
-                    // fields must keep the stored values: merge against a fresh read.
-                    saveSettings(mergeReporterSettings(value, readSettings())); profile = null; cleared(); status = strings.t("shell.status.settings_saved")
+                    // The screen clears itself and profile is dropped after a save: blank
+                    // personal fields keep the stored values; a municipal credential field
+                    // saves as typed only when the user touched it (blank = cleared), an
+                    // untouched one keeps its stored value. Merge against a fresh read.
+                    // The plaintext missing-fields record (IDs only, atomic write) goes
+                    // FIRST: if it fails, nothing was saved and no stale record can
+                    // grey out a later send.
+                    val merged = mergeReporterSettings(value, readSettings(), touchedMunicipal)
+                    val profileStore = il.sidewalks.reporter.security.SettingsProfileStore(context)
+                    profileStore.save(merged.missingMunicipalFields())
+                    try {
+                        saveSettings(merged)
+                    } catch (failure: Exception) {
+                        // The record already says the new answer: restore it to the
+                        // previous stored one, else delete it to fall back to
+                        // "unknown" - neither failure direction may grey out Send wrongly.
+                        try {
+                            val previous = readSettings()
+                            if (previous != null) profileStore.save(previous.missingMunicipalFields()) else profileStore.clear()
+                        } catch (_: Exception) { profileStore.clear() }
+                        throw failure
+                    }
+                    profile = null; cleared(); status = strings.t("shell.status.settings_saved")
                 }
                 catch (_: Exception) { status = strings.t("shell.status.settings_save_failed") }
             }
@@ -444,6 +471,22 @@ fun AppShell(
  * (issue #115). The mapping is #160's, one key per outcome; [SubmissionCoordinator]
  * never produces user-facing text itself.
  */
+internal fun municipalFieldLabelKey(id: String): String? = when (id) {
+    "subscription_key" -> "settings.field.subscription_key"
+    "api_username" -> "settings.field.api_username"
+    "api_password" -> "settings.field.api_password"
+    else -> null
+}
+
+/** Name the unset municipal fields from the typed ID list (owner
+ *  2026-11-09: an error must say exactly which values are missing). Unknown
+ *  IDs are dropped rather than mislabeled. */
+internal fun missingCredentialsSuffix(strings: Strings, missingFields: List<String>): String {
+    val labels = missingFields.mapNotNull { municipalFieldLabelKey(it) }
+    if (labels.isEmpty()) return ""
+    return ": " + labels.joinToString(", ") { strings.t(it) }
+}
+
 internal fun municipalOutcomeText(strings: Strings, outcome: SubmissionCoordinator.Outcome): String = when (outcome) {
     is SubmissionCoordinator.Outcome.Submitted ->
         strings.t("shell.submit.sent",
@@ -452,7 +495,8 @@ internal fun municipalOutcomeText(strings: Strings, outcome: SubmissionCoordinat
         strings.t("shell.submit.already_sent", mapOf("case_number" to (outcome.caseNumber ?: "")))
     is SubmissionCoordinator.Outcome.Blocked -> when (outcome.reason) {
         SubmissionCoordinator.Reason.NOT_APPROVED -> strings.t("shell.submit.blocked.not_approved")
-        SubmissionCoordinator.Reason.MISSING_CREDENTIALS -> strings.t("shell.submit.blocked.missing_credentials")
+        SubmissionCoordinator.Reason.MISSING_CREDENTIALS ->
+            strings.t("shell.submit.blocked.missing_credentials") + missingCredentialsSuffix(strings, outcome.missingFields)
         SubmissionCoordinator.Reason.UNSUPPORTED_CATEGORY -> strings.t("shell.submit.blocked.unsupported_category")
         SubmissionCoordinator.Reason.ADDRESS_UNRESOLVED ->
             strings.t("shell.submit.blocked.address_unresolved", mapOf("detail" to outcome.detail))

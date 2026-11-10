@@ -17,6 +17,12 @@ data class ReporterSettings(
 ) {
     fun hasMunicipalCredentials(): Boolean =
         municipalSubscriptionKey.isNotBlank() && municipalUsername.isNotBlank() && municipalPassword.isNotBlank()
+    /** IDs of unset municipal API credential fields (never the values). */
+    fun missingMunicipalFields(): List<String> = listOfNotNull(
+        "subscription_key".takeIf { municipalSubscriptionKey.isBlank() },
+        "api_username".takeIf { municipalUsername.isBlank() },
+        "api_password".takeIf { municipalPassword.isBlank() },
+    )
     override fun toString(): String = "ReporterSettings(redacted)"
 }
 /** Requires recent system device-credential authentication for every encryption/decryption. */
