@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.18.2] - 2026-11-10
+
+### Other changes
+
+- live-e2e: fix device staging (mkdir files dir) + fail-fast preflight (#202) (da62573)
+
 ## [0.18.1] - 2026-11-10
 
 ### Other changes
