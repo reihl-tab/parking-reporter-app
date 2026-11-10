@@ -1,6 +1,8 @@
 package il.sidewalks.reporter.ui
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -25,12 +27,13 @@ import il.sidewalks.reporter.i18n.ProvideStringsIfMissing
 private const val ISO_TIME_EXAMPLE = "\u20662026-01-01T12:00:00+02:00\u2069"
 
 @Composable
-fun ReviewScreen(initial: ReviewDraft, image: ImageBitmap?, onSave: (ReviewDraft) -> Unit, onBack: () -> Unit, onOutgoingPreview: (() -> Unit)? = null, onSubmit: ((ReviewDraft) -> Unit)? = null, submitting: Boolean = false, submissionNote: String = "", missingCredentialKeys: List<String> = emptyList(), addressLookup: (suspend (Double, Double) -> List<il.sidewalks.reporter.evidence.AddressSuggestion>)? = null) {
+fun ReviewScreen(initial: ReviewDraft, image: ImageBitmap?, onSave: (ReviewDraft) -> Unit, onBack: () -> Unit, onOutgoingPreview: (() -> Unit)? = null, onSubmit: ((ReviewDraft) -> Unit)? = null, submitting: Boolean = false, submissionNote: String = "", missingCredentialKeys: List<String> = emptyList(), addressLookup: (suspend (Double, Double) -> List<il.sidewalks.reporter.evidence.AddressSuggestion>)? = null, plateRecognizer: (suspend () -> List<String>)? = null) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var plates by remember(initial.evidence.stableId) { mutableStateOf<List<String>>(emptyList()) }
     var useGoogle by remember { mutableStateOf(false) }
     var recognizing by remember { mutableStateOf(false) }
+    var plateEdits by remember { mutableIntStateOf(0) }
     // Status lines hold catalog keys and are translated when shown, so they follow a language switch.
     var ocrStatus by remember { mutableStateOf<String?>(null) }
     var suggestions by remember { mutableStateOf<List<il.sidewalks.reporter.evidence.AddressSuggestion>>(emptyList()) }
@@ -63,14 +66,17 @@ fun ReviewScreen(initial: ReviewDraft, image: ImageBitmap?, onSave: (ReviewDraft
     }
     suspend fun recognize() {
         recognizing = true
+        val plateBefore = draft.plate
+        val editsBefore = plateEdits
         try {
             plates = withContext(Dispatchers.Default) {
-                try { if (useGoogle) il.sidewalks.reporter.recognition.MlKitPlateOcr.recognize(image!!.asAndroidBitmap()) else il.sidewalks.reporter.recognition.OfflinePlateOcr(context).recognize(image!!.asAndroidBitmap()) }
+                try { plateRecognizer?.invoke() ?: if (useGoogle) il.sidewalks.reporter.recognition.MlKitPlateOcr.recognize(image!!.asAndroidBitmap()) else il.sidewalks.reporter.recognition.OfflinePlateOcr(context).recognize(image!!.asAndroidBitmap()) }
                 catch (_: LinkageError) { emptyList() }
                 catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
                 catch (_: Exception) { emptyList() }
             }
             if (il.sidewalks.reporter.core.ReportCategory.from(draft.subject)?.needsPlate == false) plates = emptyList()
+            if (plateEdits == editsBefore) draft = PlateEntry.prefill(draft, plates, plateBefore)
             ocrStatus = if (plates.isEmpty()) "review.ocr.no_plate" else "review.ocr.suggestions_found"
         } finally { recognizing = false }
     }
@@ -135,7 +141,9 @@ fun ReviewScreen(initial: ReviewDraft, image: ImageBitmap?, onSave: (ReviewDraft
         Button(enabled = image != null && !recognizing, onClick = { scope.launch { recognize() } }, modifier = Modifier.fillMaxWidth()) { Text(s.t(if (recognizing) "review.edit.recognizing" else "review.edit.suggest_plate")) }
         Text(ocrStatus?.let { s.t(it) }.orEmpty())
         plates.forEach { plate -> TextButton(onClick = { draft = draft.edit(plate = plate) }) { Text(reviewPlateSuggestionText(s, plate)) } }
-        if (il.sidewalks.reporter.core.ReportCategory.from(draft.subject)?.needsPlate == true) OutlinedTextField(draft.plate, { draft = draft.edit(plate = it) }, singleLine = true,
+        if (il.sidewalks.reporter.core.ReportCategory.from(draft.subject)?.needsPlate == true) OutlinedTextField(draft.plate, { plateEdits++; draft = draft.edit(plate = PlateEntry.digits(it)) }, singleLine = true,
+            isError = draft.plate.isNotBlank() && !draft.plate.matches(Regex("[0-9]{7,8}")),
+            visualTransformation = PlateEntry, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, autoCorrectEnabled = false),
             textStyle = MaterialTheme.typography.titleLarge.copy(textDirection = TextDirection.Ltr),
             label = { Text(s.t("review.edit.plate_field")) }, modifier = Modifier.width(216.dp))
         }
