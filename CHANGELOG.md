@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.23.1] - 2026-11-10
+
+### Other changes
+
+- build: track verified Gradle wrapper for automatic discovery (#232) (720ac48)
+
 ## [0.23.0] - 2026-11-10
 
 ### Features
