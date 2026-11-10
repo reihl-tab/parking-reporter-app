@@ -47,7 +47,7 @@ class FullFlowE2eTest {
         il.sidewalks.reporter.i18n.UiPrefsLanguageStore.of(InstrumentationRegistry.getInstrumentation().targetContext).set("he")
     }
 
-    private val sharedUri = Uri.parse("content://il.sidewalks.reporter.testshare/shared-entry-synthetic.jpg")
+    private val sharedUri = Uri.parse("content://il.sidewalks.reporter.testshare/with-metadata.jpg")
     private var ownedPhotoHash: String? = null
 
     /** Never take ownership of a pre-existing row, even one with the test photo. */

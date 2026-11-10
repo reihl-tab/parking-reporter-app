@@ -28,10 +28,10 @@ public class TestShareProvider extends ContentProvider {
         return true;
     }
 
-    private synchronized File jpeg() throws Exception {
-        File file = new File(getContext().getCacheDir(), "testshare-synthetic-metadata-v2.jpg");
+    private synchronized File jpeg(boolean metadata) throws Exception {
+        File file = new File(getContext().getCacheDir(), metadata ? "testshare-synthetic-metadata-v2.jpg" : "testshare-synthetic.jpg");
         if (!file.isFile()) {
-            File tmp = new File(getContext().getCacheDir(), "testshare-synthetic-metadata-v2.jpg.tmp");
+            File tmp = new File(getContext().getCacheDir(), metadata ? "testshare-synthetic-metadata-v2.jpg.tmp" : "testshare-synthetic.jpg.tmp");
             Bitmap bmp = Bitmap.createBitmap(48, 32, Bitmap.Config.ARGB_8888);
             bmp.setPixel(1, 1, Color.BLUE);
             FileOutputStream out = new FileOutputStream(tmp);
@@ -41,10 +41,12 @@ public class TestShareProvider extends ContentProvider {
                 out.close();
             }
             // Synthetic-only fixture metadata. Never changes a real/live photo.
+            if (metadata) {
             android.media.ExifInterface exif = new android.media.ExifInterface(tmp.getAbsolutePath());
             exif.setAttribute(android.media.ExifInterface.TAG_DATETIME_ORIGINAL, "2026:01:01 12:00:00");
             exif.setLatLong(31.77, 35.2137);
             exif.saveAttributes();
+            }
             if (!tmp.renameTo(file)) {
                 throw new IllegalStateException("could not stage synthetic JPEG");
             }
@@ -55,7 +57,7 @@ public class TestShareProvider extends ContentProvider {
     @Override
     public ParcelFileDescriptor openFile(Uri uri, String mode) throws FileNotFoundException {
         try {
-            return ParcelFileDescriptor.open(jpeg(), ParcelFileDescriptor.MODE_READ_ONLY);
+            return ParcelFileDescriptor.open(jpeg("/with-metadata.jpg".equals(uri.getPath())), ParcelFileDescriptor.MODE_READ_ONLY);
         } catch (Exception e) {
             FileNotFoundException failure = new FileNotFoundException(String.valueOf(e.getMessage()));
             failure.initCause(e);
