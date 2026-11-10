@@ -6,6 +6,12 @@ Every release gets a `v<version>` git tag, a matching entry here, and release no
 
 ## [Unreleased]
 
+## [0.18.4] - 2026-11-10
+
+### Fixes
+
+- fix: use shipped theme in live emulator recording (#205) (76c2bd0)
+
 ## [0.18.3] - 2026-11-10
 
 ### Other changes
