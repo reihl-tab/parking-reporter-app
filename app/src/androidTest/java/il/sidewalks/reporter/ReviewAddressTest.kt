@@ -28,7 +28,7 @@ class ReviewAddressTest {
     @get:Rule val compose = createComposeRule()
     private fun draft() = ReviewDraft(
         Evidence("address-fixture", "a".repeat(64), "2026-01-01T12:00:00+02:00", 31.77, 35.21),
-        "1234567", "", "sidewalk_parking", "תיאור בדיקה בלבד", setOf("address_not_confirmed"))
+        "1234567", "", "sidewalk_parking", "תיאור בדיקה בלבד", setOf("address_needs_confirmation"))
 
     @Test fun localTimeFieldKeepsOriginalSecondsAndRemovesOnlyApprovalNote() {
         val initial = draft().copy(address = "רחוב בדיקה 12", confirmedTime = "2026-01-01T12:00:47+02:00")
