@@ -37,7 +37,7 @@ class ReviewAddressTest {
         compose.onNodeWithText("זמן: \u206601/01/2026 12:00\u2069").assertExists()
         compose.onNodeWithText("כל שינוי מבטל אישור", substring = true).assertDoesNotExist()
         compose.onNodeWithText("ערוך").performScrollTo().performClick()
-        compose.onNodeWithText("זמן צילום מאושר (24 שעות)").performScrollTo()
+        compose.onNodeWithText("זמן הצילום (24 שעות)").performScrollTo()
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         File(context.filesDir, "review-local-time-synthetic.png").outputStream().use {
             compose.onRoot().captureToImage().asAndroidBitmap().compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
@@ -109,16 +109,17 @@ class ReviewAddressTest {
         val initial = draft().copy(evidence = draft().evidence.copy(latitude = null, longitude = null), confirmedLatitude = null, confirmedLongitude = null)
         var saved: ReviewDraft? = null
         compose.setContent { AppTheme { ReviewScreen(initial, null, { saved = it }, {}) } }
-        compose.onNodeWithText("השלם מיקום חסר").performScrollTo().performClick()
-        compose.onNodeWithText("קו רוחב").performScrollTo().performTextReplacement("31.77")
-        compose.onNodeWithText("קו אורך").performScrollTo().performTextReplacement("35.21")
-        compose.onNodeWithText("אשר זמן, מיקום וכתובת שבדקת").performScrollTo().performClick()
+        compose.onNodeWithText("לא נמצא מיקום בתמונה. בחר תמונה עם מיקום כדי לשלוח דיווח.").performScrollTo().assertExists()
+        compose.onNodeWithText("ערוך").performScrollTo().performClick()
+        compose.onNodeWithText("קו רוחב").assertDoesNotExist()
+        compose.onNodeWithText("קו אורך").assertDoesNotExist()
+        compose.onNodeWithText("תיקון מיקום מתקדם").assertDoesNotExist()
         compose.onNodeWithText("שמור טיוטה").performScrollTo().performClick()
         compose.runOnIdle {
             assertNull(saved?.evidence?.latitude)
             assertNull(saved?.evidence?.longitude)
-            assertEquals(31.77, saved!!.confirmedLatitude!!, 0.0)
-            assertEquals(35.21, saved!!.confirmedLongitude!!, 0.0)
+            assertNull(saved?.confirmedLatitude)
+            assertNull(saved?.confirmedLongitude)
             assertNull(saved?.approvedDigest)
         }
     }

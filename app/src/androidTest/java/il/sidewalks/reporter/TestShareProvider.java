@@ -29,9 +29,9 @@ public class TestShareProvider extends ContentProvider {
     }
 
     private synchronized File jpeg() throws Exception {
-        File file = new File(getContext().getCacheDir(), "testshare-synthetic.jpg");
+        File file = new File(getContext().getCacheDir(), "testshare-synthetic-metadata-v2.jpg");
         if (!file.isFile()) {
-            File tmp = new File(getContext().getCacheDir(), "testshare-synthetic.jpg.tmp");
+            File tmp = new File(getContext().getCacheDir(), "testshare-synthetic-metadata-v2.jpg.tmp");
             Bitmap bmp = Bitmap.createBitmap(48, 32, Bitmap.Config.ARGB_8888);
             bmp.setPixel(1, 1, Color.BLUE);
             FileOutputStream out = new FileOutputStream(tmp);
@@ -40,6 +40,11 @@ public class TestShareProvider extends ContentProvider {
             } finally {
                 out.close();
             }
+            // Synthetic-only fixture metadata. Never changes a real/live photo.
+            android.media.ExifInterface exif = new android.media.ExifInterface(tmp.getAbsolutePath());
+            exif.setAttribute(android.media.ExifInterface.TAG_DATETIME_ORIGINAL, "2026:01:01 12:00:00");
+            exif.setLatLong(31.77, 35.2137);
+            exif.saveAttributes();
             if (!tmp.renameTo(file)) {
                 throw new IllegalStateException("could not stage synthetic JPEG");
             }

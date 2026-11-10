@@ -74,7 +74,9 @@ class ReviewCaptureReportsExtractionTest {
         "review.edit.timezone_toggle" to "תיקון אזור זמן",
         "review.edit.timezone_field" to "אזור זמן (למשל +02:00)",
         "review.edit.timezone_note" to "רק אם אזור הזמן חסר או שגוי: הזן היסט שבדקת לזמן הצילום. אין לנחש.",
-        "review.edit.time_field" to "זמן צילום מאושר (24 שעות)",
+        "review.location.missing_plain" to "לא נמצא מיקום בתמונה. בחר תמונה עם מיקום כדי לשלוח דיווח.",
+        "review.edit.jerusalem_time_note" to "הזמן מוצג לפי השעון המקומי בירושלים. אשר רק זמן שבדקת.",
+        "review.edit.time_field" to "זמן הצילום (24 שעות)",
         "review.edit.latitude_field" to "קו רוחב",
         "review.edit.longitude_field" to "קו אורך",
         "review.edit.confirm_button" to "אשר זמן, מיקום וכתובת שבדקת",
@@ -189,9 +191,10 @@ class ReviewCaptureReportsExtractionTest {
             assertTrue("$key is used but missing from strings.json", entry != null)
             for (code in languages) assertTrue("$key/$code", entry!!.optString(code).isNotBlank())
         }
-        val screenKeys = catalog.keys.filter { it.startsWith("review.") || it.startsWith("capture.") || it.startsWith("reports.") }.toSet()
+        val retired = setOf("review.edit.latitude_field", "review.edit.longitude_field", "review.edit.timezone_toggle", "review.edit.timezone_field", "review.edit.timezone_note", "review.location.show_advanced", "review.location.hide_advanced", "review.location.advanced_note", "review.location.missing", "review.location.enter_missing")
+        val screenKeys = catalog.keys.filter { it.startsWith("review.") || it.startsWith("capture.") || it.startsWith("reports.") }.toSet() - retired
         assertEquals("review./capture./reports. keys in the catalog vs the keys the screens use", screenKeys, used)
-        assertEquals(all.keys, screenKeys)
+        assertEquals(all.keys - retired, screenKeys)
         assertTrue(keysNamedIn("CaptureScreen.kt").all { it.startsWith("capture.") })
         assertTrue(keysNamedIn("ReportsScreen.kt").all { it.startsWith("reports.") })
         assertTrue((keysNamedIn("ReviewScreen.kt") + keysNamedIn("ReviewTexts.kt")).all { it.startsWith("review.") })

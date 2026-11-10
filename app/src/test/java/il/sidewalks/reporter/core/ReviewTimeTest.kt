@@ -13,6 +13,12 @@ class ReviewTimeTest {
         val original = "2026-01-01T12:00:47.123+02:00"
         assertEquals(original, ReviewTime.toIso("01/01/2026 12:00", original))
     }
+    @Test fun jerusalemConfirmationUsesDateSpecificZoneAndRefusesDSTGapOverlap() {
+        assertEquals("2026-01-01T12:00+02:00", ReviewTime.toJerusalemIso("01/01/2026 12:00", null))
+        assertEquals("2026-07-01T12:00+03:00", ReviewTime.toJerusalemIso("01/07/2026 12:00", null))
+        assertNull(ReviewTime.toJerusalemIso("27/03/2026 02:30", null))
+        assertNull(ReviewTime.toJerusalemIso("25/10/2026 01:30", null))
+    }
     @Test fun missingZoneRequiresExplicitCheckedOffset() {
         assertEquals("2026-01-01T12:00+02:00", ReviewTime.toIso("01/01/2026 12:00", "2026-01-01T12:00:00", "+02:00"))
         assertEquals("2026-01-01T12:00+03:00", ReviewTime.toIso("01/01/2026 12:00", null, "+03:00"))

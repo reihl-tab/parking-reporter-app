@@ -3,6 +3,7 @@ package il.sidewalks.reporter.ui
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.ResolverStyle
 import java.util.Locale
@@ -24,6 +25,16 @@ object ReviewTime {
             val local = LocalDateTime.parse(input, format)
             val offset = ZoneOffset.of(offsetText)
             local.atOffset(offset).toString()
+        } catch (_: Exception) { null }
+    }
+    /** Municipality-local wall clock, explicitly named beside the confirmation button.
+     * Missing/ambiguous DST instants refuse instead of silently selecting an offset. */
+    fun toJerusalemIso(input: String, previous: String?): String? {
+        if (input == display(previous) && previous?.let { validOffset(it) } == true) return previous
+        return try {
+            val local = LocalDateTime.parse(input, format)
+            val offsets = ZoneId.of("Asia/Jerusalem").rules.getValidOffsets(local)
+            if (offsets.size == 1) local.atOffset(offsets.single()).toString() else null
         } catch (_: Exception) { null }
     }
     private fun validOffset(value: String) = try { OffsetDateTime.parse(value); true } catch (_: Exception) { false }
